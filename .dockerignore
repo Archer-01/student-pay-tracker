@@ -1,0 +1,28 @@
+# Keep the build context small and clean. Paths are relative to the repo root.
+.git
+**/.git
+**/.github
+
+# Frontend: installed/built inside the image, never copied from host
+frontend/node_modules
+frontend/dist
+
+# Backend: local virtualenv, caches, and the SQLite DB (lives on the /data volume)
+backend/.venv
+backend/tests
+backend/backups
+**/__pycache__
+**/*.pyc
+**/.pytest_cache
+**/.ruff_cache
+**/.mypy_cache
+**/.hypothesis
+**/.coverage
+**/*.db
+**/*.db-wal
+**/*.db-shm
+
+# Local env / editor / agent state
+**/.env
+**/.claude
+.DS_Store

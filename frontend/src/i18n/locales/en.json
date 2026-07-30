@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "Student Pay Tracker"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "enroll": "Enroll",
+    "report": "Monthly report"
+  },
+  "pages": {
+    "dashboard": "Dashboard",
+    "students": "Students",
+    "studentDetail": "Student detail",
+    "enroll": "Enroll student",
+    "report": "Monthly report"
+  },
+  "drift": {
+    "onTrack": "On track",
+    "late_one": "{{count}} day late",
+    "late_other": "{{count}} days late"
+  },
+  "overdue": {
+    "paidUp": "Paid up",
+    "monthsBehind_one": "{{count}} month behind",
+    "monthsBehind_other": "{{count}} months behind"
+  },
+  "status": {
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+  "students": {
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "fee": "Fee",
+      "drift": "Drift",
+      "overdue": "Overdue"
+    },
+    "filterLabel": "Status",
+    "filterAll": "All",
+    "empty": "No students found."
+  },
+  "dashboard": {
+    "collectedThisMonth": "Collected this month",
+    "totalOutstanding": "Total outstanding",
+    "topLatecomers": "Top latecomers",
+    "asOf": "As of {{date}}",
+    "empty": "No latecomers — everyone's on track."
+  },
+  "report": {
+    "monthLabel": "Month",
+    "yearLabel": "Year",
+    "downloadPdf": "Download PDF",
+    "pdfFilename": "monthly-report-{{year}}-{{month}}",
+    "asOf": "As of {{date}}",
+    "totalCollected": "Total collected",
+    "totalOutstanding": "Total outstanding",
+    "empty": "No students for this month.",
+    "columns": {
+      "name": "Name",
+      "status": "Status",
+      "fee": "Fee",
+      "collected": "Collected",
+      "drift": "Drift",
+      "outstanding": "Outstanding"
+    }
+  },
+  "enroll": {
+    "fields": {
+      "name": "Name",
+      "joinDate": "Join date",
+      "fee": "Monthly fee",
+      "phone": "Phone (optional)"
+    },
+    "joinDateHint": "This anchors the billing cycles and can't be changed later.",
+    "submit": "Enroll student",
+    "validation": {
+      "nameRequired": "Name is required.",
+      "feeInvalid": "Enter a fee of 0 or more."
+    }
+  },
+  "detail": {
+    "back": "Back to students",
+    "downloadPdf": "Download ledger PDF",
+    "pdfFilename": "ledger-student-{{id}}",
+    "actions": {
+      "recordPayment": "Record payment",
+      "addOverride": "Add override",
+      "edit": "Edit details"
+    },
+    "fields": {
+      "status": "Status",
+      "fee": "Monthly fee",
+      "joinDate": "Join date",
+      "drift": "Drift",
+      "overdue": "Overdue",
+      "nextExpected": "Next expected",
+      "paymentsCount": "Payments",
+      "totalPaid": "Total paid",
+      "phone": "Phone"
+    }
+  },
+  "ledger": {
+    "title": "Ledger",
+    "columns": {
+      "cycle": "Cycle",
+      "due": "Due date",
+      "paid": "Paid date",
+      "status": "Status",
+      "amount": "Amount",
+      "drift": "Drift"
+    },
+    "status": {
+      "unpaid": "Unpaid",
+      "onTime": "On time"
+    }
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "fr": "Français"
+  },
+  "theme": {
+    "switchTo": {
+      "light": "Switch to light mode",
+      "dark": "Switch to dark mode"
+    }
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong",
+    "empty": "Nothing to show yet",
+    "retry": "Retry",
+    "cancel": "Cancel",
+    "save": "Save"
+  },
+  "payment": {
+    "title": "Record payment",
+    "fields": {
+      "forMonth": "For month",
+      "paidDate": "Paid date",
+      "amount": "Amount"
+    },
+    "validation": {
+      "monthRequired": "Choose the month this payment settles.",
+      "paidDateRequired": "Paid date is required.",
+      "amountInvalid": "Enter an amount greater than 0."
+    }
+  },
+  "override": {
+    "title": "Add override",
+    "fields": {
+      "newDueDate": "New due date",
+      "reason": "Reason"
+    },
+    "validation": {
+      "newDueDateRequired": "New due date is required.",
+      "reasonRequired": "A reason is required."
+    }
+  },
+  "edit": {
+    "title": "Edit details",
+    "fields": {
+      "phone": "Phone",
+      "fee": "Monthly fee",
+      "status": "Status"
+    },
+    "validation": {
+      "feeInvalid": "Enter a fee of 0 or more."
+    }
+  },
+  "notFound": {
+    "title": "Page not found",
+    "home": "Back to dashboard"
+  },
+  "errors": {
+    "generic": "Something went wrong. Please try again."
+  }
+}

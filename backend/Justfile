@@ -1,0 +1,18 @@
+test:
+    uv run pytest
+
+lint:
+    uv run ruff check .
+    uv run mypy app
+
+run:
+    uv run fastapi dev app/main.py
+
+migrate:
+    uv run alembic upgrade head
+
+backup:
+    uv run tracker db backup
+
+docker-up:
+    docker compose up --build

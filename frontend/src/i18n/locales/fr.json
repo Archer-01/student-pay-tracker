@@ -1,0 +1,180 @@
+{
+  "app": {
+    "title": "Suivi des paiements des élèves"
+  },
+  "nav": {
+    "dashboard": "Tableau de bord",
+    "students": "Élèves",
+    "enroll": "Inscrire",
+    "report": "Rapport mensuel"
+  },
+  "pages": {
+    "dashboard": "Tableau de bord",
+    "students": "Élèves",
+    "studentDetail": "Fiche de l'élève",
+    "enroll": "Inscrire un élève",
+    "report": "Rapport mensuel"
+  },
+  "drift": {
+    "onTrack": "À jour",
+    "late_one": "{{count}} jour de retard",
+    "late_other": "{{count}} jours de retard"
+  },
+  "overdue": {
+    "paidUp": "Réglé",
+    "monthsBehind_one": "{{count}} mois de retard",
+    "monthsBehind_other": "{{count}} mois de retard"
+  },
+  "status": {
+    "active": "Actif",
+    "inactive": "Inactif"
+  },
+  "students": {
+    "columns": {
+      "name": "Nom",
+      "status": "Statut",
+      "fee": "Frais",
+      "drift": "Retard",
+      "overdue": "Impayés"
+    },
+    "filterLabel": "Statut",
+    "filterAll": "Tous",
+    "empty": "Aucun élève trouvé."
+  },
+  "dashboard": {
+    "collectedThisMonth": "Encaissé ce mois-ci",
+    "totalOutstanding": "Total impayé",
+    "topLatecomers": "Principaux retardataires",
+    "asOf": "Au {{date}}",
+    "empty": "Aucun retardataire — tout le monde est à jour."
+  },
+  "report": {
+    "monthLabel": "Mois",
+    "yearLabel": "Année",
+    "downloadPdf": "Télécharger le PDF",
+    "pdfFilename": "rapport-mensuel-{{year}}-{{month}}",
+    "asOf": "Au {{date}}",
+    "totalCollected": "Total encaissé",
+    "totalOutstanding": "Total impayé",
+    "empty": "Aucun élève pour ce mois.",
+    "columns": {
+      "name": "Nom",
+      "status": "Statut",
+      "fee": "Frais",
+      "collected": "Encaissé",
+      "drift": "Retard",
+      "outstanding": "Impayé"
+    }
+  },
+  "enroll": {
+    "fields": {
+      "name": "Nom",
+      "joinDate": "Date d'inscription",
+      "fee": "Frais mensuels",
+      "phone": "Téléphone (facultatif)"
+    },
+    "joinDateHint": "Elle fixe les cycles de facturation et ne peut plus être modifiée ensuite.",
+    "submit": "Inscrire l'élève",
+    "validation": {
+      "nameRequired": "Le nom est obligatoire.",
+      "feeInvalid": "Saisissez des frais supérieurs ou égaux à 0."
+    }
+  },
+  "detail": {
+    "back": "Retour aux élèves",
+    "downloadPdf": "Télécharger l'historique (PDF)",
+    "pdfFilename": "historique-eleve-{{id}}",
+    "actions": {
+      "recordPayment": "Enregistrer un paiement",
+      "addOverride": "Ajouter un ajustement",
+      "edit": "Modifier la fiche"
+    },
+    "fields": {
+      "status": "Statut",
+      "fee": "Frais mensuels",
+      "joinDate": "Date d'inscription",
+      "drift": "Retard",
+      "overdue": "Impayés",
+      "nextExpected": "Prochaine échéance",
+      "paymentsCount": "Paiements",
+      "totalPaid": "Total payé",
+      "phone": "Téléphone"
+    }
+  },
+  "ledger": {
+    "title": "Historique",
+    "columns": {
+      "cycle": "Cycle",
+      "due": "Échéance",
+      "paid": "Date de paiement",
+      "status": "Statut",
+      "amount": "Montant",
+      "drift": "Retard"
+    },
+    "status": {
+      "unpaid": "Impayé",
+      "onTime": "À temps"
+    }
+  },
+  "language": {
+    "label": "Langue",
+    "en": "English",
+    "fr": "Français"
+  },
+  "theme": {
+    "switchTo": {
+      "light": "Passer en mode clair",
+      "dark": "Passer en mode sombre"
+    }
+  },
+  "common": {
+    "loading": "Chargement…",
+    "error": "Une erreur est survenue",
+    "empty": "Rien à afficher pour le moment",
+    "retry": "Réessayer",
+    "cancel": "Annuler",
+    "save": "Enregistrer"
+  },
+  "payment": {
+    "title": "Enregistrer un paiement",
+    "fields": {
+      "forMonth": "Mois concerné",
+      "paidDate": "Date de paiement",
+      "amount": "Montant"
+    },
+    "validation": {
+      "monthRequired": "Choisissez le mois réglé par ce paiement.",
+      "paidDateRequired": "La date de paiement est obligatoire.",
+      "amountInvalid": "Saisissez un montant supérieur à 0."
+    }
+  },
+  "override": {
+    "title": "Ajouter un ajustement",
+    "fields": {
+      "newDueDate": "Nouvelle échéance",
+      "reason": "Motif"
+    },
+    "validation": {
+      "newDueDateRequired": "La nouvelle échéance est obligatoire.",
+      "reasonRequired": "Un motif est obligatoire."
+    }
+  },
+  "edit": {
+    "title": "Modifier la fiche",
+    "fields": {
+      "phone": "Téléphone",
+      "fee": "Frais mensuels",
+      "status": "Statut"
+    },
+    "validation": {
+      "feeInvalid": "Saisissez des frais supérieurs ou égaux à 0."
+    }
+  },
+  "notFound": {
+    "title": "Page introuvable",
+    "home": "Retour au tableau de bord"
+  },
+  "errors": {
+    "generic": "Une erreur est survenue. Veuillez réessayer."
+  }
+}

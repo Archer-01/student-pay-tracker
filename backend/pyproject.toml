@@ -1,0 +1,62 @@
+[project]
+name = "student-pay-tracker-backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.18.5",
+    "fastapi[standard]>=0.139.2",
+    "pydantic-settings>=2.14.2",
+    "reportlab>=5.0.0",
+    "sqlalchemy>=2.0.51",
+    "typer>=0.15.0",
+]
+
+[project.scripts]
+tracker = "app.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.28.1",
+    "hypothesis>=6.157.1",
+    "mypy>=2.3.0",
+    "pre-commit>=4.6.0",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "ruff>=0.15.22",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+# Alembic migrations are generated code; don't lint/format them.
+extend-exclude = ["alembic/versions"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.per-file-ignores]
+# typer and FastAPI both put Option/Argument/Depends/Query calls in parameter defaults by design.
+"app/cli.py" = ["B008"]
+"app/api/*.py" = ["B008"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "app.services.*"
+strict = true
+
+[[tool.mypy.overrides]]
+module = ["app.models.*", "app.schemas.*", "app.api.*", "app.core.*", "app.repos.*", "app.cli"]
+disallow_untyped_defs = false
