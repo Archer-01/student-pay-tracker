@@ -25,9 +25,10 @@ app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 
 # --- Serve the built frontend (single-origin: no CORS) ------------------------
-# The Dockerfile copies the Vite build output here (app/main.py -> parent.parent == repo root == /app in
-# the image, so this resolves to /app/static). When absent (e.g. a pure-API run), this block is skipped
-# and only the API is served. Registered LAST so it never shadows the API / docs routes above.
+# The Dockerfile copies the Vite build output here (app/main.py -> parent.parent == repo root ==
+# /app in the image, so this resolves to /app/static). When absent (e.g. a pure-API run), this
+# block is skipped and only the API is served. Registered LAST so it never shadows the API / docs
+# routes above.
 FRONTEND_DIR = Path(__file__).resolve().parent.parent / "static"
 
 if FRONTEND_DIR.is_dir():
@@ -37,9 +38,10 @@ if FRONTEND_DIR.is_dir():
 
     @app.get("/{full_path:path}", include_in_schema=False)
     async def serve_spa(full_path: str) -> FileResponse:
-        """SPA fallback: serve a real static file if it exists, else index.html (so a hard refresh on a
-        client-side route like /students returns the app, not a 404). API/docs paths are matched above;
-        guard here so an unknown /api or /health GET returns 404 rather than the SPA shell."""
+        """SPA fallback: serve a real static file if it exists, else index.html (so a hard refresh
+        on a client-side route like /students returns the app, not a 404). API/docs paths are
+        matched above; guard here so an unknown /api or /health GET returns 404 rather than the
+        SPA shell."""
         if full_path.startswith("api/") or full_path in {"health", "docs", "redoc", "openapi.json"}:
             raise HTTPException(status_code=404)
         candidate = FRONTEND_DIR / full_path
