@@ -83,3 +83,40 @@ def test_change_status(db_session: Session) -> None:
     student = _enroll(svc)
     svc.change_status(student.id, StudentStatus.INACTIVE)
     assert svc.get(student.id).status is StudentStatus.INACTIVE
+
+
+def test_delete_removes_student(db_session: Session) -> None:
+    svc = StudentService(db_session)
+    student = _enroll(svc)
+    svc.delete(student.id)
+    with pytest.raises(StudentNotFoundError):
+        svc.get(student.id)
+
+
+def test_delete_missing_raises(db_session: Session) -> None:
+    with pytest.raises(StudentNotFoundError):
+        StudentService(db_session).delete(999)
+
+
+def test_delete_cascades_to_payments_and_overrides(db_session: Session) -> None:
+    # The payment/override FKs are ON DELETE RESTRICT; deletion must still succeed by
+    # removing the child rows first, not error out on the constraint.
+    from datetime import date
+
+    from app.repos import OverrideRepo, PaymentRepo
+    from app.services.override_service import OverrideService
+    from app.services.payment_service import PaymentService
+
+    svc = StudentService(db_session)
+    student = _enroll(svc)
+    PaymentService(db_session).record_payment(
+        student_id=student.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
+    )
+    OverrideService(db_session).create_override(
+        student_id=student.id, new_due_date=date(2023, 7, 20), reason="agreed shift"
+    )
+
+    svc.delete(student.id)
+
+    assert PaymentRepo(db_session).list_for_student(student.id) == []
+    assert OverrideRepo(db_session).list_for_student(student.id) == []

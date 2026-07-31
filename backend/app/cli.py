@@ -186,6 +186,26 @@ def students_show(
         console.print(f"Cumulative drift: [bold]{total}[/bold]")
 
 
+@students_app.command("delete")
+def students_delete(
+    student_id: int = typer.Argument(...),
+    yes: bool = typer.Option(False, "--yes", help="Skip the confirmation prompt."),
+) -> None:
+    """Delete a student and cascade to their payments and overrides (irreversible)."""
+    if not yes:
+        typer.confirm(
+            f"This will permanently delete student {student_id} and all their "
+            "payments and overrides. Continue?",
+            abort=True,
+        )
+    with _session() as session:
+        try:
+            StudentService(session).delete(student_id)
+        except DomainError as exc:
+            _abort(_render_error(exc))
+        console.print(f"Deleted student [bold]{student_id}[/bold].")
+
+
 # --------------------------------------------------------------------------- #
 # payments
 # --------------------------------------------------------------------------- #

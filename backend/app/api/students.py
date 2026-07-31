@@ -180,6 +180,13 @@ async def update_student(
     return StudentOut.model_validate(student)
 
 
+@router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_student(student_id: int, db: Session = Depends(get_db)) -> Response:
+    """Hard-delete a student and cascade to their payments and overrides (admin/dev only)."""
+    StudentService(db).delete(student_id)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
 @router.post(
     "/{student_id}/payments",
     response_model=PaymentOut,

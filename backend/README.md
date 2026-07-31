@@ -100,9 +100,11 @@ repositories. All date arithmetic stays in `app/services` — models and repos h
   `CHECK cycle_number >= 0`.
 - **`anchor_override`** — audit-log rows: `student_id`, `new_due_date`, `reason`
   (`CHECK length(trim(reason)) > 0`), `created_at`.
-- Foreign keys use `ON DELETE RESTRICT`: a student with payments or overrides cannot be deleted
-  (protects the history/evidence use case). `PRAGMA foreign_keys=ON` is set on every connection so
-  this is actually enforced.
+- Foreign keys use `ON DELETE RESTRICT` (`PRAGMA foreign_keys=ON` on every connection, so it's
+  actually enforced): the database never silently orphans or cascade-deletes payment/override history.
+  The admin **delete-student** operation (`StudentService.delete`, CLI + API — never exposed in the
+  frontend) removes those child rows explicitly in the service layer first, so a student *with*
+  history can be deleted, but only through that intentional cascade, not by accident.
 
 **Access** — `app/core/db.py` (declarative `Base`, lazily-built engine, session factory, `get_db`)
 and thin repos in `app/repos/` (`StudentRepo`, `PaymentRepo`, `OverrideRepo`): create / get / list /
@@ -136,7 +138,8 @@ override (July moves from the 5th to the 20th, no double charge). Multiple overr
 collapse to the last.
 
 **Services**
-- `StudentService` — `enroll`, `get`, `list(status=…)`, `update_contact_fee`, `change_status`.
+- `StudentService` — `enroll`, `get`, `list(status=…)`, `update_contact_fee`, `change_status`,
+  `delete` (hard-delete, cascading to the student's payments and overrides — admin/dev only).
   There is deliberately **no way to change `join_date`** (the drift anchor is immutable).
 - `PaymentService.record_payment(student_id, cycle_number, paid_date, amount)` — computes the cycle's
   override-aware `expected_due_date` and `days_late` and **freezes** them on the row. Recording a
@@ -169,6 +172,7 @@ API will use — so CLI and API results match.
 tracker students add --name "Amina" --join-date 2023-03-05 --fee 300 [--phone …] [--status active]
 tracker students list [--sort-by-drift] [--status active] [--as-of YYYY-MM-DD]
 tracker students show <id> [--as-of YYYY-MM-DD]        # full ledger + cumulative drift
+tracker students delete <id> [--yes]                   # cascades to payments/overrides; prompts unless --yes
 tracker payments record <id> --date YYYY-MM-DD --amount 300 (--for-month YYYY-MM | --cycle N)
 tracker overrides create <id> --new-date YYYY-MM-DD --reason "agreed shift"
 tracker db reset --yes                                  # dev only; needs ALLOW_DB_RESET=1
@@ -232,6 +236,7 @@ The write endpoints.
 |---|---|---|
 | `POST /api/v1/students` | name, join_date, fee (≥0), phone?, status? | → **201** |
 | `PATCH /api/v1/students/{id}` | phone?, fee?, status? | → **200**; sending `join_date` (or any unknown field) → **422** |
+| `DELETE /api/v1/students/{id}` | — | → **204**; cascades to the student's payments/overrides (admin/dev; not exposed in the frontend) |
 | `POST /api/v1/students/{id}/payments` | paid_date, amount (>0), and **exactly one** of `cycle_number` / `for_month` | → **201**; duplicate cycle → **409** |
 | `POST /api/v1/students/{id}/overrides` | new_due_date, reason | → **201** |
 

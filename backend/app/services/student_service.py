@@ -10,7 +10,7 @@ from typing import Final
 from sqlalchemy.orm import Session
 
 from app.models import Student, StudentStatus
-from app.repos import StudentRepo
+from app.repos import OverrideRepo, PaymentRepo, StudentRepo
 from app.services.exceptions import StudentNotFoundError
 
 
@@ -25,6 +25,8 @@ class StudentService:
     def __init__(self, session: Session) -> None:
         self.session = session
         self.students = StudentRepo(session)
+        self.payments = PaymentRepo(session)
+        self.overrides = OverrideRepo(session)
 
     def enroll(
         self,
@@ -60,6 +62,23 @@ class StudentService:
             student.fee = fee
         self.session.commit()
         return student
+
+    def delete(self, student_id: int) -> None:
+        """Hard-delete a student and cascade to their payments and overrides.
+
+        An admin/dev operation (CLI + API), never exposed in the frontend. Deletion is a
+        cascade rather than a refusal: the payment/override FKs are ``ON DELETE RESTRICT``, so
+        we remove the child rows explicitly first, keeping this decision in the service layer
+        instead of relying on database FK behaviour. This destroys financial/audit history —
+        callers are expected to confirm before invoking it.
+        """
+        student = self.get(student_id)
+        for payment in self.payments.list_for_student(student_id):
+            self.payments.delete(payment)
+        for override in self.overrides.list_for_student(student_id):
+            self.overrides.delete(override)
+        self.students.delete(student)
+        self.session.commit()
 
     def change_status(self, student_id: int, status: StudentStatus) -> Student:
         student = self.get(student_id)

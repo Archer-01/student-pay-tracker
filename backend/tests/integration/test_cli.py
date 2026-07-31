@@ -46,6 +46,38 @@ def test_students_add_and_show(cli_db: str) -> None:
     assert "Amina" in show.output
 
 
+def test_students_delete(cli_db: str) -> None:
+    _add_student()
+    result = runner.invoke(app, ["students", "delete", "1", "--yes"])
+    assert result.exit_code == 0, result.output
+    assert runner.invoke(app, ["students", "show", "1"]).exit_code != 0
+
+
+def test_students_delete_requires_confirmation(cli_db: str) -> None:
+    _add_student()
+    # Decline the confirmation prompt -> aborts, student survives.
+    result = runner.invoke(app, ["students", "delete", "1"], input="n\n")
+    assert result.exit_code != 0
+    assert runner.invoke(app, ["students", "show", "1"]).exit_code == 0
+
+
+def test_students_delete_cascades(cli_db: str) -> None:
+    _add_student()
+    paid = runner.invoke(
+        app, ["payments", "record", "1", "--date", "2023-04-10", "--amount", "300", "--cycle", "1"]
+    )
+    assert paid.exit_code == 0, paid.output
+    result = runner.invoke(app, ["students", "delete", "1", "--yes"])
+    assert result.exit_code == 0, result.output
+    assert runner.invoke(app, ["students", "show", "1"]).exit_code != 0
+
+
+def test_students_delete_unknown_errors(cli_db: str) -> None:
+    result = runner.invoke(app, ["students", "delete", "999", "--yes"])
+    assert result.exit_code != 0
+    assert "999" in result.output
+
+
 def test_end_to_end_drift_15(cli_db: str) -> None:
     # The headline test: enroll, record three late payments, drift shows as 15 via the CLI.
     _add_student()
