@@ -6,6 +6,7 @@ import { downloadFile } from "../api/client";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
 import { formatDate } from "../lib/dates";
+import { slugify } from "../lib/slug";
 import { resolveErrorMessage } from "../lib/errors";
 import { DriftBadge } from "../components/DriftBadge";
 import { OverdueBadge } from "../components/OverdueBadge";
@@ -36,11 +37,12 @@ export function StudentDetail() {
     state.reload();
   };
 
-  async function handleDownload() {
+  async function handleDownload(name: string) {
     setDownloadError(null);
     try {
-      const filename = `${t("detail.pdfFilename", { id: studentId })}.pdf`;
-      await downloadFile(`/students/${studentId}/ledger.pdf`, filename);
+      const slug = slugify(name);
+      const stem = t("detail.pdfFilename", { id: studentId, name: slug ? `-${slug}` : "" });
+      await downloadFile(`/students/${studentId}/ledger.pdf`, `${stem}.pdf`);
     } catch (err) {
       setDownloadError(resolveErrorMessage(err, t));
     }
@@ -70,7 +72,7 @@ export function StudentDetail() {
                     <Button variant="secondary" onClick={() => setOpenModal("edit")}>
                       {t("detail.actions.edit")}
                     </Button>
-                    <Button variant="ghost" onClick={handleDownload}>
+                    <Button variant="ghost" onClick={() => handleDownload(detail.name)}>
                       {t("detail.downloadPdf")}
                     </Button>
                   </div>

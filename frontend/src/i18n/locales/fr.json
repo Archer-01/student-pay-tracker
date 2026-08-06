@@ -83,7 +83,7 @@
   "detail": {
     "back": "Retour aux élèves",
     "downloadPdf": "Télécharger l'historique (PDF)",
-    "pdfFilename": "historique-eleve-{{id}}",
+    "pdfFilename": "historique-eleve-{{id}}{{name}}",
     "actions": {
       "recordPayment": "Enregistrer un paiement",
       "addOverride": "Ajouter un ajustement",

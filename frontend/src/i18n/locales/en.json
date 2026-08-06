@@ -83,7 +83,7 @@
   "detail": {
     "back": "Back to students",
     "downloadPdf": "Download ledger PDF",
-    "pdfFilename": "ledger-student-{{id}}",
+    "pdfFilename": "ledger-student-{{id}}{{name}}",
     "actions": {
       "recordPayment": "Record payment",
       "addOverride": "Add override",
