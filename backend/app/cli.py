@@ -299,6 +299,29 @@ def db_reset(
     console.print(f"Database reset to a clean migrated state ({settings.database_url}).")
 
 
+@db_app.command("seed")
+def db_seed(
+    force: bool = typer.Option(
+        False, "--force", help="Seed even if the database already has students."
+    ),
+) -> None:
+    """Populate the database with deterministic dummy data (dev only)."""
+    from app.core.seed import seed_dummy_data
+
+    with _session() as session:
+        existing = StudentService(session).list()
+        if existing and not force:
+            _abort(
+                f"Database already has {len(existing)} student(s); pass --force to seed anyway."
+            )
+        summary = seed_dummy_data(session)
+    console.print(
+        f"Seeded [bold]{summary.students}[/bold] students, "
+        f"[bold]{summary.payments}[/bold] payments, "
+        f"[bold]{summary.overrides}[/bold] overrides."
+    )
+
+
 @db_app.command("backup")
 def db_backup(
     to: Path = typer.Option(Path("backups"), "--to", help="Destination directory."),

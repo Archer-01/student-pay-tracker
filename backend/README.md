@@ -176,7 +176,13 @@ tracker students delete <id> [--yes]                   # cascades to payments/ov
 tracker payments record <id> --date YYYY-MM-DD --amount 300 (--for-month YYYY-MM | --cycle N)
 tracker overrides create <id> --new-date YYYY-MM-DD --reason "agreed shift"
 tracker db reset --yes                                  # dev only; needs ALLOW_DB_RESET=1
+tracker db seed [--force]                               # dev only; loads deterministic dummy data
 ```
+
+`tracker db seed` populates a fixed, realistic dev dataset (6 students — on-time payers, a chronic
+late payer, an unpaid-cycle gap, one anchor override, an inactive student, and one with no phone).
+It's deterministic (reproducible) and defined in `app/core/seed.py`; it refuses to run on a
+non-empty database unless you pass `--force`.
 
 - **Recording a payment always names the month it settles** — either `--for-month 2024-04` (resolved
   to the right cycle, override-aware) or `--cycle N` (the index shown by `students show`). Exactly one

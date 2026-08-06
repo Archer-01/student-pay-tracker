@@ -186,6 +186,22 @@ def test_list_sort_by_drift(cli_db: str) -> None:
     assert result.output.index("Late") < result.output.index("OnTime")
 
 
+def test_db_seed_populates_data(cli_db: str) -> None:
+    result = runner.invoke(app, ["db", "seed"])
+    assert result.exit_code == 0, result.output
+    listed = runner.invoke(app, ["students", "list"])
+    assert "Amina Benali" in listed.output
+
+
+def test_db_seed_refuses_when_not_empty_without_force(cli_db: str) -> None:
+    assert runner.invoke(app, ["db", "seed"]).exit_code == 0
+    again = runner.invoke(app, ["db", "seed"])
+    assert again.exit_code != 0
+    assert "--force" in again.output
+    # --force seeds a second time.
+    assert runner.invoke(app, ["db", "seed", "--force"]).exit_code == 0
+
+
 def test_db_reset_blocked_without_env(cli_db: str, monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("ALLOW_DB_RESET", raising=False)
     result = runner.invoke(app, ["db", "reset", "--yes"])
