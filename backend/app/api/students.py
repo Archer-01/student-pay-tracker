@@ -1,5 +1,7 @@
 """Read-only student endpoints."""
 
+import re
+import unicodedata
 from datetime import date
 from enum import StrEnum
 
@@ -10,7 +12,7 @@ from app.api.deps import get_locale
 from app.api.pdf_export import render_table_pdf
 from app.core.db import get_db
 from app.core.i18n import translate
-from app.models import StudentStatus
+from app.models import Student, StudentStatus
 from app.schemas.ledger import LedgerEntryOut, LedgerOut
 from app.schemas.override import OverrideCreate, OverrideOut
 from app.schemas.payment import PaymentCreate, PaymentOut
@@ -117,6 +119,30 @@ def _ledger_row_status(entry: LedgerEntry, locale: str) -> str:
     return translate("csv.ledger.status.on_time", locale)
 
 
+def _ledger_subtitle(student: Student, locale: str) -> str:
+    """The student's name, plus a localized phone line when a phone number is on file."""
+    if student.phone:
+        return f"{student.name}\n{translate('pdf.ledger.phone', locale, phone=student.phone)}"
+    return student.name
+
+
+def _slugify_name(name: str) -> str:
+    """An ASCII, filename-safe slug of a name (accents folded, non-alphanumerics hyphenated).
+
+    Returns "" for names that carry no ASCII letters/digits (e.g. Arabic script) — the caller
+    then falls back to an id-only filename rather than emitting an empty or non-ASCII one.
+    """
+    folded = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^a-zA-Z0-9]+", "-", folded).strip("-").lower()
+
+
+def _ledger_filename(student: Student) -> str:
+    """Download filename for a student's ledger PDF, including a slug of their name when usable."""
+    slug = _slugify_name(student.name)
+    stem = f"student-{student.id}-{slug}" if slug else f"student-{student.id}"
+    return f"{stem}-ledger.pdf"
+
+
 def _ledger_export(entries: list[LedgerEntry], locale: str) -> tuple[list[str], list[list[str]]]:
     """Localized (header, rows) for the ledger export — cells are strings, ready to render."""
     header = [
@@ -154,10 +180,14 @@ async def get_ledger_pdf(
     locale: str = Depends(get_locale),
 ) -> Response:
     as_of_date = as_of or date.today()
-    entries = LedgerService(db).get_ledger(student_id, as_of_date)  # 404 if unknown
+    student = StudentService(db).get(student_id)  # 404 if unknown
+    entries = LedgerService(db).get_ledger(student_id, as_of_date)
     header, rows = _ledger_export(entries, locale)
     title = translate("pdf.ledger.title", locale)
-    return render_table_pdf(title, header, rows, f"student-{student_id}-ledger.pdf")
+    subtitle = _ledger_subtitle(student, locale)
+    return render_table_pdf(
+        title, header, rows, _ledger_filename(student), subtitle=subtitle
+    )
 
 
 @router.post("", response_model=StudentOut, status_code=status.HTTP_201_CREATED)

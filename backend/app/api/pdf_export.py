@@ -6,13 +6,14 @@ names are not shaped/rendered — a known limitation; the CSV path previously re
 
 import io
 from collections.abc import Iterable, Sequence
+from xml.sax.saxutils import escape
 
 from fastapi import Response
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Flowable, SimpleDocTemplate, Spacer, Table, TableStyle
 from reportlab.platypus.paragraph import Paragraph
 
 _HEADER_BG = colors.HexColor("#334155")  # slate-700
@@ -20,9 +21,17 @@ _GRID = colors.HexColor("#cbd5e1")  # slate-300
 
 
 def render_table_pdf(
-    title: str, header: Sequence[str], rows: Iterable[Sequence[str]], filename: str
+    title: str,
+    header: Sequence[str],
+    rows: Iterable[Sequence[str]],
+    filename: str,
+    subtitle: str | None = None,
 ) -> Response:
-    """Render a titled table to a PDF and return it as an attachment Response."""
+    """Render a titled table to a PDF and return it as an attachment Response.
+
+    ``subtitle`` (plain text; newlines become line breaks) renders under the title — used to
+    carry the student's name and phone on ledger exports.
+    """
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -55,7 +64,12 @@ def render_table_pdf(
         )
     )
 
-    doc.build([Paragraph(title, styles["Title"]), Spacer(1, 8 * mm), table])
+    story: list[Flowable] = [Paragraph(escape(title), styles["Title"])]
+    if subtitle:
+        safe_subtitle = escape(subtitle).replace("\n", "<br/>")
+        story.append(Paragraph(safe_subtitle, styles["Heading2"]))
+    story += [Spacer(1, 8 * mm), table]
+    doc.build(story)
 
     return Response(
         content=buffer.getvalue(),

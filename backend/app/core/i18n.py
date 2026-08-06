@@ -60,6 +60,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     "csv.monthly.outstanding": {"en": "Outstanding", "fr": "Solde dû"},
     # --- PDF export titles (the csv.* header/status keys above are reused for the table cells) ---
     "pdf.ledger.title": {"en": "Payment ledger", "fr": "Historique des paiements"},
+    "pdf.ledger.phone": {"en": "Phone: {phone}", "fr": "Téléphone : {phone}"},
     "pdf.monthly.title": {
         "en": "Monthly report — {month:02d}/{year}",
         "fr": "Rapport mensuel — {month:02d}/{year}",

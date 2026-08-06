@@ -7,9 +7,11 @@ on strings here, since the rendered PDF's byte stream isn't greppable for the te
 from datetime import date
 from decimal import Decimal
 
+import pytest
+
 from app.api.reports import _monthly_export
-from app.api.students import _ledger_export
-from app.models import StudentStatus
+from app.api.students import _ledger_export, _ledger_filename, _ledger_subtitle, _slugify_name
+from app.models import Student, StudentStatus
 from app.services.ledger_service import LedgerEntry
 from app.services.reports_service import MonthlyReport, MonthlyReportRow
 
@@ -65,6 +67,44 @@ def test_ledger_export_french() -> None:
     ]
     assert rows[0][-1] == "Impayé"
     assert rows[1][-1] == "En retard de 5 jours"
+
+
+def test_ledger_subtitle_name_and_phone() -> None:
+    student = Student(name="Amïra", phone="+212600112233")
+    assert _ledger_subtitle(student, "en") == "Amïra\nPhone: +212600112233"
+
+
+def test_ledger_subtitle_name_only_when_no_phone() -> None:
+    assert _ledger_subtitle(Student(name="Bilal", phone=None), "en") == "Bilal"
+
+
+def test_ledger_subtitle_localizes_phone_label() -> None:
+    student = Student(name="Youssef", phone="+212600112233")
+    assert _ledger_subtitle(student, "fr") == "Youssef\nTéléphone : +212600112233"
+
+
+@pytest.mark.parametrize(
+    ("name", "expected"),
+    [
+        ("Amina Benali", "amina-benali"),
+        ("Amïra", "amira"),  # accents folded to ASCII
+        ("  Omar   Tazi  ", "omar-tazi"),  # collapsed whitespace, trimmed
+        ("Jean-Luc O'Neil", "jean-luc-o-neil"),  # punctuation to hyphens
+        ("محمد", ""),  # no ASCII letters -> empty slug
+    ],
+)
+def test_slugify_name(name: str, expected: str) -> None:
+    assert _slugify_name(name) == expected
+
+
+def test_ledger_filename_includes_name_slug() -> None:
+    student = Student(id=7, name="Amina Benali", phone=None)
+    assert _ledger_filename(student) == "student-7-amina-benali-ledger.pdf"
+
+
+def test_ledger_filename_falls_back_to_id_only_for_unsluggable_name() -> None:
+    student = Student(id=7, name="محمد", phone=None)
+    assert _ledger_filename(student) == "student-7-ledger.pdf"
 
 
 def _report(name: str = "Amïra") -> MonthlyReport:

@@ -269,7 +269,7 @@ Reporting endpoints under `/api/v1`, for the "evidence" use case.
 |---|---|
 | `GET /api/v1/reports/monthly?year=&month=` | JSON: total collected, total outstanding, a row per active student |
 | `GET /api/v1/reports/monthly.pdf?year=&month=` | The same, as a downloadable PDF |
-| `GET /api/v1/students/{id}/ledger.pdf` | A student's full ledger as PDF, with a human status column |
+| `GET /api/v1/students/{id}/ledger.pdf` | A student's full ledger as PDF, headed by their name (and phone, when on file) and a human status column |
 
 - **Monthly report** lists active students only; `collected` counts payments by paid-date in that
   month, `outstanding` = unpaid cycles due by month-end × fee, `drift` is as of month-end. Totals are
