@@ -16,7 +16,12 @@ from app.services.student_service import StudentService
 def _enroll(db_session: Session, name: str = "Amïra") -> int:
     return (
         StudentService(db_session)
-        .enroll(name=name, phone=None, join_date=date(2023, 3, 5), fee=Decimal("300"))
+        .enroll(
+            first_name=name,
+            phone=None,
+            join_date=date(2023, 3, 5),
+            custom_price=Decimal("300"),
+        )
         .id
     )
 

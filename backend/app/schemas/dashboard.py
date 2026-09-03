@@ -20,4 +20,6 @@ class DashboardSummaryOut(BaseModel):
     as_of: date
     total_collected_this_month: Decimal
     total_outstanding: Decimal
+    leavers_with_debt: int
+    owed_by_leavers: Decimal
     top_latecomers: list[LatecomerOut]

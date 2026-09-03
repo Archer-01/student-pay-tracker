@@ -20,6 +20,10 @@ htmlcov/
 # Environment variables
 .env
 
-# SQLite databases
+# SQLite databases, their WAL/shared-memory siblings (which *.db does not match), and the
+# timestamped snapshots `tracker db backup` writes.
 *.db
+*.db-wal
+*.db-shm
 *.sqlite3
+backups/

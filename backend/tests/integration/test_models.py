@@ -16,10 +16,9 @@ from app.models import AnchorOverride, Payment, Student, StudentStatus
 
 def _student(session: Session, **overrides: object) -> Student:
     defaults: dict[str, object] = {
-        "name": "Amina",
+        "first_name": "Amina",
         "phone": "+212600000000",
         "join_date": date(2023, 3, 5),
-        "fee": Decimal("300.00"),
     }
     defaults.update(overrides)
     student = Student(**defaults)
@@ -57,26 +56,26 @@ def test_student_can_be_created_with_defaults(db_session: Session) -> None:
 
 
 def test_student_name_is_not_null(db_session: Session) -> None:
-    db_session.add(Student(join_date=date(2023, 3, 5), fee=Decimal("300.00")))
+    db_session.add(Student(join_date=date(2023, 3, 5), custom_price=Decimal("300.00")))
     with pytest.raises(IntegrityError):
         db_session.flush()
 
 
 def test_student_join_date_is_not_null(db_session: Session) -> None:
-    db_session.add(Student(name="Amina", fee=Decimal("300.00")))
+    db_session.add(Student(first_name="Amina", custom_price=Decimal("300.00")))
     with pytest.raises(IntegrityError):
         db_session.flush()
 
 
-def test_student_fee_may_be_zero_for_free_students(db_session: Session) -> None:
-    # Free / scholarship students are real; fee >= 0 (not > 0).
-    student = _student(db_session, fee=Decimal("0.00"))
-    assert student.fee == Decimal("0.00")
+def test_student_custom_price_may_be_zero_for_free_students(db_session: Session) -> None:
+    # Free / scholarship students are real; an agreed price may be 0 (>= 0, not > 0).
+    student = _student(db_session, custom_price=Decimal("0.00"))
+    assert student.custom_price == Decimal("0.00")
 
 
-def test_student_fee_cannot_be_negative(db_session: Session) -> None:
+def test_student_custom_price_cannot_be_negative(db_session: Session) -> None:
     with pytest.raises(IntegrityError):
-        _student(db_session, fee=Decimal("-1.00"))
+        _student(db_session, custom_price=Decimal("-1.00"))
 
 
 # --------------------------------------------------------------------------- #

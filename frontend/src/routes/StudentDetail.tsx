@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { getLedger, getStudent } from "../api/endpoints";
+import { getLedger, getStudent, listPeriods } from "../api/endpoints";
 import { downloadFile } from "../api/client";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
 import { formatDate } from "../lib/dates";
+import { classLabel } from "../lib/classes";
 import { slugify } from "../lib/slug";
 import { resolveErrorMessage } from "../lib/errors";
 import { DriftBadge } from "../components/DriftBadge";
@@ -13,10 +14,11 @@ import { OverdueBadge } from "../components/OverdueBadge";
 import { RecordPaymentForm } from "../components/students/RecordPaymentForm";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
+import { AttendanceForm } from "../components/students/AttendanceForm";
 import type { LedgerEntry } from "../api/types";
 import { AsyncView, Button, Card, Modal, PageHeader, Table, TBody, THead, Th, Td, Tr } from "../components/ui";
 
-type OpenModal = null | "payment" | "override" | "edit";
+type OpenModal = null | "payment" | "override" | "edit" | "leave" | "return";
 
 export function StudentDetail() {
   const { t } = useTranslation();
@@ -24,7 +26,7 @@ export function StudentDetail() {
   const studentId = Number(id);
 
   const state = useApi(
-    () => Promise.all([getStudent(studentId), getLedger(studentId)]),
+    () => Promise.all([getStudent(studentId), getLedger(studentId), listPeriods(studentId)]),
     [studentId],
   );
 
@@ -58,10 +60,10 @@ export function StudentDetail() {
       </Link>
 
       <AsyncView state={state} onRetry={state.reload}>
-        {([detail, ledger]) => (
+        {([detail, ledger, periods]) => (
           <>
             <PageHeader
-              title={detail.name}
+              title={detail.full_name}
               actions={
                 <div className="flex flex-col items-end gap-1">
                   <div className="flex flex-wrap justify-end gap-2">
@@ -69,10 +71,16 @@ export function StudentDetail() {
                     <Button variant="secondary" onClick={() => setOpenModal("override")}>
                       {t("detail.actions.addOverride")}
                     </Button>
+                    <Button
+                      variant="secondary"
+                      onClick={() => setOpenModal(detail.status === "active" ? "leave" : "return")}
+                    >
+                      {t(detail.status === "active" ? "student.markLeft" : "student.markReturned")}
+                    </Button>
                     <Button variant="secondary" onClick={() => setOpenModal("edit")}>
                       {t("detail.actions.edit")}
                     </Button>
-                    <Button variant="ghost" onClick={() => handleDownload(detail.name)}>
+                    <Button variant="ghost" onClick={() => handleDownload(detail.full_name)}>
                       {t("detail.downloadPdf")}
                     </Button>
                   </div>
@@ -93,11 +101,34 @@ export function StudentDetail() {
                 <CreateOverrideForm studentId={studentId} onSuccess={handleSaved} onCancel={close} />
               </Modal>
             )}
+            {(openModal === "leave" || openModal === "return") && (
+              <Modal
+                title={t(openModal === "leave" ? "student.leaveTitle" : "student.returnTitle")}
+                onClose={close}
+              >
+                <AttendanceForm
+                  studentId={studentId}
+                  mode={openModal}
+                  onSuccess={handleSaved}
+                  onCancel={close}
+                />
+              </Modal>
+            )}
             {openModal === "edit" && (
               <Modal title={t("edit.title")} onClose={close}>
                 <EditStudentForm
                   studentId={studentId}
-                  initial={{ phone: detail.phone, fee: detail.fee, status: detail.status }}
+                  initial={{
+                    firstName: detail.first_name,
+                    lastName: detail.last_name,
+                    isRepeating: detail.is_repeating,
+                    phone: detail.phone,
+                    status: detail.status,
+                    classId: detail.class_id,
+                    packId: detail.pack_id,
+                    customPrice: detail.custom_price,
+                    priceNote: detail.price_note,
+                  }}
                   onSuccess={handleSaved}
                   onCancel={close}
                 />
@@ -107,7 +138,55 @@ export function StudentDetail() {
             <Card className="mb-6">
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
                 <Stat label={t("detail.fields.status")}>{t(`status.${detail.status}`)}</Stat>
-                <Stat label={t("detail.fields.fee")}>{formatMoney(detail.fee)}</Stat>
+                <Stat label={t("detail.fields.class")}>
+                  {detail.school_class ? (
+                    <Link
+                      to={`/classes/${detail.school_class.id}`}
+                      className="hover:underline"
+                    >
+                      {classLabel(detail.school_class)}
+                    </Link>
+                  ) : (
+                    <span className="font-normal text-slate-400 dark:text-slate-500">
+                      {t("classes.unassigned")}
+                    </span>
+                  )}
+                </Stat>
+                <Stat label={t("student.pack")}>
+                  {detail.pack ? (
+                    <>
+                      {detail.pack.name} · {detail.pack.level}
+                      {/* The pack's level disagreeing with the class is allowed but worth
+                          seeing — it is usually a mis-click, occasionally deliberate. */}
+                      {detail.school_class &&
+                        detail.school_class.level !== detail.pack.level && (
+                          <span
+                            className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-950 dark:text-amber-400"
+                            title={t("student.levelMismatch", {
+                              packLevel: detail.pack.level,
+                              classLevel: detail.school_class.level,
+                            })}
+                          >
+                            {detail.school_class.level} ≠ {detail.pack.level}
+                          </span>
+                        )}
+                    </>
+                  ) : (
+                    <span className="font-normal text-slate-400 dark:text-slate-500">
+                      {t("student.noPack")}
+                    </span>
+                  )}
+                </Stat>
+                <Stat label={t("detail.fields.monthlyPrice")}>
+                  {formatMoney(detail.monthly_price)}
+                  {/* An agreed price is shown against the pack's, so the exception is visible. */}
+                  {detail.custom_price !== null && detail.pack && (
+                    <span className="ml-1 text-xs font-normal text-amber-700 dark:text-amber-400">
+                      {t("student.insteadOf", { price: formatMoney(detail.pack.price) })}
+                      {detail.price_note ? ` · ${detail.price_note}` : ""}
+                    </span>
+                  )}
+                </Stat>
                 <Stat label={t("detail.fields.joinDate")}>{formatDate(detail.join_date)}</Stat>
                 <Stat label={t("detail.fields.drift")}>
                   <DriftBadge drift={detail.cumulative_drift} />
@@ -115,12 +194,65 @@ export function StudentDetail() {
                 <Stat label={t("detail.fields.overdue")}>
                   <OverdueBadge monthsOverdue={detail.months_overdue} />
                 </Stat>
+                <Stat label={t("detail.fields.amountOwed")}>
+                  {formatMoney(detail.amount_owed)}
+                </Stat>
                 <Stat label={t("detail.fields.nextExpected")}>{formatDate(detail.next_expected_date)}</Stat>
                 <Stat label={t("detail.fields.paymentsCount")}>{detail.payments_count}</Stat>
+                <Stat label={t("detail.fields.firstPayment")}>
+                  {detail.first_payment_date ? formatDate(detail.first_payment_date) : "—"}
+                </Stat>
                 <Stat label={t("detail.fields.totalPaid")}>{formatMoney(detail.total_paid)}</Stat>
-                {detail.phone && <Stat label={t("detail.fields.phone")}>{detail.phone}</Stat>}
+                {/* Shown unconditionally: an empty phone is information too, and a grid that
+                    changes shape per student is harder to scan. */}
+                <Stat label={t("detail.fields.phone")}>
+                  {detail.phone ?? <span className="font-normal text-slate-400">—</span>}
+                </Stat>
+                <Stat label={t("detail.fields.repeating")}>
+                  {detail.is_repeating ? t("common.yes") : t("common.no")}
+                </Stat>
               </dl>
             </Card>
+
+            {/* Only worth a section once there's an actual absence — a single open period
+                since the join date is already shown as "Student since". */}
+            {periods.length > 1 && (
+              <>
+                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {t("student.attendance")}
+                </h2>
+                <div className="mb-6">
+                  <Table>
+                    <THead>
+                      <Tr>
+                        <Th>{t("student.from")}</Th>
+                        <Th>{t("student.until")}</Th>
+                        <Th>{t("student.reason")}</Th>
+                      </Tr>
+                    </THead>
+                    <TBody>
+                      {periods.map((p) => (
+                        <Tr key={p.id}>
+                          <Td>{formatDate(p.entry_date)}</Td>
+                          <Td>
+                            {p.leave_date ? (
+                              formatDate(p.leave_date)
+                            ) : (
+                              <span className="text-emerald-700 dark:text-emerald-400">
+                                {t("student.stillHere")}
+                              </span>
+                            )}
+                          </Td>
+                          <Td className="text-slate-400 dark:text-slate-500">
+                            {p.leave_reason ?? "—"}
+                          </Td>
+                        </Tr>
+                      ))}
+                    </TBody>
+                  </Table>
+                </div>
+              </>
+            )}
 
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t("ledger.title")}
@@ -138,9 +270,20 @@ export function StudentDetail() {
               </THead>
               <TBody>
                 {ledger.entries.map((entry) => {
-                  const unpaid = entry.paid_date === null;
+                  const unpaid = entry.paid_date === null && !entry.suspended;
                   return (
-                    <Tr key={entry.cycle_number} className={unpaid ? "text-slate-400 dark:text-slate-500" : ""}>
+                    <Tr
+                      key={entry.cycle_number}
+                      // An away month is styled distinctly from an unpaid one: it is not a debt,
+                      // and colouring them alike is the mistake worth avoiding here.
+                      className={
+                        entry.suspended
+                          ? "bg-slate-50 italic text-slate-400 dark:bg-slate-800/40 dark:text-slate-500"
+                          : unpaid
+                            ? "text-slate-400 dark:text-slate-500"
+                            : ""
+                      }
+                    >
                       <Td>{entry.cycle_number}</Td>
                       <Td>{formatDate(entry.expected_due_date)}</Td>
                       <Td>{entry.paid_date ? formatDate(entry.paid_date) : "—"}</Td>
@@ -160,6 +303,8 @@ export function StudentDetail() {
 }
 
 function ledgerStatus(entry: LedgerEntry, t: ReturnType<typeof useTranslation>["t"]): string {
+  // "Away" takes precedence over "Unpaid": a month the student wasn't enrolled for is not a debt.
+  if (entry.suspended) return t("ledger.status.away");
   if (entry.paid_date === null) return t("ledger.status.unpaid");
   if (entry.days_late !== null && entry.days_late > 0) return t("drift.late", { count: entry.days_late });
   return t("ledger.status.onTime");

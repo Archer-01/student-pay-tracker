@@ -15,6 +15,8 @@ class LedgerEntryOut(BaseModel):
     days_late: int | None
     amount: Decimal | None
     cumulative_drift: int
+    # True when the student was away that month: shown, but neither owed nor accruing drift.
+    suspended: bool
 
 
 class LedgerOut(BaseModel):

@@ -19,7 +19,9 @@ _AS_OF = {"as_of": "2023-06-30"}
 def _seed(db_session: Session) -> tuple[Student, Student]:
     students = StudentService(db_session)
     payments = PaymentService(db_session)
-    amina = students.enroll(name="Amina", phone=None, join_date=date(2023, 3, 5), fee=_FEE)
+    amina = students.enroll(
+        first_name="Amina", phone=None, join_date=date(2023, 3, 5), custom_price=_FEE
+    )
     payments.record_payment(
         student_id=amina.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=_FEE
     )
@@ -27,10 +29,10 @@ def _seed(db_session: Session) -> tuple[Student, Student]:
         student_id=amina.id, cycle_number=2, paid_date=date(2023, 5, 10), amount=_FEE
     )  # drift 5 + 5 = 10
     bilal = students.enroll(
-        name="Bilal",
+        first_name="Bilal",
         phone=None,
         join_date=date(2023, 3, 5),
-        fee=_FEE,
+        custom_price=_FEE,
         status=StudentStatus.INACTIVE,
     )
     return amina, bilal
@@ -41,8 +43,8 @@ async def test_list_students(client: AsyncClient, db_session: Session) -> None:
     resp = await client.get("/api/v1/students", params=_AS_OF)
     assert resp.status_code == 200
     data = resp.json()
-    assert {d["name"] for d in data} == {"Amina", "Bilal"}
-    amina = next(d for d in data if d["name"] == "Amina")
+    assert {d["full_name"] for d in data} == {"Amina", "Bilal"}
+    amina = next(d for d in data if d["full_name"] == "Amina")
     assert amina["cumulative_drift"] == 10
     # Cycles 0..3 due by Jun 30 (Mar/Apr/May/Jun); Apr & May paid → Mar & Jun unpaid.
     assert amina["months_overdue"] == 2
@@ -52,22 +54,26 @@ async def test_list_status_filter(client: AsyncClient, db_session: Session) -> N
     _seed(db_session)
     resp = await client.get("/api/v1/students", params={"status": "active", **_AS_OF})
     assert resp.status_code == 200
-    assert [d["name"] for d in resp.json()] == ["Amina"]
+    assert [d["full_name"] for d in resp.json()] == ["Amina"]
 
 
 async def test_list_sort_drift_desc(client: AsyncClient, db_session: Session) -> None:
     students = StudentService(db_session)
     payments = PaymentService(db_session)
-    low = students.enroll(name="Low", phone=None, join_date=date(2023, 3, 5), fee=_FEE)
+    low = students.enroll(
+        first_name="Low", phone=None, join_date=date(2023, 3, 5), custom_price=_FEE
+    )
     payments.record_payment(
         student_id=low.id, cycle_number=1, paid_date=date(2023, 4, 7), amount=_FEE
     )
-    high = students.enroll(name="High", phone=None, join_date=date(2023, 3, 5), fee=_FEE)
+    high = students.enroll(
+        first_name="High", phone=None, join_date=date(2023, 3, 5), custom_price=_FEE
+    )
     payments.record_payment(
         student_id=high.id, cycle_number=1, paid_date=date(2023, 4, 20), amount=_FEE
     )
     resp = await client.get("/api/v1/students", params={"sort": "drift_desc", **_AS_OF})
-    assert [d["name"] for d in resp.json()] == ["High", "Low"]
+    assert [d["full_name"] for d in resp.json()] == ["High", "Low"]
 
 
 async def test_months_overdue_counts_arrears_and_ignores_free_students(
@@ -75,11 +81,25 @@ async def test_months_overdue_counts_arrears_and_ignores_free_students(
 ) -> None:
     students = StudentService(db_session)
     # Never-paid, fee > 0 → behind on every due cycle (0..3 by Jun 30 = 4).
-    students.enroll(name="Behind", phone=None, join_date=date(2023, 3, 5), fee=_FEE)
+    students.enroll(
+        first_name="Behind",
+        phone=None,
+        join_date=date(2023,
+        3,
+        5),
+        custom_price=_FEE,
+    )
     # Free student (fee 0), never paid → owes nothing → 0.
-    students.enroll(name="Free", phone=None, join_date=date(2023, 3, 5), fee=Decimal("0"))
+    students.enroll(
+        first_name="Free",
+        phone=None,
+        join_date=date(2023,
+        3,
+        5),
+        custom_price=Decimal("0"),
+    )
     resp = await client.get("/api/v1/students", params=_AS_OF)
-    data = {d["name"]: d for d in resp.json()}
+    data = {d["full_name"]: d for d in resp.json()}
     assert data["Behind"]["months_overdue"] == 4
     assert data["Free"]["months_overdue"] == 0
 
@@ -98,7 +118,7 @@ async def test_student_detail(client: AsyncClient, db_session: Session) -> None:
     resp = await client.get(f"/api/v1/students/{amina.id}", params=_AS_OF)
     assert resp.status_code == 200
     data = resp.json()
-    assert data["name"] == "Amina"
+    assert data["full_name"] == "Amina"
     assert data["cumulative_drift"] == 10
     assert data["months_overdue"] == 2
     assert data["payments_count"] == 2
@@ -134,14 +154,22 @@ async def test_drift_endpoint(client: AsyncClient, db_session: Session) -> None:
 async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Session) -> None:
     students = StudentService(db_session)
     payments = PaymentService(db_session)
-    a = students.enroll(name="A", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300"))
+    a = students.enroll(
+
+        first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
+
+    )
     payments.record_payment(
         student_id=a.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
     )
     payments.record_payment(
         student_id=a.id, cycle_number=2, paid_date=date(2023, 5, 10), amount=Decimal("300")
     )
-    b = students.enroll(name="B", phone=None, join_date=date(2023, 5, 5), fee=Decimal("200"))
+    b = students.enroll(
+
+        first_name="B", phone=None, join_date=date(2023, 5, 5), custom_price=Decimal("200")
+
+    )
     payments.record_payment(
         student_id=b.id, cycle_number=1, paid_date=date(2023, 6, 3), amount=Decimal("200")
     )

@@ -125,3 +125,4 @@ def test_override_never_changes_earlier_cycles(data: tuple[date, list[date], dat
 def test_due_dates_are_strictly_increasing(join: date, overrides: list[date]) -> None:
     dues = generate_expected_due_dates(join, add_months(join, 120), overrides)
     assert all(a < b for a, b in zip(dues, dues[1:], strict=False))
+

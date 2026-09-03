@@ -19,7 +19,7 @@ _FEE = Decimal("300.00")
 def _enroll(db_session: Session, join_date: date = date(2023, 3, 5)) -> int:
     return (
         StudentService(db_session)
-        .enroll(name="Amina", phone=None, join_date=join_date, fee=_FEE)
+        .enroll(first_name="Amina", phone=None, join_date=join_date, custom_price=_FEE)
         .id
     )
 

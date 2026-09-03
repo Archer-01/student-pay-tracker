@@ -17,7 +17,7 @@ _FEE = Decimal("300.00")
 def _enroll(db_session: Session, join_date: date = date(2023, 3, 5)) -> int:
     return (
         StudentService(db_session)
-        .enroll(name="Amina", phone=None, join_date=join_date, fee=_FEE)
+        .enroll(first_name="Amina", phone=None, join_date=join_date, custom_price=_FEE)
         .id
     )
 
@@ -107,3 +107,25 @@ def test_mixed_twelve_cycle_history(db_session: Session) -> None:
     gap = next(e for e in entries if e.cycle_number == 7)
     assert gap.paid_date is None and gap.days_late is None
     assert entries[-1].cumulative_drift == expected_drift
+
+
+def test_first_payment_date_is_derived(db_session: Session) -> None:
+    """Derived from the payments, never stored — so correcting a payment can't desync it."""
+    from app.services.payment_service import PaymentService
+
+    student = StudentService(db_session).enroll(
+        first_name="Amina", join_date=date(2023, 3, 5), custom_price=Decimal("300")
+    )
+    summary = LedgerService(db_session).student_summary(student.id, date(2023, 6, 30))
+    assert summary.first_payment_date is None  # no payments yet
+
+    payments = PaymentService(db_session)
+    payments.record_payment(
+        student_id=student.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
+    )
+    payments.record_payment(
+        student_id=student.id, cycle_number=0, paid_date=date(2023, 3, 20), amount=Decimal("300")
+    )
+    summary = LedgerService(db_session).student_summary(student.id, date(2023, 6, 30))
+    # The earliest payment, not the first one recorded.
+    assert summary.first_payment_date == date(2023, 3, 20)

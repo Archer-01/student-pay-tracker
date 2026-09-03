@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import dashboard, health, reports, students
+from app.api import classes, dashboard, debts, health, packs, reports, students
 from app.api.errors import register_error_handlers
 from app.core.logging import configure_logging
 
@@ -21,6 +21,9 @@ register_error_handlers(app)
 # Single-teacher tool: the API is open (no auth). Run it on a trusted host/network.
 app.include_router(health.router)
 app.include_router(students.router, prefix="/api/v1")
+app.include_router(classes.router, prefix="/api/v1")
+app.include_router(packs.router, prefix="/api/v1")
+app.include_router(debts.router, prefix="/api/v1")
 app.include_router(dashboard.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 

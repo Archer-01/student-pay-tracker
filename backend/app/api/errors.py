@@ -1,14 +1,43 @@
 """Map domain exceptions to HTTP responses (localized) and log each handled error."""
 
 import logging
+from collections.abc import Awaitable, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
 from app.core.i18n import normalize_locale, resolve_locale, translate
-from app.services.exceptions import DomainError, DuplicatePaymentError, StudentNotFoundError
+from app.services.exceptions import (
+    ClassNotEmptyError,
+    ClassNotFoundError,
+    DomainError,
+    DuplicateClassError,
+    DuplicatePackError,
+    DuplicatePaymentError,
+    InvalidPeriodError,
+    InvalidWriteoffError,
+    PackInUseError,
+    PackNotFoundError,
+    StudentNotFoundError,
+)
 
 logger = logging.getLogger("app.api")
+
+# Exact-type handlers win over the DomainError fallback (Starlette walks the MRO), so listing a
+# subclass here overrides the 400 default. Anything not listed is a 400.
+_STATUS_BY_ERROR: tuple[tuple[type[DomainError], int], ...] = (
+    (StudentNotFoundError, 404),
+    (ClassNotFoundError, 404),
+    (PackNotFoundError, 404),
+    (DuplicatePaymentError, 409),
+    (DuplicateClassError, 409),
+    (ClassNotEmptyError, 409),
+    (DuplicatePackError, 409),
+    (PackInUseError, 409),
+    (InvalidPeriodError, 409),
+    (InvalidWriteoffError, 409),
+)
+_FALLBACK_STATUS = 400
 
 
 def _handle(request: Request, exc: DomainError, status_code: int) -> JSONResponse:
@@ -28,23 +57,15 @@ def _handle(request: Request, exc: DomainError, status_code: int) -> JSONRespons
     return JSONResponse(status_code=status_code, content={"detail": detail, "code": exc.code})
 
 
-async def _student_not_found(request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, DomainError)
-    return _handle(request, exc, 404)
+def _handler(status_code: int) -> Callable[[Request, Exception], Awaitable[JSONResponse]]:
+    async def handle(request: Request, exc: Exception) -> JSONResponse:
+        assert isinstance(exc, DomainError)
+        return _handle(request, exc, status_code)
 
-
-async def _duplicate_payment(request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, DomainError)
-    return _handle(request, exc, 409)
-
-
-async def _domain_error(request: Request, exc: Exception) -> JSONResponse:
-    assert isinstance(exc, DomainError)
-    return _handle(request, exc, 400)
+    return handle
 
 
 def register_error_handlers(app: FastAPI) -> None:
-    # Exact-type handlers win over the DomainError fallback (Starlette walks the MRO).
-    app.add_exception_handler(StudentNotFoundError, _student_not_found)
-    app.add_exception_handler(DuplicatePaymentError, _duplicate_payment)
-    app.add_exception_handler(DomainError, _domain_error)
+    for error_type, status_code in _STATUS_BY_ERROR:
+        app.add_exception_handler(error_type, _handler(status_code))
+    app.add_exception_handler(DomainError, _handler(_FALLBACK_STATUS))

@@ -17,7 +17,11 @@ def _seed_month(db_session: Session) -> None:
     students = StudentService(db_session)
     payments = PaymentService(db_session)
     # A: fee 300, join Mar 5; pays Apr/May/Jun late (10th). June collection = 300.
-    a = students.enroll(name="A", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300"))
+    a = students.enroll(
+
+        first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
+
+    )
     for cycle, day in ((1, "04-10"), (2, "05-10"), (3, "06-10")):
         payments.record_payment(
             student_id=a.id,
@@ -26,16 +30,20 @@ def _seed_month(db_session: Session) -> None:
             amount=Decimal("300"),
         )
     # B: fee 200, join Jun 5; pays cycle 0 on Jun 7 (2 late). June collection = 200.
-    b = students.enroll(name="B", phone=None, join_date=date(2023, 6, 5), fee=Decimal("200"))
+    b = students.enroll(
+
+        first_name="B", phone=None, join_date=date(2023, 6, 5), custom_price=Decimal("200")
+
+    )
     payments.record_payment(
         student_id=b.id, cycle_number=0, paid_date=date(2023, 6, 7), amount=Decimal("200")
     )
     # C: inactive — excluded from the report entirely.
     students.enroll(
-        name="C",
+        first_name="C",
         phone=None,
         join_date=date(2023, 1, 5),
-        fee=Decimal("500"),
+        custom_price=Decimal("500"),
         status=StudentStatus.INACTIVE,
     )
 
@@ -79,7 +87,7 @@ async def test_monthly_report_pdf(client: AsyncClient, db_session: Session) -> N
 
 async def test_ledger_pdf(client: AsyncClient, db_session: Session) -> None:
     student = StudentService(db_session).enroll(
-        name="Amïra", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300")
+        first_name="Amïra", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
     )
     PaymentService(db_session).record_payment(
         student_id=student.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
@@ -109,7 +117,10 @@ async def test_ledger_pdf_includes_name_and_phone(
 
     monkeypatch.setattr(rl_config, "pageCompression", 0)
     student = StudentService(db_session).enroll(
-        name="Amina", phone="+212600112233", join_date=date(2023, 3, 5), fee=Decimal("300")
+        first_name="Amina",
+        phone="+212600112233",
+        join_date=date(2023, 3, 5),
+        custom_price=Decimal("300"),
     )
     resp = await client.get(f"/api/v1/students/{student.id}/ledger.pdf")
     assert resp.status_code == 200
@@ -124,7 +135,7 @@ async def test_ledger_pdf_without_phone_shows_name_only(
 
     monkeypatch.setattr(rl_config, "pageCompression", 0)
     student = StudentService(db_session).enroll(
-        name="Bilal", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300")
+        first_name="Bilal", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
     )
     resp = await client.get(f"/api/v1/students/{student.id}/ledger.pdf")
     assert resp.status_code == 200
@@ -135,3 +146,54 @@ async def test_ledger_pdf_without_phone_shows_name_only(
 async def test_invalid_month_is_422(client: AsyncClient) -> None:
     resp = await client.get("/api/v1/reports/monthly", params={"year": 2023, "month": 13})
     assert resp.status_code == 422
+
+
+# --------------------------------------------------------------------------- #
+# Annual report API
+# --------------------------------------------------------------------------- #
+
+
+async def test_annual_report_endpoint(client: AsyncClient, db_session: Session) -> None:
+    _seed_month(db_session)
+    resp = await client.get("/api/v1/reports/annual", params={"year": 2023})
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["year"] == 2023
+    assert [m["month"] for m in body["months"]] == list(range(1, 13))
+    assert Decimal(body["total_collected"]) == sum(
+        Decimal(m["collected"]) for m in body["months"]
+    )
+
+
+async def test_annual_report_pdf(client: AsyncClient, db_session: Session) -> None:
+    from tests.integration.test_api_profile import pdf_text
+
+    _seed_month(db_session)
+    resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 2023})
+    assert resp.status_code == 200
+    assert resp.headers["content-type"] == "application/pdf"
+    assert "annual-2023.pdf" in resp.headers["content-disposition"]
+    text = pdf_text(resp.content)
+    assert "annual revenue" in text and "2023" in text
+    assert "collected" in text and "best month" in text
+    assert "january" in text and "december" in text
+
+
+async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: Session) -> None:
+    from tests.integration.test_api_profile import pdf_text
+
+    _seed_month(db_session)
+    resp = await client.get(
+        "/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"}
+    )
+    text = pdf_text(resp.content)
+    assert "revenus annuels" in text
+    assert "janvier" in text
+    assert "meilleur mois" in text
+
+
+async def test_annual_report_pdf_of_an_empty_year_says_so(client: AsyncClient) -> None:
+    from tests.integration.test_api_profile import pdf_text
+
+    resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 1999})
+    assert "no payments were recorded" in pdf_text(resp.content)

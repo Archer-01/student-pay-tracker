@@ -6,14 +6,23 @@
     "dashboard": "Dashboard",
     "students": "Students",
     "enroll": "Enroll",
-    "report": "Monthly report"
+    "report": "Monthly report",
+    "classes": "Classes",
+    "packs": "Packs",
+    "annual": "Year",
+    "debts": "Owed"
   },
   "pages": {
     "dashboard": "Dashboard",
     "students": "Students",
     "studentDetail": "Student detail",
     "enroll": "Enroll student",
-    "report": "Monthly report"
+    "report": "Monthly report",
+    "classes": "Classes",
+    "classDetail": "Class",
+    "packs": "Packs",
+    "annual": "Annual revenue",
+    "debts": "Left owing money"
   },
   "drift": {
     "onTrack": "On track",
@@ -33,13 +42,18 @@
     "columns": {
       "name": "Name",
       "status": "Status",
-      "fee": "Fee",
       "drift": "Drift",
-      "overdue": "Overdue"
+      "overdue": "Overdue",
+      "class": "Class",
+      "price": "Price",
+      "owed": "Owed"
     },
     "filterLabel": "Status",
     "filterAll": "All",
-    "empty": "No students found."
+    "empty": "No students found.",
+    "filterClassAll": "All classes",
+    "search": "Search",
+    "searchPlaceholder": "Name…"
   },
   "dashboard": {
     "collectedThisMonth": "Collected this month",
@@ -68,16 +82,15 @@
   },
   "enroll": {
     "fields": {
-      "name": "Name",
       "joinDate": "Join date",
-      "fee": "Monthly fee",
-      "phone": "Phone (optional)"
+      "phone": "Phone (optional)",
+      "class": "Class"
     },
     "joinDateHint": "This anchors the billing cycles and can't be changed later.",
     "submit": "Enroll student",
     "validation": {
-      "nameRequired": "Name is required.",
-      "feeInvalid": "Enter a fee of 0 or more."
+      "priceInvalid": "Agreed price must be a non-negative number",
+      "firstNameRequired": "First name is required"
     }
   },
   "detail": {
@@ -91,14 +104,18 @@
     },
     "fields": {
       "status": "Status",
-      "fee": "Monthly fee",
       "joinDate": "Join date",
       "drift": "Drift",
       "overdue": "Overdue",
       "nextExpected": "Next expected",
       "paymentsCount": "Payments",
       "totalPaid": "Total paid",
-      "phone": "Phone"
+      "phone": "Phone",
+      "class": "Class",
+      "monthlyPrice": "Monthly price",
+      "amountOwed": "Amount owed",
+      "firstPayment": "First payment",
+      "repeating": "Repeating the year"
     }
   },
   "ledger": {
@@ -113,13 +130,12 @@
     },
     "status": {
       "unpaid": "Unpaid",
-      "onTime": "On time"
+      "onTime": "On time",
+      "away": "Away"
     }
   },
   "language": {
-    "label": "Language",
-    "en": "English",
-    "fr": "Français"
+    "label": "Language"
   },
   "theme": {
     "switchTo": {
@@ -133,7 +149,9 @@
     "empty": "Nothing to show yet",
     "retry": "Retry",
     "cancel": "Cancel",
-    "save": "Save"
+    "save": "Save",
+    "yes": "Yes",
+    "no": "No"
   },
   "payment": {
     "title": "Record payment",
@@ -163,11 +181,12 @@
     "title": "Edit details",
     "fields": {
       "phone": "Phone",
-      "fee": "Monthly fee",
-      "status": "Status"
+      "status": "Status",
+      "class": "Class"
     },
     "validation": {
-      "feeInvalid": "Enter a fee of 0 or more."
+      "priceInvalid": "Agreed price must be a non-negative number",
+      "firstNameRequired": "First name is required"
     }
   },
   "notFound": {
@@ -176,5 +195,112 @@
   },
   "errors": {
     "generic": "Something went wrong. Please try again."
+  },
+  "classes": {
+    "empty": "No classes yet. Create one to start grouping students.",
+    "create": "New class",
+    "createTitle": "Create a class",
+    "level": "Level",
+    "name": "Name",
+    "namePlaceholder": "e.g. Groupe A",
+    "students": "Students",
+    "drift": "Total drift",
+    "filterLevel": "Level",
+    "filterAll": "All levels",
+    "addStudent": "Add student",
+    "rosterEmpty": "No students in this class yet.",
+    "downloadRoster": "Download roster (PDF)",
+    "rename": "Rename",
+    "renameTitle": "Rename class",
+    "delete": "Delete class",
+    "deleteConfirm": "Delete this class? It must have no students.",
+    "unassigned": "Unassigned",
+    "validation": {
+      "nameRequired": "Name is required"
+    },
+    "backToClasses": "All classes",
+    "none": "No class"
+  },
+  "packs": {
+    "empty": "No packs yet. Create an offering to start pricing.",
+    "newOffering": "New offering",
+    "newOfferingTitle": "New offering",
+    "offering": "Offering",
+    "subjects": "Subjects",
+    "subjectsHint": "Comma-separated, e.g. Maths, Physique",
+    "pricesHint": "Leave a level blank if you do not offer it there.",
+    "notOffered": "not offered",
+    "students": "students",
+    "gridHint": "One row per offering, one column per level. Click a price to change it.",
+    "editPrice": "Price",
+    "editCellTitle": "{{offering}} · {{level}}",
+    "offered": "Offered at this level",
+    "validation": {
+      "nameRequired": "Name is required",
+      "subjectsRequired": "At least one subject is required",
+      "pricesRequired": "Set a price for at least one level"
+    },
+    "save": "Save",
+    "affects": "Changes the price for {{count}} student(s) right away, including months they have not paid yet.",
+    "editOffering": "Edit offering",
+    "editOfferingTitle": "Edit {{name}}",
+    "appliesToAllLevels": "Name and subjects apply to every level of this offering; only prices differ."
+  },
+  "student": {
+    "pack": "Pack",
+    "noPack": "No pack yet",
+    "packPriceHint": "Pack price: {{price}}",
+    "customPrice": "Agreed price",
+    "customPriceHint": "Leave blank to charge the pack price. Fill in only if this student pays something different.",
+    "priceNote": "Why",
+    "priceNoteHint": "e.g. sibling discount, hardship",
+    "insteadOf": "instead of {{price}}",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "lastNameHint": "Leave blank if there is no surname on record",
+    "repeating": "Repeating the year (redoublant)",
+    "repeatingShort": "Repeating",
+    "levelMismatch": "This pack is for {{packLevel}} but the class is {{classLevel}}.",
+    "attendance": "Attendance",
+    "from": "From",
+    "until": "Until",
+    "reason": "Reason",
+    "stillHere": "Still attending",
+    "markLeft": "Mark as left",
+    "markReturned": "Mark as returned",
+    "leaveTitle": "Record a departure",
+    "returnTitle": "Record a return",
+    "leaveDate": "Departure date",
+    "returnDate": "Return date",
+    "leaveReason": "Reason",
+    "leaveHint": "Months after this date stop being owed. Drift already accrued is kept.",
+    "returnHint": "The join date never moves, so any existing debt and drift come back with them."
+  },
+  "annual": {
+    "year": "Year",
+    "collected": "Collected",
+    "payments": "Payments",
+    "month": "Month",
+    "total": "Total collected",
+    "average": "Monthly average",
+    "averageHint": "Averaged over the months that earned, not over twelve",
+    "best": "Best month",
+    "downloadPdf": "Download PDF",
+    "empty": "No payments recorded in this year."
+  },
+  "debts": {
+    "empty": "Nobody has left owing money.",
+    "totalOwed": "Total owed",
+    "leftOn": "Left on",
+    "months": "Months",
+    "owed": "Owed",
+    "writeOff": "Write off",
+    "writeOffTitle": "Write off {{name}}'s balance",
+    "writeOffReason": "Reason",
+    "writeOffHint": "Recorded permanently. This is not a payment — it never counts as revenue.",
+    "writeOffConfirm": "Write off {{amount}}",
+    "returnedWithDebt": "This student left owing money",
+    "duplicateWarning": "A former student with this name or number left owing {{amount}}.",
+    "onDashboard": "Left owing"
   }
 }

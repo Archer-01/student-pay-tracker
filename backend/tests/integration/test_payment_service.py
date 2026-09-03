@@ -14,7 +14,7 @@ from app.services.student_service import StudentService
 
 def _student(db_session: Session, join_date: date = date(2023, 3, 5)) -> int:
     student = StudentService(db_session).enroll(
-        name="Amina", phone=None, join_date=join_date, fee=Decimal("300.00")
+        first_name="Amina", phone=None, join_date=join_date, custom_price=Decimal("300.00")
     )
     return student.id
 

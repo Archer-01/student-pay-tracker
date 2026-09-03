@@ -19,9 +19,12 @@ _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
 
 async def _create_student(
-    client: AsyncClient, name: str = "Amina", join: str = "2023-03-05", fee: str = "300"
+    client: AsyncClient, name: str = "Amina", join: str = "2023-03-05", price: str = "300"
 ) -> int:
-    resp = await client.post("/api/v1/students", json={"name": name, "join_date": join, "fee": fee})
+    resp = await client.post(
+        "/api/v1/students",
+        json={"first_name": name, "join_date": join, "custom_price": price},
+    )
     assert resp.status_code == 201, resp.text
     return int(resp.json()["id"])
 
@@ -34,11 +37,16 @@ async def _create_student(
 async def test_create_student(client: AsyncClient) -> None:
     resp = await client.post(
         "/api/v1/students",
-        json={"name": "Amina", "join_date": "2023-03-05", "fee": "300", "phone": "+2126"},
+        json={
+            "first_name": "Amina",
+            "join_date": "2023-03-05",
+            "custom_price": "300",
+            "phone": "+2126",
+        },
     )
     assert resp.status_code == 201
     data = resp.json()
-    assert data["name"] == "Amina"
+    assert data["full_name"] == "Amina"
     assert (await client.get(f"/api/v1/students/{data['id']}")).status_code == 200
 
 
@@ -46,25 +54,25 @@ async def test_patch_student(client: AsyncClient) -> None:
     sid = await _create_student(client)
     resp = await client.patch(
         f"/api/v1/students/{sid}",
-        json={"phone": "+999", "fee": "350", "status": "inactive"},
+        json={"phone": "+999", "custom_price": "350", "status": "inactive"},
     )
     assert resp.status_code == 200
     data = resp.json()
     assert data["phone"] == "+999"
-    assert Decimal(str(data["fee"])) == Decimal("350")
+    assert Decimal(str(data["custom_price"])) == Decimal("350")
     assert data["status"] == "inactive"
     assert data["join_date"] == "2023-03-05"  # anchor untouched
 
 
 async def test_patch_partial_leaves_other_fields(client: AsyncClient) -> None:
-    sid = await _create_student(client, fee="300")
-    # Only phone -> fee and status unchanged.
+    sid = await _create_student(client, price="300")
+    # Only phone -> price and status unchanged.
     phone_only = await client.patch(f"/api/v1/students/{sid}", json={"phone": "+111"})
     assert phone_only.status_code == 200
     assert phone_only.json()["phone"] == "+111"
-    assert Decimal(str(phone_only.json()["fee"])) == Decimal("300")
+    assert Decimal(str(phone_only.json()["custom_price"])) == Decimal("300")
     assert phone_only.json()["status"] == "active"
-    # Only status -> phone and fee unchanged.
+    # Only status -> phone and price unchanged.
     status_only = await client.patch(f"/api/v1/students/{sid}", json={"status": "inactive"})
     assert status_only.status_code == 200
     assert status_only.json()["status"] == "inactive"
@@ -85,9 +93,10 @@ async def test_patch_unknown_field_is_422(client: AsyncClient) -> None:
 @pytest.mark.parametrize(
     "body",
     [
-        {"name": "X", "join_date": "2023-03-05", "fee": "-1"},  # negative fee
-        {"name": "   ", "join_date": "2023-03-05", "fee": "1"},  # blank name
-        {"join_date": "2023-03-05", "fee": "1"},  # missing name
+        {"first_name": "X", "join_date": "2023-03-05", "custom_price": "-1"},  # negative price
+        # blank name
+        {"first_name": "", "last_name": "  ", "join_date": "2023-03-05", "custom_price": "1"},
+        {"join_date": "2023-03-05", "custom_price": "1"},  # missing name
     ],
 )
 async def test_create_student_validation_422(client: AsyncClient, body: dict) -> None:
@@ -260,7 +269,8 @@ async def test_cli_and_api_agree(
     command.upgrade(Config(str(_ALEMBIC_INI)), "head")
     runner = CliRunner()
     runner.invoke(
-        cli_app, ["students", "add", "--name", "Amina", "--join-date", "2023-03-05", "--fee", "300"]
+        cli_app,
+        ["students", "add", "--first-name", "Amina", "--join-date", "2023-03-05", "--price", "300"],
     )
     for month in ("2023-04", "2023-05", "2023-06"):
         runner.invoke(

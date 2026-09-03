@@ -54,10 +54,32 @@ def run_migrations_offline() -> None:
 
 
 def _run_migrations(connection: Connection) -> None:
-    # render_as_batch lets future SQLite ALTER-heavy migrations work (SQLite can't ALTER in place).
-    context.configure(connection=connection, target_metadata=target_metadata, render_as_batch=True)
-    with context.begin_transaction():
-        context.run_migrations()
+    # SQLite cannot ALTER a table in place, so restructuring one means create-copy-DROP-rename
+    # (see migration 0004). `app/core/db.py` turns foreign_keys ON for every connection, and with
+    # it on that DROP fails against any database holding child rows — which is every real one.
+    #
+    # So enforcement is suspended for the duration of a migration run and restored afterwards.
+    # It must be toggled here rather than inside a migration: `PRAGMA foreign_keys` is a silent
+    # no-op inside a transaction, and alembic's `autocommit_block()` can't be used either because
+    # it asserts it owns the transaction, which is false when a connection is injected (below).
+    # Each rebuilding migration is responsible for leaving the data referentially sound; the
+    # migration test asserts `PRAGMA foreign_key_check` is clean afterwards.
+    was_enabled = connection.exec_driver_sql("PRAGMA foreign_keys").scalar()
+    connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+    try:
+        # render_as_batch lets SQLite ALTER-heavy migrations work.
+        context.configure(
+            connection=connection, target_metadata=target_metadata, render_as_batch=True
+        )
+        with context.begin_transaction():
+            context.run_migrations()
+    finally:
+        # Commit before restoring the pragma, for two reasons: reading the pragma above opened a
+        # transaction, and SQLite runs DDL non-transactionally, so without this the migrations
+        # would be rolled back when the connection closes; and `PRAGMA foreign_keys` is silently
+        # ignored while a transaction is open, so the restore would be a no-op.
+        connection.commit()
+        connection.exec_driver_sql(f"PRAGMA foreign_keys={'ON' if was_enabled else 'OFF'}")
 
 
 def run_migrations_online() -> None:

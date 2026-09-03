@@ -13,6 +13,12 @@ Docker), and English/French i18n on API error messages + CSV exports (`app/core/
 way; this CLAUDE.md governs how ongoing changes should be made. The invariants and layering rules
 below are not "done" — they must keep holding for any future change.
 
+**Planned work lives in `../BACKLOG.md`** (repo root): sprints 9–13 — classes, packs + the pricing
+model that replaces `student.fee`, the student profile rework, enrollment periods (leave/return), and
+the leavers-with-debt list. Read it before starting anything in those areas; it records the design
+decisions and the open questions, and several of its sprints deliberately revise things this file
+currently describes as settled (noted inline below).
+
 ## What this is
 
 A backend-only payment tracker for a teacher tracking student tuition payments and lateness ("drift") over time. Stack: Python 3.12+, FastAPI (`fastapi[standard]`), SQLite, SQLAlchemy 2.x, Alembic, Pydantic v2, pytest, `uv`.
@@ -75,18 +81,58 @@ Build order matters and is intentional — each layer depends on the previous be
 5. **REST API** — read endpoints first, then write endpoints + auth. The CLI and API must produce identical results for the same operations.
 6. **Reports/exports**, then **hardening/ops** (logging, rate limiting, SQLite pragmas, backups, Docker).
 
+## A trap this codebase sets for itself
+
+Repos and services expose a method named **`list`** (`StudentRepo.list`, `ClassService.list`,
+`PackService.list`). Inside a class body that name shadows the builtin for **every annotation
+declared after it**, so a later `-> list[Thing]` resolves to the method and fails — at import time
+with `TypeError: 'function' object is not subscriptable`, or under mypy with `"list" is not valid as
+a type`. It has bitten three times. The fix used throughout is a module-scope alias next to the
+class (`RosterRows = list[RosterRow]`, `Packs = list[Pack]`), which is order-independent and works
+for both mypy and the runtime. Reordering methods "fixes" it only until the next one is added.
+
 ## Domain invariants to protect
 
 - **Overrides are audit-log style, not mutations.** `override_service.create_override` writes to `anchor_override` and must never touch `student.join_date` or existing payment rows. An override must not reduce `cumulative_drift` for cycles before the override date — this is the whole point of the design and needs an explicit regression test.
 - **`join_date` is immutable via the API.** `PATCH /students/{id}` must reject or ignore `join_date` in the request body. This is critical — the drift model breaks if the anchor date can move.
+- **Recorded payments are frozen truth.** `payment.amount`, `expected_due_date`, and `days_late` are
+  written once by the service layer and never recomputed — not by a fee change, not by a schema
+  change, not by anything in `../BACKLOG.md`.
+- **Pricing is current, not historical — and that is a deliberate trade** (sprint 10, migration
+  0004). A student pays `custom_price` if set, else their pack's price. Changing a pack's price, or
+  moving a student to another pack, therefore changes what they owe for months not yet paid. Don't
+  "fix" this by reintroducing snapshots without asking: it was chosen knowingly, in exchange for
+  one number per student instead of three. What must *not* change is `payment.amount` — money
+  already taken stays frozen, so only the outstanding estimate moves.
+- **Money is quoted through `PricingService.price_of`, never by reading `pack.price` at a call
+  site.** That is what keeps the `custom_price` override and the "no pack means not billed" rule in
+  one place instead of being re-derived (and forgotten) per screen.
 - **Duplicate payments are rejected, not overwritten.** Recording a payment for a cycle that already has one raises an explicit error (`DuplicatePaymentError` or similar).
+- **A write-off is not a payment.** `debt_writeoff` forgives a departed student's balance; it must
+  never appear in collected revenue, in the annual report, or in drift. The shortcut it exists to
+  prevent is recording a fake payment to clear the leavers list.
+- **Absence suspends, it never rewrites.** An unpaid cycle outside every enrollment period is
+  suspended (not owed, no drift). A *paid* cycle is never suspended, and suspension can only stop
+  future accrual — it must never reduce drift already recorded. `join_date` stays the anchor
+  through any number of leaves and returns; a return that reset the schedule would erase exactly
+  the history the drift model exists to keep.
 - **Cumulative drift is monotonically non-decreasing** as `as_of` moves forward, always ≥ 0, and is 0 if all payments are on time. These are the `hypothesis` property tests referenced above.
 
 ## Explicitly out of scope
 
 Don't smuggle these in even if they seem like natural extensions:
-- Attendance tracking
-- Auth of any kind — the API is intentionally open (single trusted teacher on a trusted network). No token, no users, no multi-teacher.
+- Attendance tracking (per-session presence). Note the *enrollment periods* planned in
+  `../BACKLOG.md` §3.4 are not attendance — they record long spans a student was enrolled, so
+  billing can skip months they were away. Resist the slide from one into the other.
+- **Auth — deferred, not forbidden.** The API is open today (trusted network, no token, no users), and
+  nothing in the current sprints should add auth. But a two-account login *is* on the roadmap
+  (`../BACKLOG.md` §5), so don't treat "no auth" as a permanent design principle — and don't add
+  `created_by`/`user_id` FKs in the meantime, since there is no `user` table to point at yet.
+- Multi-teacher / multi-tenant data separation (both future users will see the same data).
+- **Revenue sharing / commission between the two teachers.** `draft-backlog.md` sketches a split
+  ("20%, ayoub takes 50DH from the pack", "College: 25%"), but the rule was never pinned down and
+  the client has explicitly deferred it: the app's job is tracking late students. Don't infer a
+  formula from those notes — ask.
 - Actually sending WhatsApp messages (API only returns the message text as a string)
 - PostgreSQL (SQLite is fine for one teacher and hundreds of students)
 - Async service layer (routes are `async def`, but the service layer stays sync — SQLite + sync SQLAlchemy is the intended design)

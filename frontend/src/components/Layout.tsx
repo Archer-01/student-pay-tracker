@@ -6,8 +6,12 @@ import { ThemeToggle } from "./ThemeToggle";
 const navItems = [
   { to: "/", key: "dashboard", end: true },
   { to: "/students", key: "students", end: false },
+  { to: "/classes", key: "classes", end: false },
+  { to: "/packs", key: "packs", end: false },
   { to: "/students/new", key: "enroll", end: false },
   { to: "/reports/monthly", key: "report", end: false },
+  { to: "/reports/annual", key: "annual", end: false },
+  { to: "/debts", key: "debts", end: false },
 ] as const;
 
 export function Layout() {

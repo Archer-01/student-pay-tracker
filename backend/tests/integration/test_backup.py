@@ -37,7 +37,7 @@ def test_backup_round_trip_preserves_rows(tmp_path: Path) -> None:
     engine = create_engine(url)
     with Session(engine) as session:
         StudentService(session).enroll(
-            name="Amina", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300")
+            first_name="Amina", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
         )
     engine.dispose()
 

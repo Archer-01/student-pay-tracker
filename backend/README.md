@@ -312,6 +312,309 @@ The image is multi-stage (uv, `--frozen`), runs as a **non-root** user, stores t
 persistent `/data` volume, and has a container healthcheck hitting `/health`. Migrations run on
 startup.
 
+## Sprint 9 — Classes
+
+Students can now be grouped into **classes** (a school level + a name, e.g. *2BAC — Groupe A*).
+A class is **organisational only**: it never affects the anchor, payments, or drift. There are
+regression tests asserting exactly that — moving a student between classes, or removing them from
+one, leaves `cumulative_drift` and the whole ledger byte-identical.
+
+**Levels** are a shared enum (`ClassLevel` in `app/models/school_class.py`): `1AC`, `2AC`, `3AC`,
+`TC`, `1BAC`, `2BAC`, declared in **school order**. That order is load-bearing — sorting the stored
+values alphabetically would put `1BAC` before `2AC`. The same enum will scope pack prices by level
+in sprint 10, which is why it lives in models rather than in the class module alone.
+
+**Schema** (migration `0002`): a `school_class` table (`level` + `name`, unique together, non-blank
+name enforced by a CHECK) and a nullable `student.class_id`. Existing students land unassigned, so
+no drift or arrears figure moves.
+
+**Endpoints**
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/classes` | `?level=`, `?as_of=`; each item carries `student_count` and class-wide `cumulative_drift`. Returned in school order, then by name |
+| `POST` | `/api/v1/classes` | `{level, name}` → 201. Duplicate `(level, name)` → 409 `duplicate_class` |
+| `GET` | `/api/v1/classes/{id}` | Detail + counts. Unknown → 404 `class_not_found` |
+| `PATCH` | `/api/v1/classes/{id}` | `{level?, name?}`; unknown fields → 422 |
+| `DELETE` | `/api/v1/classes/{id}` | 204, or **409 `class_not_empty`** if it still has students |
+| `GET` | `/api/v1/classes/{id}/roster.pdf` | Localized roster (`?as_of=`, `?lang=`) |
+| `GET` | `/api/v1/students?class_id=` | New filter; students also gained `class_id` + nested `school_class` |
+
+A class's roster is deliberately **not** embedded in the detail response — it's
+`GET /students?class_id=`, so there is one representation of "a list of students" in the API and
+the roster inherits the status/sort filters for free.
+
+**CLI**
+
+```bash
+tracker classes add --level 2BAC --name "Groupe A"
+tracker classes list [--level 2BAC] [--as-of YYYY-MM-DD]   # school order, counts, class drift
+tracker classes show 1                                     # roster with drift + months overdue
+tracker classes rename 1 --name "Groupe B" [--level 1BAC]
+tracker classes delete 1 --yes                             # refuses a non-empty class
+tracker students add ... --class-id 1
+tracker students assign-class 1 --class-id 2               # or --none to unassign
+```
+
+**Note on migration 0002.** Autogenerate produced a `batch_alter_table` on `student`, which on
+SQLite rebuilds the table (`DROP TABLE student` + rename). With `PRAGMA foreign_keys=ON` — which
+`app/core/db.py` sets on every connection — that drop **fails** against any database that already
+holds `payment` or `anchor_override` rows. It passes on an empty database, so the blank-DB test in
+the `new-migration` skill could not catch it; it was found by running the upgrade against a copy of
+a populated `app.db`. The migration instead adds the column with an inline `REFERENCES` clause,
+which SQLite does in place. Verify data migrations against populated copies, not just blank ones.
+
+## Sprint 10 — Packs & the pricing model
+
+What a student pays now comes from a **pack** rather than a bare fee. A pack is a named,
+**level-scoped** set of subjects with a price — *Maths seul · 2BAC · 150 DH*. There is no separate
+"enrollment type" concept: "Maths only", "Maths + Physics" and the full four-subject pack are all
+just packs, so adding an offering is a row, not a code change. Prices vary by level, so each
+`(name, level)` pair is its own row — 4 offerings x 6 levels = **24 packs**.
+
+### One price per student
+
+`pack.price` is the price. A student who has agreed something different carries a
+**`custom_price`** on their own row, with a **`price_note`** saying why:
+
+```
+effective price = student.custom_price  if set,  else  student.pack.price,  else nothing
+```
+
+Resolved in one place (`app/services/pricing_service.py`), which everything quoting money goes
+through — months overdue, amount owed, the monthly report, the dashboard. A student with no pack
+and no agreed price simply isn't billed: they show as owing nothing, and the UI nudges to put them
+on a pack. That is a legal state, not an error.
+
+`student.fee` is **gone** (migration 0004). Having `pack.price`, an assignment price *and* a legacy
+fee was one pricing concept too many; the agreed price replaces all of it.
+
+### Prices are current, not historical
+
+This is the deliberate trade. Changing a pack's price changes what its students owe for months
+they have **not yet paid**, and moving a student to a different pack reprices their unpaid past
+months too. There is no price history and no per-month pricing.
+
+Recorded payments are unaffected: `payment.amount` is frozen at insert, so money already taken is
+never rewritten — only the outstanding *estimate* moves. Both halves are pinned by tests in
+`tests/integration/test_pricing.py`.
+
+An agreed price shields that student from pack price changes, since it is their own number.
+
+### Endpoints
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/packs` | `?level=`, `?active=`; includes subjects and student count |
+| `GET` | `/api/v1/packs/grid` | The offerings x levels matrix. A cell with a null `pack_id` isn't offered |
+| `POST` | `/api/v1/packs` | One pack (one offering at one level) |
+| `POST` | `/api/v1/packs/offerings` | A whole grid row: one pack per priced level, one shared subject set |
+| `PATCH` | `/api/v1/packs/offerings/{name}` | Rename / set subjects across **every** level-variant |
+| `PATCH` | `/api/v1/packs/{id}` | One grid cell: `price`, `is_active` |
+| `DELETE` | `/api/v1/packs/{id}` | 409 `pack_in_use` if any student is on it — deactivate instead |
+
+A student's pack and price are plain fields on the student: `pack_id`, `custom_price` and
+`price_note` on `POST /students` and `PATCH /students/{id}`. Students also gained `monthly_price`
+(the effective price) and `amount_owed` (money, not just a month count).
+
+**Offering vs. pack.** An offering is a pack `name` shared by its level-variants; since `level`
+lives on the pack, the subject set is physically duplicated across them. `PackService` is what stops
+them diverging: name and subject edits always apply to *all* variants (`update_offering`), never one
+row, and a test asserts same-named packs always have identical subject sets.
+
+**Level mismatch is advisory.** Assigning a 1AC student a 2BAC pack succeeds and returns a
+`level_warning`. A repeating student, or one sitting with a higher group, is a real case — refusing
+it would be wrong.
+
+### CLI
+
+```bash
+tracker packs grid                     # the price matrix — fastest way to check a price round
+tracker packs add --name "Maths seul" --level 2BAC --price 150 --subject Maths
+tracker packs list [--level 2BAC]
+tracker packs deactivate 6
+tracker students set-pack 1 --pack-id 6 [--price 90 --price-note "remise fratrie"]
+tracker students set-pack 1 --clear-price   # back to the pack price
+tracker students set-pack 1 --none          # off any pack
+```
+
+## Sprint 11 — Student profile & reworked PDFs
+
+**`name` is now `first_name` + `last_name`** (migration 0005), plus `is_repeating` ("redoublant")
+and a derived `first_payment_date`. `last_name` is **nullable**: a compound given name with no
+family name is a real case, and the seed contains one — "Fatima Zahra". That is also why the
+migration splits names with an **explicit mapping** rather than on whitespace, which would have
+invented the surname "Zahra". Names that the mapping doesn't know fall back to first-token/rest;
+the fallback exists so the migration can't fail, not because it's right — review the table after
+upgrading a database this migration hasn't seen.
+
+`Student.full_name` assembles the two parts, so exports, filenames and the CLI all render a name
+identically. `first_payment_date` is **derived** (`min(paid_date)`), never stored, so correcting a
+payment can't desync it — and it is deliberately not `join_date`; the gap between them is
+informative.
+
+`GET /students?q=` searches either name part. The list is ordered by surname.
+
+### The PDF exports were rebuilt
+
+All three (ledger, class roster, monthly report) now share one document shell in
+`app/api/pdf_export.py`: a title block, a strip of **headline figures**, a **detail block** of
+label/value pairs, the table, and a footer recording when it was generated and as of when. The
+ledger previously carried only a name and a phone number; it now shows class, pack, monthly price,
+total paid, months overdue, amount owed, drift, phone, status, repeating, student-since, first
+payment, and any agreed price with its reason.
+
+Two things worth keeping:
+
+- Tables are sized to **fill the page width**, weighted by each column's widest cell. Left to
+  itself reportlab sizes to content and centres it, which leaves a narrow table floating in the
+  middle of a landscape page.
+- An empty export renders a **sentence** ("No billing cycles have fallen due yet.") rather than a
+  lone header row.
+
+`tests/integration/test_api_profile.py` decodes the generated PDFs (ASCII85 + Flate) and asserts on
+the text, so the exports are covered rather than eyeballed.
+
+### CLI
+
+```bash
+tracker students add --first-name Amina --last-name Benali --join-date 2023-03-05 [--repeating]
+tracker students list [--search benali]     # † marks a repeating student
+```
+
+## Annual revenue
+
+`GET /reports/annual?year=` (and `.pdf`) answers "how much came in this year", month by month.
+**All twelve months are always returned**, including empty ones, so a caller can chart or tabulate
+a year without filling gaps. Money is counted by the date it was **paid**, not the cycle it
+settled — the question is what was taken, not what was owed for it.
+
+The monthly average is over the months that **actually earned**, not over twelve: a year that only
+ran from September would otherwise look like it took a third of what it did.
+
+Editing an offering's name or subjects is exposed as `tracker packs edit-offering <name>
+[--rename NEW] [--subject S ...]`, applying across every level at once — per-level edits are
+deliberately impossible, since only prices may differ between an offering's variants.
+
+## Sprint 12 — Enrollment periods: leave & return
+
+A student who stops attending in March and comes back in October shouldn't be billed for the
+months between — but must not have their history quietly reset either. `enrollment_period` records
+the spans a student was actually present:
+
+```
+enrollment_period(student_id, entry_date, leave_date NULL, leave_reason)
+```
+
+**`join_date` still never moves.** The schedule is generated from the anchor forever; periods say
+when the student was *present*, and absence is applied as a filter on top. That separation is the
+whole point: a student who leaves owing three months and returns still owes three months, and
+keeps the drift they had accrued. `schedule.py` is untouched by this sprint.
+
+### Suspension
+
+An unpaid cycle whose due date falls **outside every period** is `suspended`: rendered as "Away",
+excluded from `months_overdue` and `amount_owed`, and unable to accrue drift. Two rules keep it
+honest:
+
+- **A paid cycle is never suspended.** A recorded payment is audit truth regardless of what the
+  attendance history says — settling a month you were away for still counts, and still counts late.
+- **Suspension only removes future accrual.** It cannot subtract drift that already happened,
+  because drift comes from recorded payments.
+
+An *open-ended* absence suspends too, not just a closed gap: a student who left and hasn't
+returned stops accruing arrears from their departure onward.
+
+### Invariants, and where each is enforced
+
+| Rule | Enforced by |
+| --- | --- |
+| `leave_date >= entry_date` | CHECK constraint |
+| At most one open period per student | **partial unique index** on the open rows |
+| Periods never overlap and stay ordered | `EnrollmentService` (+ tests) |
+| The first period starts on `join_date` | `EnrollmentService.amend` refuses to move it |
+
+`amend` validates the *proposed* timeline before writing anything — mutating first would let
+SQLAlchemy autoflush the bad row and surface a database `IntegrityError` instead of a domain
+error, and would leave a rejected amendment sitting dirty in the session.
+
+### Property tests
+
+Four, in `tests/integration/test_enrollment_properties.py` (integration, not unit, because
+suspension lives in the ledger and needs a database):
+
+1. Drift is non-decreasing in `as_of` for any set of non-overlapping absences.
+2. Recording an absence can only *reduce* arrears — never increase them — and leaves drift alone.
+3. A student who never left produces a ledger with nothing suspended: the strict no-op that
+   protects every earlier sprint.
+4. Leaving and returning the same day is indistinguishable from never leaving.
+
+### Endpoints and CLI
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/students/{id}/periods` | Attendance history, oldest first |
+| `POST` | `/api/v1/students/{id}/leave` | `{leave_date, reason?}` |
+| `POST` | `/api/v1/students/{id}/return` | `{entry_date}`. **Never blocked by debt** — re-admitting someone who owes is the teacher's call |
+| `PATCH` | `/api/v1/students/{id}/periods/{pid}` | Correct a mistyped date |
+
+```bash
+tracker students leave 4 --on 2023-09-30 --reason "Pause"
+tracker students return 4 --on 2024-01-15
+tracker students periods 4
+```
+
+Migration 0006 is additive and moves no figure: every existing student gets one **open** period at
+their join date, so nothing is suspended. Students already marked `inactive` keep that status but
+have **no recorded leave date** — the migration deliberately doesn't invent one, since guessing a
+departure month silently changes what they owe. Record a real departure to stop their billing at
+the right month.
+
+## Sprint 13 — Leavers with debt
+
+When a student leaves, they drop out of the active list and their unpaid balance goes with them.
+This makes that balance visible.
+
+**The flag is derived, never stored:** no open enrollment period, plus an outstanding balance as
+of their last departure. A stored boolean would go stale the moment a payment landed; a derived
+one clears itself. Sprint 12's suspension does the arithmetic — months after the departure are
+suspended, so leaving *caps* the debt at what was owed on the way out instead of letting it grow
+forever.
+
+Two routes off the list, and no silent third:
+
+* **They pay.** Recording the payments drops the balance to zero and the flag resolves itself.
+* **The teacher forgives it.** `debt_writeoff` records the amount and a mandatory reason,
+  append-only in the `AnchorOverride` style. It is **not a payment** — a test asserts writing off
+  leaves collected revenue and drift untouched, because the tempting shortcut (recording a fake
+  payment to clear the list) would quietly inflate the revenue reports.
+
+**Nothing blocks.** Re-admitting someone who owes is the teacher's call; `POST /return` succeeds
+and returns `debt_warning` with the amount. The other loophole — re-enrolling under a fresh record
+— is covered by `GET /debts/matches`, which the enrolment form calls as you type. It warns, never
+refuses: real people share names.
+
+| Method | Path | Notes |
+| --- | --- | --- |
+| `GET` | `/api/v1/debts` | Leavers who owe, largest first, plus the total |
+| `GET` | `/api/v1/debts/matches` | Past leavers matching a phone or name (accent/case-insensitive) |
+| `GET` | `/api/v1/debts/{student_id}` | One student's status |
+| `POST` | `/api/v1/debts/{student_id}/write-off` | `{reason}`; 409 if nothing is owed |
+
+A separate router rather than `/students/...` so the collection route can't be swallowed by
+`/students/{student_id}` — FastAPI would try to parse "debts" as an int.
+
+```bash
+tracker debts list
+tracker debts write-off 5 --reason "Déménagement définitif"
+```
+
+The dashboard gained a tile, kept separate from `total_outstanding`: chasing someone who has
+already left is a different conversation from chasing someone still attending.
+
+**Assumption worth confirming (backlog §6 Q6):** a month counts as owed if its due date fell on or
+before the leave date. A student who leaves on the 3rd therefore owes that month.
+
 ## Internationalization (i18n)
 
 The backend speaks **English and French** (`app/core/i18n.py` — a small dependency-free catalog; no

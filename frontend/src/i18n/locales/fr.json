@@ -6,14 +6,23 @@
     "dashboard": "Tableau de bord",
     "students": "Élèves",
     "enroll": "Inscrire",
-    "report": "Rapport mensuel"
+    "report": "Rapport mensuel",
+    "classes": "Classes",
+    "packs": "Packs",
+    "annual": "Année",
+    "debts": "Impayés"
   },
   "pages": {
     "dashboard": "Tableau de bord",
     "students": "Élèves",
     "studentDetail": "Fiche de l'élève",
     "enroll": "Inscrire un élève",
-    "report": "Rapport mensuel"
+    "report": "Rapport mensuel",
+    "classes": "Classes",
+    "classDetail": "Classe",
+    "packs": "Packs",
+    "annual": "Revenus annuels",
+    "debts": "Partis en devant"
   },
   "drift": {
     "onTrack": "À jour",
@@ -33,13 +42,18 @@
     "columns": {
       "name": "Nom",
       "status": "Statut",
-      "fee": "Frais",
       "drift": "Retard",
-      "overdue": "Impayés"
+      "overdue": "Impayés",
+      "class": "Classe",
+      "price": "Tarif",
+      "owed": "Dû"
     },
     "filterLabel": "Statut",
     "filterAll": "Tous",
-    "empty": "Aucun élève trouvé."
+    "empty": "Aucun élève trouvé.",
+    "filterClassAll": "Toutes les classes",
+    "search": "Rechercher",
+    "searchPlaceholder": "Nom…"
   },
   "dashboard": {
     "collectedThisMonth": "Encaissé ce mois-ci",
@@ -68,16 +82,15 @@
   },
   "enroll": {
     "fields": {
-      "name": "Nom",
       "joinDate": "Date d'inscription",
-      "fee": "Frais mensuels",
-      "phone": "Téléphone (facultatif)"
+      "phone": "Téléphone (facultatif)",
+      "class": "Classe"
     },
     "joinDateHint": "Elle fixe les cycles de facturation et ne peut plus être modifiée ensuite.",
     "submit": "Inscrire l'élève",
     "validation": {
-      "nameRequired": "Le nom est obligatoire.",
-      "feeInvalid": "Saisissez des frais supérieurs ou égaux à 0."
+      "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
+      "firstNameRequired": "Le prénom est obligatoire"
     }
   },
   "detail": {
@@ -91,14 +104,18 @@
     },
     "fields": {
       "status": "Statut",
-      "fee": "Frais mensuels",
       "joinDate": "Date d'inscription",
       "drift": "Retard",
       "overdue": "Impayés",
       "nextExpected": "Prochaine échéance",
       "paymentsCount": "Paiements",
       "totalPaid": "Total payé",
-      "phone": "Téléphone"
+      "phone": "Téléphone",
+      "class": "Classe",
+      "monthlyPrice": "Tarif mensuel",
+      "amountOwed": "Montant dû",
+      "firstPayment": "Premier paiement",
+      "repeating": "Redoublant"
     }
   },
   "ledger": {
@@ -113,13 +130,12 @@
     },
     "status": {
       "unpaid": "Impayé",
-      "onTime": "À temps"
+      "onTime": "À temps",
+      "away": "Absent"
     }
   },
   "language": {
-    "label": "Langue",
-    "en": "English",
-    "fr": "Français"
+    "label": "Langue"
   },
   "theme": {
     "switchTo": {
@@ -133,7 +149,9 @@
     "empty": "Rien à afficher pour le moment",
     "retry": "Réessayer",
     "cancel": "Annuler",
-    "save": "Enregistrer"
+    "save": "Enregistrer",
+    "yes": "Oui",
+    "no": "Non"
   },
   "payment": {
     "title": "Enregistrer un paiement",
@@ -163,11 +181,12 @@
     "title": "Modifier la fiche",
     "fields": {
       "phone": "Téléphone",
-      "fee": "Frais mensuels",
-      "status": "Statut"
+      "status": "Statut",
+      "class": "Classe"
     },
     "validation": {
-      "feeInvalid": "Saisissez des frais supérieurs ou égaux à 0."
+      "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
+      "firstNameRequired": "Le prénom est obligatoire"
     }
   },
   "notFound": {
@@ -176,5 +195,112 @@
   },
   "errors": {
     "generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "classes": {
+    "empty": "Aucune classe pour le moment. Créez-en une pour regrouper les élèves.",
+    "create": "Nouvelle classe",
+    "createTitle": "Créer une classe",
+    "level": "Niveau",
+    "name": "Nom",
+    "namePlaceholder": "ex. Groupe A",
+    "students": "Élèves",
+    "drift": "Retard total",
+    "filterLevel": "Niveau",
+    "filterAll": "Tous les niveaux",
+    "addStudent": "Ajouter un élève",
+    "rosterEmpty": "Aucun élève dans cette classe.",
+    "downloadRoster": "Télécharger la liste (PDF)",
+    "rename": "Renommer",
+    "renameTitle": "Renommer la classe",
+    "delete": "Supprimer la classe",
+    "deleteConfirm": "Supprimer cette classe ? Elle ne doit contenir aucun élève.",
+    "unassigned": "Sans classe",
+    "validation": {
+      "nameRequired": "Le nom est obligatoire"
+    },
+    "backToClasses": "Toutes les classes",
+    "none": "Aucune classe"
+  },
+  "packs": {
+    "empty": "Aucun pack pour le moment. Créez une offre pour définir les tarifs.",
+    "newOffering": "Nouvelle offre",
+    "newOfferingTitle": "Nouvelle offre",
+    "offering": "Offre",
+    "subjects": "Matières",
+    "subjectsHint": "Séparées par des virgules, ex. Maths, Physique",
+    "pricesHint": "Laissez un niveau vide si vous ne le proposez pas.",
+    "notOffered": "non proposé",
+    "students": "élèves",
+    "gridHint": "Une ligne par offre, une colonne par niveau. Cliquez sur un tarif pour le modifier.",
+    "editPrice": "Tarif",
+    "editCellTitle": "{{offering}} · {{level}}",
+    "offered": "Proposé à ce niveau",
+    "validation": {
+      "nameRequired": "Le nom est obligatoire",
+      "subjectsRequired": "Au moins une matière est requise",
+      "pricesRequired": "Définissez un tarif pour au moins un niveau"
+    },
+    "save": "Enregistrer",
+    "affects": "Modifie immédiatement le tarif de {{count}} élève(s), y compris pour les mois impayés.",
+    "editOffering": "Modifier l'offre",
+    "editOfferingTitle": "Modifier {{name}}",
+    "appliesToAllLevels": "Le nom et les matières s'appliquent à tous les niveaux de cette offre ; seuls les tarifs diffèrent."
+  },
+  "student": {
+    "pack": "Pack",
+    "noPack": "Aucun pack",
+    "packPriceHint": "Tarif du pack : {{price}}",
+    "customPrice": "Tarif convenu",
+    "customPriceHint": "Laissez vide pour appliquer le tarif du pack. À remplir uniquement si cet élève paie autre chose.",
+    "priceNote": "Motif",
+    "priceNoteHint": "ex. remise fratrie, situation difficile",
+    "insteadOf": "au lieu de {{price}}",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "lastNameHint": "Laissez vide si aucun nom de famille n'est connu",
+    "repeating": "Redoublant",
+    "repeatingShort": "Redoublant",
+    "levelMismatch": "Ce pack concerne {{packLevel}} mais la classe est {{classLevel}}.",
+    "attendance": "Présence",
+    "from": "Du",
+    "until": "Au",
+    "reason": "Motif",
+    "stillHere": "Toujours présent",
+    "markLeft": "Enregistrer un départ",
+    "markReturned": "Enregistrer un retour",
+    "leaveTitle": "Enregistrer un départ",
+    "returnTitle": "Enregistrer un retour",
+    "leaveDate": "Date de départ",
+    "returnDate": "Date de retour",
+    "leaveReason": "Motif",
+    "leaveHint": "Les mois suivant cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
+    "returnHint": "La date d'inscription ne bouge pas : la dette et le retard éventuels reviennent avec l'élève."
+  },
+  "annual": {
+    "year": "Année",
+    "collected": "Encaissé",
+    "payments": "Paiements",
+    "month": "Mois",
+    "total": "Total encaissé",
+    "average": "Moyenne mensuelle",
+    "averageHint": "Moyenne sur les mois ayant rapporté, pas sur douze",
+    "best": "Meilleur mois",
+    "downloadPdf": "Télécharger le PDF",
+    "empty": "Aucun paiement enregistré cette année."
+  },
+  "debts": {
+    "empty": "Personne n'est parti en devant de l'argent.",
+    "totalOwed": "Total dû",
+    "leftOn": "Parti le",
+    "months": "Mois",
+    "owed": "Dû",
+    "writeOff": "Abandonner la créance",
+    "writeOffTitle": "Abandonner le solde de {{name}}",
+    "writeOffReason": "Motif",
+    "writeOffHint": "Enregistré définitivement. Ce n'est pas un paiement — cela ne compte jamais comme recette.",
+    "writeOffConfirm": "Abandonner {{amount}}",
+    "returnedWithDebt": "Cet élève est parti en devant de l'argent",
+    "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti en devant {{amount}}.",
+    "onDashboard": "Partis en devant"
   }
 }

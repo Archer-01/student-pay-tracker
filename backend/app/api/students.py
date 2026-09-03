@@ -1,18 +1,24 @@
 """Read-only student endpoints."""
 
-import re
-import unicodedata
 from datetime import date
+from decimal import Decimal
 from enum import StrEnum
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_locale
-from app.api.pdf_export import render_table_pdf
+from app.api.pdf_export import Stat, render_report_pdf, slugify_name
 from app.core.db import get_db
 from app.core.i18n import translate
 from app.models import Student, StudentStatus
+from app.schemas.enrollment import (
+    LeaveRequest,
+    PeriodAmend,
+    PeriodOut,
+    ReturnRequest,
+    ReturnResultOut,
+)
 from app.schemas.ledger import LedgerEntryOut, LedgerOut
 from app.schemas.override import OverrideCreate, OverrideOut
 from app.schemas.payment import PaymentCreate, PaymentOut
@@ -24,9 +30,12 @@ from app.schemas.student import (
     StudentOut,
     StudentUpdate,
 )
-from app.services.ledger_service import LedgerEntry, LedgerService
+from app.services.debt_service import DebtService
+from app.services.enrollment_service import EnrollmentService
+from app.services.ledger_service import LedgerEntry, LedgerService, StudentSummary
 from app.services.override_service import OverrideService
 from app.services.payment_service import PaymentService
+from app.services.pricing_service import PricingService
 from app.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -41,21 +50,26 @@ async def list_students(
     db: Session = Depends(get_db),
     status: StudentStatus | None = Query(None),
     sort: StudentSort | None = Query(None),
+    class_id: int | None = Query(None, description="Only students in this class."),
+    q: str | None = Query(None, description="Search first or last name."),
     as_of: date | None = Query(None),
 ) -> list[StudentListItemOut]:
     as_of_date = as_of or date.today()
     ledger = LedgerService(db)
+    pricing = PricingService(db)
     items: list[StudentListItemOut] = []
-    for student in StudentService(db).list(status=status):
-        # One ledger pass yields both drift (running total) and arrears (unpaid due cycles).
+    for student in StudentService(db).list(status=status, class_id=class_id, query=q):
+        # One ledger pass yields drift, arrears and the money owed — all priced per cycle by
+        # PricingService, so the "what does a month cost" rule lives in exactly one place.
         entries = ledger.get_ledger(student.id, as_of_date)
-        drift = entries[-1].cumulative_drift if entries else 0
-        months_overdue = 0 if student.fee == 0 else sum(1 for e in entries if e.paid_date is None)
+        unpaid_due = ledger.unpaid_due_dates(student, entries)
         items.append(
             StudentListItemOut(
                 **StudentOut.model_validate(student).model_dump(),
-                cumulative_drift=drift,
-                months_overdue=months_overdue,
+                cumulative_drift=entries[-1].cumulative_drift if entries else 0,
+                months_overdue=len(unpaid_due),
+                amount_owed=pricing.amount_for_cycles(student, unpaid_due),
+                monthly_price=pricing.price_of(student),
             )
         )
     if sort is StudentSort.drift_desc:
@@ -76,9 +90,12 @@ async def get_student(
         **StudentOut.model_validate(student).model_dump(),
         cumulative_drift=summary.cumulative_drift,
         months_overdue=summary.months_overdue,
+        amount_owed=summary.amount_owed,
+        monthly_price=PricingService(db).price_of(student),
         next_expected_date=summary.next_expected_date,
         payments_count=summary.payments_count,
         total_paid=summary.total_paid,
+        first_payment_date=summary.first_payment_date,
         as_of=as_of_date,
     )
 
@@ -112,6 +129,9 @@ async def get_drift(
 
 
 def _ledger_row_status(entry: LedgerEntry, locale: str) -> str:
+    # "Away" before "Unpaid": a month the student wasn't enrolled for is not a debt.
+    if entry.suspended:
+        return translate("csv.ledger.status.away", locale)
     if entry.paid_date is None:
         return translate("csv.ledger.status.unpaid", locale)
     if entry.days_late is not None and entry.days_late > 0:
@@ -119,26 +139,72 @@ def _ledger_row_status(entry: LedgerEntry, locale: str) -> str:
     return translate("csv.ledger.status.on_time", locale)
 
 
-def _ledger_subtitle(student: Student, locale: str) -> str:
-    """The student's name, plus a localized phone line when a phone number is on file."""
-    if student.phone:
-        return f"{student.name}\n{translate('pdf.ledger.phone', locale, phone=student.phone)}"
-    return student.name
+def _fmt_date(value: date | None, locale: str) -> str:
+    return value.isoformat() if value else translate("pdf.value.none", locale)
 
 
-def _slugify_name(name: str) -> str:
-    """An ASCII, filename-safe slug of a name (accents folded, non-alphanumerics hyphenated).
+def _class_label(student: Student, locale: str) -> str:
+    if student.school_class is None:
+        return translate("pdf.value.unassigned", locale)
+    return f"{student.school_class.level.value} — {student.school_class.name}"
 
-    Returns "" for names that carry no ASCII letters/digits (e.g. Arabic script) — the caller
-    then falls back to an id-only filename rather than emitting an empty or non-ASCII one.
+
+def _pack_label(student: Student, locale: str) -> str:
+    """The pack name, plus its level only when that differs from the student's class.
+
+    Printing the level unconditionally reads as a stutter — "2BAC — Groupe A · Maths seul · 2BAC" —
+    since the class already says it. When they disagree, though, that is exactly what a reader
+    needs to see.
     """
-    folded = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode("ascii")
-    return re.sub(r"[^a-zA-Z0-9]+", "-", folded).strip("-").lower()
+    if student.pack is None:
+        return translate("pdf.value.no_pack", locale)
+    same_level = (
+        student.school_class is not None
+        and student.school_class.level is student.pack.level
+    )
+    return student.pack.name if same_level else f"{student.pack.name} · {student.pack.level.value}"
+
+
+def _ledger_facts(
+    student: Student, summary: StudentSummary, locale: str
+) -> list[tuple[str, str]]:
+    """The secondary detail block: everything about the student that isn't a headline figure."""
+    yes_no = translate("pdf.value.yes" if student.is_repeating else "pdf.value.no", locale)
+    facts = [
+        (translate("pdf.field.phone", locale),
+         student.phone or translate("pdf.value.none", locale)),
+        (
+            translate("pdf.field.status", locale),
+            translate(f"status.{student.status.value}", locale),
+        ),
+        (translate("pdf.field.repeating", locale), yes_no),
+        (translate("pdf.field.join_date", locale), _fmt_date(student.join_date, locale)),
+        (translate("pdf.field.first_payment", locale),
+         _fmt_date(summary.first_payment_date, locale)),
+    ]
+    # Only shown when there is an arrangement — otherwise it's noise on every export.
+    if student.custom_price is not None:
+        note = student.price_note or translate("pdf.value.none", locale)
+        facts.append((translate("pdf.field.price_note", locale), note))
+    return facts
+
+
+def _ledger_stats(summary: StudentSummary, monthly_price: Decimal, locale: str) -> list[Stat]:
+    return [
+        Stat(translate("pdf.stat.monthly_price", locale), f"{monthly_price:.2f}"),
+        Stat(translate("pdf.stat.total_paid", locale), f"{summary.total_paid:.2f}"),
+        Stat(translate("pdf.stat.months_overdue", locale), str(summary.months_overdue)),
+        Stat(translate("pdf.stat.amount_owed", locale), f"{summary.amount_owed:.2f}"),
+        Stat(
+            translate("pdf.stat.drift", locale),
+            translate("pdf.value.days", locale, days=summary.cumulative_drift),
+        ),
+    ]
 
 
 def _ledger_filename(student: Student) -> str:
     """Download filename for a student's ledger PDF, including a slug of their name when usable."""
-    slug = _slugify_name(student.name)
+    slug = slugify_name(student.full_name)
     stem = f"student-{student.id}-{slug}" if slug else f"student-{student.id}"
     return f"{stem}-ledger.pdf"
 
@@ -181,23 +247,39 @@ async def get_ledger_pdf(
 ) -> Response:
     as_of_date = as_of or date.today()
     student = StudentService(db).get(student_id)  # 404 if unknown
-    entries = LedgerService(db).get_ledger(student_id, as_of_date)
-    header, rows = _ledger_export(entries, locale)
-    title = translate("pdf.ledger.title", locale)
-    subtitle = _ledger_subtitle(student, locale)
-    return render_table_pdf(
-        title, header, rows, _ledger_filename(student), subtitle=subtitle
+    ledger = LedgerService(db)
+    summary = ledger.student_summary(student_id, as_of_date)
+    header, rows = _ledger_export(ledger.get_ledger(student_id, as_of_date), locale)
+    price = PricingService(db).price_of(student)
+    return render_report_pdf(
+        title=translate("pdf.ledger.title", locale),
+        subtitle=student.full_name,
+        meta=f"{_class_label(student, locale)} · {_pack_label(student, locale)}",
+        stats=_ledger_stats(summary, price, locale),
+        facts=_ledger_facts(student, summary, locale),
+        header=header,
+        rows=rows,
+        filename=_ledger_filename(student),
+        footer=translate(
+            "pdf.footer", locale, generated=date.today().isoformat(), as_of=as_of_date.isoformat()
+        ),
+        empty_message=translate("pdf.ledger.empty", locale),
     )
 
 
 @router.post("", response_model=StudentOut, status_code=status.HTTP_201_CREATED)
 async def create_student(payload: StudentCreate, db: Session = Depends(get_db)) -> StudentOut:
     student = StudentService(db).enroll(
-        name=payload.name,
+        first_name=payload.first_name,
+        last_name=payload.last_name,
         phone=payload.phone,
+        is_repeating=payload.is_repeating,
         join_date=payload.join_date,
-        fee=payload.fee,
         status=payload.status,
+        class_id=payload.class_id,
+        pack_id=payload.pack_id,
+        custom_price=payload.custom_price,
+        price_note=payload.price_note,
     )
     return StudentOut.model_validate(student)
 
@@ -258,3 +340,71 @@ async def create_override(
         student_id=student_id, new_due_date=payload.new_due_date, reason=payload.reason
     )
     return OverrideOut.model_validate(override)
+
+
+@router.get("/{student_id}/periods", response_model=list[PeriodOut], tags=["enrollment"])
+async def list_periods(student_id: int, db: Session = Depends(get_db)) -> list[PeriodOut]:
+    """A student's attendance history, oldest first."""
+    return [PeriodOut.model_validate(p) for p in EnrollmentService(db).history(student_id)]
+
+
+@router.post("/{student_id}/leave", response_model=PeriodOut, tags=["enrollment"])
+async def record_leave(
+    student_id: int, payload: LeaveRequest, db: Session = Depends(get_db)
+) -> PeriodOut:
+    """Record a departure. Months after it stop being owed; drift already accrued is untouched."""
+    period = EnrollmentService(db).leave(
+        student_id, leave_date=payload.leave_date, reason=payload.reason
+    )
+    return PeriodOut.model_validate(period)
+
+
+@router.post("/{student_id}/return", response_model=ReturnResultOut, tags=["enrollment"])
+async def record_return(
+    student_id: int,
+    payload: ReturnRequest,
+    db: Session = Depends(get_db),
+    locale: str = Depends(get_locale),
+) -> ReturnResultOut:
+    """Record a return, opening a new period.
+
+    Deliberately **not** blocked by an outstanding balance: the teacher decides whether to
+    re-admit someone who owes money (backlog §2.3). ``join_date`` is never moved, so a returning
+    student keeps the drift and the debt they left with.
+    """
+    # What they owed *before* returning: reopening a period un-suspends future months, so the
+    # figure has to be read first or it would already have moved.
+    owed = DebtService(db).status(student_id)
+    period = EnrollmentService(db).return_(student_id, entry_date=payload.entry_date)
+    warning = (
+        translate(
+            "warning.returning_with_debt",
+            locale,
+            amount=f"{owed.amount_owed:.2f}",
+            months=owed.months_owed,
+        )
+        if owed.left_with_debt
+        else None
+    )
+    return ReturnResultOut(
+        **PeriodOut.model_validate(period).model_dump(),
+        amount_owed=owed.amount_owed,
+        months_owed=owed.months_owed,
+        debt_warning=warning,
+    )
+
+
+@router.patch(
+    "/{student_id}/periods/{period_id}", response_model=PeriodOut, tags=["enrollment"]
+)
+async def amend_period(
+    student_id: int,
+    period_id: int,
+    payload: PeriodAmend,
+    db: Session = Depends(get_db),
+) -> PeriodOut:
+    """Correct a mistyped date. Every ordering rule is re-checked afterwards."""
+    period = EnrollmentService(db).amend(
+        student_id, period_id, **payload.model_dump(exclude_unset=True)
+    )
+    return PeriodOut.model_validate(period)

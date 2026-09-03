@@ -15,10 +15,10 @@ from app.repos import OverrideRepo, PaymentRepo, StudentRepo
 
 def _make_student(name: str = "Amina", status: StudentStatus = StudentStatus.ACTIVE) -> Student:
     return Student(
-        name=name,
+        first_name=name,
         phone="+212600000000",
         join_date=date(2023, 3, 5),
-        fee=Decimal("300.00"),
+        custom_price=Decimal("300.00"),
         status=status,
     )
 
@@ -57,7 +57,7 @@ def test_student_list_and_status_filter(db_session: Session) -> None:
 
     assert len(repo.list()) == 2
     active = repo.list(status=StudentStatus.ACTIVE)
-    assert [s.name for s in active] == ["Active One"]
+    assert [s.full_name for s in active] == ["Active One"]
 
 
 def test_student_delete_without_history(db_session: Session) -> None:

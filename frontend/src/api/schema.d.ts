@@ -50,7 +50,11 @@ export interface paths {
         get: operations["get_student_api_v1_students__student_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Student
+         * @description Hard-delete a student and cascade to their payments and overrides (admin/dev only).
+         */
+        delete: operations["delete_student_api_v1_students__student_id__delete"];
         options?: never;
         head?: never;
         /** Update Student */
@@ -142,6 +146,329 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/students/{student_id}/periods": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Periods
+         * @description A student's attendance history, oldest first.
+         */
+        get: operations["list_periods_api_v1_students__student_id__periods_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/leave": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record Leave
+         * @description Record a departure. Months after it stop being owed; drift already accrued is untouched.
+         */
+        post: operations["record_leave_api_v1_students__student_id__leave_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/return": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Record Return
+         * @description Record a return, opening a new period.
+         *
+         *     Deliberately **not** blocked by an outstanding balance: the teacher decides whether to
+         *     re-admit someone who owes money (backlog §2.3). ``join_date`` is never moved, so a returning
+         *     student keeps the drift and the debt they left with.
+         */
+        post: operations["record_return_api_v1_students__student_id__return_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/periods/{period_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Amend Period
+         * @description Correct a mistyped date. Every ordering rule is re-checked afterwards.
+         */
+        patch: operations["amend_period_api_v1_students__student_id__periods__period_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/classes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Classes */
+        get: operations["list_classes_api_v1_classes_get"];
+        put?: never;
+        /** Create Class */
+        post: operations["create_class_api_v1_classes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/classes/{class_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Class */
+        get: operations["get_class_api_v1_classes__class_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Class
+         * @description Delete an empty class. A class that still has students is refused with 409.
+         */
+        delete: operations["delete_class_api_v1_classes__class_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Class */
+        patch: operations["update_class_api_v1_classes__class_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/classes/{class_id}/roster.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Roster Pdf */
+        get: operations["get_roster_pdf_api_v1_classes__class_id__roster_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/packs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Packs */
+        get: operations["list_packs_api_v1_packs_get"];
+        put?: never;
+        /** Create Pack */
+        post: operations["create_pack_api_v1_packs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/packs/grid": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Grid
+         * @description The offerings x levels matrix. Missing cells mean "not offered at that level".
+         */
+        get: operations["get_grid_api_v1_packs_grid_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/packs/offerings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create Offering
+         * @description Create a whole grid row: one pack per priced level, sharing one subject set.
+         */
+        post: operations["create_offering_api_v1_packs_offerings_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/packs/offerings/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /**
+         * Update Offering
+         * @description Rename an offering and/or set its subjects, across every level-variant at once.
+         */
+        patch: operations["update_offering_api_v1_packs_offerings__name__patch"];
+        trace?: never;
+    };
+    "/api/v1/packs/{pack_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Pack */
+        get: operations["get_pack_api_v1_packs__pack_id__get"];
+        put?: never;
+        post?: never;
+        /**
+         * Delete Pack
+         * @description Delete a pack no student is on; otherwise 409 — deactivate it instead.
+         */
+        delete: operations["delete_pack_api_v1_packs__pack_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Pack */
+        patch: operations["update_pack_api_v1_packs__pack_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/debts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Leavers
+         * @description Students who left owing money, largest debt first.
+         */
+        get: operations["list_leavers_api_v1_debts_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debts/matches": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Find Matches
+         * @description Past leavers who still owe and match this phone or name.
+         *
+         *     Called by the enrolment form so re-enrolling a debtor under a fresh record surfaces a warning.
+         *     Advisory only — real people share names.
+         */
+        get: operations["find_matches_api_v1_debts_matches_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debts/{student_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Debt */
+        get: operations["get_debt_api_v1_debts__student_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/debts/{student_id}/write-off": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Off
+         * @description Forgive what a departed student owed, with a reason, on the record.
+         *
+         *     Deliberately not a payment: it must never appear in collected revenue.
+         */
+        post: operations["write_off_api_v1_debts__student_id__write_off_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/dashboard/summary": {
         parameters: {
             query?: never;
@@ -193,10 +520,153 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reports/annual": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Annual Report
+         * @description What came in over a year, month by month. Every month is present, including empty ones.
+         */
+        get: operations["annual_report_api_v1_reports_annual_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reports/annual.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Annual Report Pdf */
+        get: operations["annual_report_pdf_api_v1_reports_annual_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AnnualMonthOut */
+        AnnualMonthOut: {
+            /** Month */
+            month: number;
+            /** Collected */
+            collected: string;
+            /** Payments Count */
+            payments_count: number;
+        };
+        /** AnnualReportOut */
+        AnnualReportOut: {
+            /** Year */
+            year: number;
+            /** Months */
+            months: components["schemas"]["AnnualMonthOut"][];
+            /** Total Collected */
+            total_collected: string;
+            /** Payments Count */
+            payments_count: number;
+        };
+        /**
+         * ClassBriefOut
+         * @description The nested form carried on a student, for rendering "2BAC — Groupe A" without a lookup.
+         */
+        ClassBriefOut: {
+            /** Id */
+            id: number;
+            level: components["schemas"]["ClassLevel"];
+            /** Name */
+            name: string;
+        };
+        /** ClassCreate */
+        ClassCreate: {
+            level: components["schemas"]["ClassLevel"];
+            /** Name */
+            name: string;
+        };
+        /** ClassDetailOut */
+        ClassDetailOut: {
+            /** Id */
+            id: number;
+            level: components["schemas"]["ClassLevel"];
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Student Count */
+            student_count: number;
+            /** Cumulative Drift */
+            cumulative_drift: number;
+            /**
+             * As Of
+             * Format: date
+             */
+            as_of: string;
+        };
+        /**
+         * ClassLevel
+         * @description Moroccan school levels, declared in school order.
+         *
+         *     Order matters and is load-bearing: it is the ordering used for display, because sorting the
+         *     *values* alphabetically is wrong ("1BAC" would land before "2AC"). Members can't start with
+         *     a digit, so the member name and the stored value differ — the value is what's stored, filtered
+         *     on, and exported (the ``StudentStatus`` precedent).
+         * @enum {string}
+         */
+        ClassLevel: "1AC" | "2AC" | "3AC" | "TC" | "1BAC" | "2BAC";
+        /** ClassListItemOut */
+        ClassListItemOut: {
+            /** Id */
+            id: number;
+            level: components["schemas"]["ClassLevel"];
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Student Count */
+            student_count: number;
+            /** Cumulative Drift */
+            cumulative_drift: number;
+        };
+        /** ClassOut */
+        ClassOut: {
+            /** Id */
+            id: number;
+            level: components["schemas"]["ClassLevel"];
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ClassUpdate */
+        ClassUpdate: {
+            level?: components["schemas"]["ClassLevel"] | null;
+            /** Name */
+            name?: string | null;
+        };
         /** DashboardSummaryOut */
         DashboardSummaryOut: {
             /**
@@ -208,8 +678,28 @@ export interface components {
             total_collected_this_month: string;
             /** Total Outstanding */
             total_outstanding: string;
+            /** Leavers With Debt */
+            leavers_with_debt: number;
+            /** Owed By Leavers */
+            owed_by_leavers: string;
             /** Top Latecomers */
             top_latecomers: components["schemas"]["LatecomerOut"][];
+        };
+        /**
+         * DebtStatusOut
+         * @description What a student owed when they left. ``left_on`` is null while they're still attending.
+         */
+        DebtStatusOut: {
+            student: components["schemas"]["StudentOut"];
+            /** Left On */
+            left_on: string | null;
+            /** Amount Owed */
+            amount_owed: string;
+            /** Months Owed */
+            months_owed: number;
+            /** Left With Debt */
+            left_with_debt: boolean;
+            written_off: components["schemas"]["WriteoffOut"] | null;
         };
         /** DriftOut */
         DriftOut: {
@@ -222,6 +712,30 @@ export interface components {
             as_of: string;
             /** Cumulative Drift */
             cumulative_drift: number;
+        };
+        /**
+         * GridCellOut
+         * @description One (offering, level) cell. ``pack_id`` is null when the offering isn't sold at a level.
+         */
+        GridCellOut: {
+            level: components["schemas"]["ClassLevel"];
+            /** Pack Id */
+            pack_id: number | null;
+            /** Price */
+            price: string | null;
+            /** Is Active */
+            is_active: boolean | null;
+            /** Student Count */
+            student_count: number;
+        };
+        /** GridRowOut */
+        GridRowOut: {
+            /** Name */
+            name: string;
+            /** Subjects */
+            subjects: string[];
+            /** Cells */
+            cells: components["schemas"]["GridCellOut"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -236,6 +750,23 @@ export interface components {
             name: string;
             /** Cumulative Drift */
             cumulative_drift: number;
+        };
+        /** LeaveRequest */
+        LeaveRequest: {
+            /**
+             * Leave Date
+             * Format: date
+             */
+            leave_date: string;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** LeaversOut */
+        LeaversOut: {
+            /** Leavers */
+            leavers: components["schemas"]["DebtStatusOut"][];
+            /** Total Owed */
+            total_owed: string;
         };
         /** LedgerEntryOut */
         LedgerEntryOut: {
@@ -254,6 +785,8 @@ export interface components {
             amount: string | null;
             /** Cumulative Drift */
             cumulative_drift: number;
+            /** Suspended */
+            suspended: boolean;
         };
         /** LedgerOut */
         LedgerOut: {
@@ -303,6 +836,33 @@ export interface components {
             /** Outstanding */
             outstanding: string;
         };
+        /**
+         * OfferingCreate
+         * @description Create every level-variant of an offering at once — one grid row.
+         *
+         *     Prices are keyed by level; a level omitted here simply isn't offered, which is legal (the
+         *     grid may legitimately have empty cells).
+         */
+        OfferingCreate: {
+            /** Name */
+            name: string;
+            /** Subjects */
+            subjects: string[];
+            /** Prices */
+            prices: {
+                [key: string]: number | string;
+            };
+        };
+        /**
+         * OfferingUpdate
+         * @description Rename an offering and/or change its subjects — applied to every level-variant.
+         */
+        OfferingUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Subjects */
+            subjects?: string[] | null;
+        };
         /** OverrideCreate */
         OverrideCreate: {
             /**
@@ -331,6 +891,73 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /**
+         * PackBriefOut
+         * @description The nested form carried on a student, for rendering "Maths seul · 2BAC" without a lookup.
+         */
+        PackBriefOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            level: components["schemas"]["ClassLevel"];
+            /** Price */
+            price: string;
+        };
+        /**
+         * PackCreate
+         * @description Create a single pack (one offering at one level).
+         */
+        PackCreate: {
+            /** Name */
+            name: string;
+            level: components["schemas"]["ClassLevel"];
+            /** Price */
+            price: number | string;
+            /** Subjects */
+            subjects: string[];
+        };
+        /** PackDetailOut */
+        PackDetailOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            level: components["schemas"]["ClassLevel"];
+            /** Price */
+            price: string;
+            /** Is Active */
+            is_active: boolean;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Subjects */
+            subjects: string[];
+            /** Student Count */
+            student_count: number;
+        };
+        /**
+         * PackGridOut
+         * @description The offerings x levels price matrix — what the packs screen renders.
+         */
+        PackGridOut: {
+            /** Levels */
+            levels: components["schemas"]["ClassLevel"][];
+            /** Rows */
+            rows: components["schemas"]["GridRowOut"][];
+        };
+        /**
+         * PackUpdate
+         * @description Edit one grid cell. Name/subjects belong to the offering, so they're not accepted here.
+         */
+        PackUpdate: {
+            /** Price */
+            price?: (number | string) | null;
+            /** Is Active */
+            is_active?: boolean | null;
         };
         /** PaymentCreate */
         PaymentCreate: {
@@ -377,38 +1004,136 @@ export interface components {
              */
             created_at: string;
         };
+        /** PeriodAmend */
+        PeriodAmend: {
+            /** Entry Date */
+            entry_date?: string | null;
+            /** Leave Date */
+            leave_date?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** PeriodOut */
+        PeriodOut: {
+            /** Id */
+            id: number;
+            /** Student Id */
+            student_id: number;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Leave Date */
+            leave_date: string | null;
+            /** Leave Reason */
+            leave_reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ReturnRequest */
+        ReturnRequest: {
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+        };
+        /**
+         * ReturnResultOut
+         * @description A reopened period, plus what the returning student still owes.
+         *
+         *     The return itself is never refused — re-admitting a debtor is the teacher's call. This is the
+         *     moment they most need to know, so the figure travels back with the response.
+         */
+        ReturnResultOut: {
+            /** Id */
+            id: number;
+            /** Student Id */
+            student_id: number;
+            /**
+             * Entry Date
+             * Format: date
+             */
+            entry_date: string;
+            /** Leave Date */
+            leave_date: string | null;
+            /** Leave Reason */
+            leave_reason: string | null;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Amount Owed */
+            amount_owed: string;
+            /** Months Owed */
+            months_owed: number;
+            /** Debt Warning */
+            debt_warning?: string | null;
+        };
         /** StudentCreate */
         StudentCreate: {
-            /** Name */
-            name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name?: string | null;
             /** Phone */
             phone?: string | null;
+            /**
+             * Is Repeating
+             * @default false
+             */
+            is_repeating: boolean;
             /**
              * Join Date
              * Format: date
              */
             join_date: string;
-            /** Fee */
-            fee: number | string;
             /** @default active */
             status: components["schemas"]["StudentStatus"];
+            /** Class Id */
+            class_id?: number | null;
+            /** Pack Id */
+            pack_id?: number | null;
+            /** Custom Price */
+            custom_price?: (number | string) | null;
+            /** Price Note */
+            price_note?: string | null;
         };
         /** StudentDetailOut */
         StudentDetailOut: {
             /** Id */
             id: number;
-            /** Name */
-            name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string | null;
+            /** Full Name */
+            full_name: string;
             /** Phone */
             phone: string | null;
+            /** Is Repeating */
+            is_repeating: boolean;
             /**
              * Join Date
              * Format: date
              */
             join_date: string;
-            /** Fee */
-            fee: string;
             status: components["schemas"]["StudentStatus"];
+            /** Class Id */
+            class_id: number | null;
+            school_class: components["schemas"]["ClassBriefOut"] | null;
+            /** Pack Id */
+            pack_id: number | null;
+            pack: components["schemas"]["PackBriefOut"] | null;
+            /** Custom Price */
+            custom_price: string | null;
+            /** Price Note */
+            price_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -418,6 +1143,10 @@ export interface components {
             cumulative_drift: number;
             /** Months Overdue */
             months_overdue: number;
+            /** Amount Owed */
+            amount_owed: string;
+            /** Monthly Price */
+            monthly_price: string;
             /**
              * Next Expected Date
              * Format: date
@@ -427,6 +1156,8 @@ export interface components {
             payments_count: number;
             /** Total Paid */
             total_paid: string;
+            /** First Payment Date */
+            first_payment_date: string | null;
             /**
              * As Of
              * Format: date
@@ -437,18 +1168,32 @@ export interface components {
         StudentListItemOut: {
             /** Id */
             id: number;
-            /** Name */
-            name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string | null;
+            /** Full Name */
+            full_name: string;
             /** Phone */
             phone: string | null;
+            /** Is Repeating */
+            is_repeating: boolean;
             /**
              * Join Date
              * Format: date
              */
             join_date: string;
-            /** Fee */
-            fee: string;
             status: components["schemas"]["StudentStatus"];
+            /** Class Id */
+            class_id: number | null;
+            school_class: components["schemas"]["ClassBriefOut"] | null;
+            /** Pack Id */
+            pack_id: number | null;
+            pack: components["schemas"]["PackBriefOut"] | null;
+            /** Custom Price */
+            custom_price: string | null;
+            /** Price Note */
+            price_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -458,23 +1203,41 @@ export interface components {
             cumulative_drift: number;
             /** Months Overdue */
             months_overdue: number;
+            /** Amount Owed */
+            amount_owed: string;
+            /** Monthly Price */
+            monthly_price: string;
         };
         /** StudentOut */
         StudentOut: {
             /** Id */
             id: number;
-            /** Name */
-            name: string;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string | null;
+            /** Full Name */
+            full_name: string;
             /** Phone */
             phone: string | null;
+            /** Is Repeating */
+            is_repeating: boolean;
             /**
              * Join Date
              * Format: date
              */
             join_date: string;
-            /** Fee */
-            fee: string;
             status: components["schemas"]["StudentStatus"];
+            /** Class Id */
+            class_id: number | null;
+            school_class: components["schemas"]["ClassBriefOut"] | null;
+            /** Pack Id */
+            pack_id: number | null;
+            pack: components["schemas"]["PackBriefOut"] | null;
+            /** Custom Price */
+            custom_price: string | null;
+            /** Price Note */
+            price_note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -494,11 +1257,23 @@ export interface components {
         StudentStatus: "active" | "inactive";
         /** StudentUpdate */
         StudentUpdate: {
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
             /** Phone */
             phone?: string | null;
-            /** Fee */
-            fee?: number | string | null;
+            /** Is Repeating */
+            is_repeating?: boolean | null;
             status?: components["schemas"]["StudentStatus"] | null;
+            /** Class Id */
+            class_id?: number | null;
+            /** Pack Id */
+            pack_id?: number | null;
+            /** Custom Price */
+            custom_price?: (number | string) | null;
+            /** Price Note */
+            price_note?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -512,6 +1287,27 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WriteoffCreate */
+        WriteoffCreate: {
+            /** Reason */
+            reason: string;
+        };
+        /** WriteoffOut */
+        WriteoffOut: {
+            /** Id */
+            id: number;
+            /** Student Id */
+            student_id: number;
+            /** Amount */
+            amount: string;
+            /** Reason */
+            reason: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
         };
     };
     responses: never;
@@ -549,6 +1345,10 @@ export interface operations {
             query?: {
                 status?: components["schemas"]["StudentStatus"] | null;
                 sort?: components["schemas"]["StudentSort"] | null;
+                /** @description Only students in this class. */
+                class_id?: number | null;
+                /** @description Search first or last name. */
+                q?: string | null;
                 as_of?: string | null;
             };
             header?: never;
@@ -631,6 +1431,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["StudentDetailOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_student_api_v1_students__student_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -851,6 +1680,714 @@ export interface operations {
             };
         };
     };
+    list_periods_api_v1_students__student_id__periods_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_leave_api_v1_students__student_id__leave_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeaveRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    record_return_api_v1_students__student_id__return_post: {
+        parameters: {
+            query?: {
+                /** @description Force a locale (en/fr); overrides Accept-Language. */
+                lang?: string | null;
+            };
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReturnRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReturnResultOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    amend_period_api_v1_students__student_id__periods__period_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+                period_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PeriodAmend"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PeriodOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_classes_api_v1_classes_get: {
+        parameters: {
+            query?: {
+                level?: components["schemas"]["ClassLevel"] | null;
+                as_of?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassListItemOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_class_api_v1_classes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_class_api_v1_classes__class_id__get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+            };
+            header?: never;
+            path: {
+                class_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_class_api_v1_classes__class_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_class_api_v1_classes__class_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                class_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClassUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClassOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_roster_pdf_api_v1_classes__class_id__roster_pdf_get: {
+        parameters: {
+            query?: {
+                as_of?: string | null;
+                /** @description Force a locale (en/fr); overrides Accept-Language. */
+                lang?: string | null;
+            };
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path: {
+                class_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_packs_api_v1_packs_get: {
+        parameters: {
+            query?: {
+                level?: components["schemas"]["ClassLevel"] | null;
+                active?: boolean | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_pack_api_v1_packs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_grid_api_v1_packs_grid_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackGridOut"];
+                };
+            };
+        };
+    };
+    create_offering_api_v1_packs_offerings_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferingCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_offering_api_v1_packs_offerings__name__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OfferingUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pack_api_v1_packs__pack_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_pack_api_v1_packs__pack_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_pack_api_v1_packs__pack_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pack_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PackUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PackDetailOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_leavers_api_v1_debts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LeaversOut"];
+                };
+            };
+        };
+    };
+    find_matches_api_v1_debts_matches_get: {
+        parameters: {
+            query?: {
+                phone?: string | null;
+                first_name?: string | null;
+                last_name?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtStatusOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_debt_api_v1_debts__student_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DebtStatusOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_off_api_v1_debts__student_id__write_off_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WriteoffCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WriteoffOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_summary_api_v1_dashboard_summary_get: {
         parameters: {
             query?: {
@@ -920,6 +2457,72 @@ export interface operations {
             query: {
                 year: number;
                 month: number;
+                /** @description Force a locale (en/fr); overrides Accept-Language. */
+                lang?: string | null;
+            };
+            header?: {
+                "accept-language"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    annual_report_api_v1_reports_annual_get: {
+        parameters: {
+            query: {
+                year: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnnualReportOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    annual_report_pdf_api_v1_reports_annual_pdf_get: {
+        parameters: {
+            query: {
+                year: number;
                 /** @description Force a locale (en/fr); overrides Accept-Language. */
                 lang?: string | null;
             };

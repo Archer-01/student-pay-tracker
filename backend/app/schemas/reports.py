@@ -1,4 +1,4 @@
-"""Response schemas for the monthly report."""
+"""Response schemas for the monthly and annual reports."""
 
 from datetime import date
 from decimal import Decimal
@@ -29,3 +29,20 @@ class MonthlyReportOut(BaseModel):
     total_collected: Decimal
     total_outstanding: Decimal
     rows: list[MonthlyReportRowOut]
+
+
+class AnnualMonthOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    month: int
+    collected: Decimal
+    payments_count: int
+
+
+class AnnualReportOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    year: int
+    months: list[AnnualMonthOut]
+    total_collected: Decimal
+    payments_count: int

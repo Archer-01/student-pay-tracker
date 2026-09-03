@@ -25,13 +25,28 @@ export function Dashboard() {
               {t("dashboard.asOf", { date: formatDate(data.as_of) })}
             </p>
 
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
               <StatTile label={t("dashboard.collectedThisMonth")}>
                 {formatMoney(data.total_collected_this_month)}
               </StatTile>
               <StatTile label={t("dashboard.totalOutstanding")}>
                 {formatMoney(data.total_outstanding)}
               </StatTile>
+              {/* Kept separate from `total_outstanding`, which covers students still attending:
+                  chasing someone who has already left is a different conversation. Only shown
+                  when there is something to chase. */}
+              {data.leavers_with_debt > 0 && (
+                <Link to="/debts" className="block">
+                  <StatTile label={t("debts.onDashboard")}>
+                    <span className="text-rose-700 dark:text-rose-400">
+                      {formatMoney(data.owed_by_leavers)}
+                    </span>
+                    <span className="ml-2 text-sm font-normal text-slate-400">
+                      ({data.leavers_with_debt})
+                    </span>
+                  </StatTile>
+                </Link>
+              )}
             </div>
 
             <Card padded={false}>

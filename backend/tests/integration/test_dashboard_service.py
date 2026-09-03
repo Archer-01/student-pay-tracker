@@ -16,7 +16,11 @@ def test_dashboard_summary_math(db_session: Session) -> None:
     payments = PaymentService(db_session)
 
     # A (active, fee 300, join Mar 5): pays Apr and May late; Mar & Jun unpaid.
-    a = students.enroll(name="A", phone=None, join_date=date(2023, 3, 5), fee=Decimal("300"))
+    a = students.enroll(
+
+        first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
+
+    )
     payments.record_payment(
         student_id=a.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
     )
@@ -25,17 +29,21 @@ def test_dashboard_summary_math(db_session: Session) -> None:
     )
 
     # B (active, fee 200, join May 5): pays June cycle early (in June); May unpaid.
-    b = students.enroll(name="B", phone=None, join_date=date(2023, 5, 5), fee=Decimal("200"))
+    b = students.enroll(
+
+        first_name="B", phone=None, join_date=date(2023, 5, 5), custom_price=Decimal("200")
+
+    )
     payments.record_payment(
         student_id=b.id, cycle_number=1, paid_date=date(2023, 6, 3), amount=Decimal("200")
     )
 
     # C (INACTIVE): must be excluded from outstanding and latecomers.
     students.enroll(
-        name="C",
+        first_name="C",
         phone=None,
         join_date=date(2023, 1, 5),
-        fee=Decimal("500"),
+        custom_price=Decimal("500"),
         status=StudentStatus.INACTIVE,
     )
 
@@ -56,7 +64,7 @@ def test_dashboard_summary_top_n_limit(db_session: Session) -> None:
     payments = PaymentService(db_session)
     for i in range(4):
         s = students.enroll(
-            name=f"S{i}", phone=None, join_date=date(2023, 3, 5), fee=Decimal("100")
+            first_name=f"S{i}", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("100")
         )
         # Each i pays cycle 1 with i+1 days of lateness -> distinct positive drift.
         payments.record_payment(
