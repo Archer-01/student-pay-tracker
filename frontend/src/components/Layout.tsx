@@ -3,14 +3,21 @@ import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
 
+/**
+ * Destinations only, in the order the work happens: who you teach, what you charge, what came in,
+ * what's still owed.
+ *
+ * "Enrol a student" used to sit here, between Packs and Reports. It is an *action*, not a place,
+ * and it now lives as the primary button on the students page — which is where you already are
+ * when you need it. The two report pages collapsed into one entry with tabs inside, for the same
+ * reason a nav bar shouldn't enumerate a page's sub-views.
+ */
 const navItems = [
   { to: "/", key: "dashboard", end: true },
   { to: "/students", key: "students", end: false },
   { to: "/classes", key: "classes", end: false },
   { to: "/packs", key: "packs", end: false },
-  { to: "/students/new", key: "enroll", end: false },
-  { to: "/reports/monthly", key: "report", end: false },
-  { to: "/reports/annual", key: "annual", end: false },
+  { to: "/reports", key: "report", end: false },
   { to: "/debts", key: "debts", end: false },
 ] as const;
 

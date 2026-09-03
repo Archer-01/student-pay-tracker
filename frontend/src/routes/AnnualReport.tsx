@@ -5,6 +5,7 @@ import { downloadFile } from "../api/client";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
 import { resolveErrorMessage } from "../lib/errors";
+import { ReportTabs } from "../components/ReportTabs";
 import {
   AsyncView,
   Button,
@@ -65,6 +66,7 @@ export function AnnualReport() {
 
   return (
     <div>
+      <ReportTabs />
       <PageHeader title={t("pages.annual")} actions={actions} />
       {downloadError && (
         <p className="mb-4 text-sm text-rose-600 dark:text-rose-400">{downloadError}</p>

@@ -9,6 +9,7 @@ import { DriftBadge } from "../components/DriftBadge";
 import { OverdueBadge } from "../components/OverdueBadge";
 import {
   AsyncView,
+  Button,
   PageHeader,
   Select,
   Table,
@@ -43,7 +44,7 @@ export function StudentsList() {
   const classes = useApi(() => listClasses(), []);
 
   const filter = (
-    <>
+    <div className="flex items-end gap-2">
       <TextField
         id="students-search"
         label={t("students.search")}
@@ -72,7 +73,12 @@ export function StudentsList() {
           { value: "inactive", label: t("status.inactive") },
         ]}
       />
-    </>
+      {/* Enrolling is an action, so it lives on the page you're already on rather than in the
+          nav bar next to the destinations. */}
+      <Link to="/students/new">
+        <Button className="mb-[1px] whitespace-nowrap">{t("students.add")}</Button>
+      </Link>
+    </div>
   );
 
   return (

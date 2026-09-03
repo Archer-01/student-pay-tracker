@@ -5,7 +5,6 @@
   "nav": {
     "dashboard": "Dashboard",
     "students": "Students",
-    "enroll": "Enroll",
     "report": "Monthly report",
     "classes": "Classes",
     "packs": "Packs",
@@ -53,14 +52,25 @@
     "empty": "No students found.",
     "filterClassAll": "All classes",
     "search": "Search",
-    "searchPlaceholder": "Name…"
+    "searchPlaceholder": "Name…",
+    "add": "Add student"
   },
   "dashboard": {
     "collectedThisMonth": "Collected this month",
     "totalOutstanding": "Total outstanding",
-    "topLatecomers": "Top latecomers",
     "asOf": "As of {{date}}",
-    "empty": "No latecomers — everyone's on track."
+    "empty": "Nobody owes anything.",
+    "whoToChase": "Who to chase",
+    "rankedByOwed": "Most owed first",
+    "attention": "Needs attention",
+    "activeStudents_one": "{{count}} student",
+    "activeStudents_other": "{{count}} students",
+    "monthsBehind_one": "{{count}} month behind",
+    "monthsBehind_other": "{{count}} months behind",
+    "unbilled_one": "{{count}} student has no pack and is being charged nothing:",
+    "unbilled_other": "{{count}} students have no pack and are being charged nothing:",
+    "missingLeaveDate_one": "{{count}} student is marked as gone but has no departure date, so their billing is still running:",
+    "missingLeaveDate_other": "{{count}} students are marked as gone but have no departure date, so their billing is still running:"
   },
   "report": {
     "monthLabel": "Month",
@@ -116,6 +126,10 @@
       "amountOwed": "Amount owed",
       "firstPayment": "First payment",
       "repeating": "Repeating the year"
+    },
+    "sections": {
+      "enrolment": "Enrolment",
+      "money": "Money"
     }
   },
   "ledger": {

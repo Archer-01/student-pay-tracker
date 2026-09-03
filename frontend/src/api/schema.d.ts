@@ -678,12 +678,18 @@ export interface components {
             total_collected_this_month: string;
             /** Total Outstanding */
             total_outstanding: string;
+            /** Active Students */
+            active_students: number;
             /** Leavers With Debt */
             leavers_with_debt: number;
             /** Owed By Leavers */
             owed_by_leavers: string;
-            /** Top Latecomers */
-            top_latecomers: components["schemas"]["LatecomerOut"][];
+            /** Top Debtors */
+            top_debtors: components["schemas"]["StudentDigestOut"][];
+            /** Unbilled Students */
+            unbilled_students: components["schemas"]["StudentDigestOut"][];
+            /** Missing Leave Date */
+            missing_leave_date: components["schemas"]["StudentDigestOut"][];
         };
         /**
          * DebtStatusOut
@@ -741,15 +747,6 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
-        };
-        /** LatecomerOut */
-        LatecomerOut: {
-            /** Student Id */
-            student_id: number;
-            /** Name */
-            name: string;
-            /** Cumulative Drift */
-            cumulative_drift: number;
         };
         /** LeaveRequest */
         LeaveRequest: {
@@ -1163,6 +1160,26 @@ export interface components {
              * Format: date
              */
             as_of: string;
+        };
+        /**
+         * StudentDigestOut
+         * @description One student as the dashboard needs them: who, where, and how far behind.
+         */
+        StudentDigestOut: {
+            /** Student Id */
+            student_id: number;
+            /** Name */
+            name: string;
+            /** Class Label */
+            class_label: string | null;
+            /** Monthly Price */
+            monthly_price: string;
+            /** Cumulative Drift */
+            cumulative_drift: number;
+            /** Months Overdue */
+            months_overdue: number;
+            /** Amount Owed */
+            amount_owed: string;
         };
         /** StudentListItemOut */
         StudentListItemOut: {

@@ -13,6 +13,7 @@ export type PaymentOut = components["schemas"]["PaymentOut"];
 export type OverrideCreate = components["schemas"]["OverrideCreate"];
 export type OverrideOut = components["schemas"]["OverrideOut"];
 export type DashboardSummary = components["schemas"]["DashboardSummaryOut"];
+export type StudentDigest = components["schemas"]["StudentDigestOut"];
 /** Moroccan school levels, in school order — shared by classes and (later) pack pricing. */
 export type ClassLevel = components["schemas"]["ClassLevel"];
 export type ClassOut = components["schemas"]["ClassOut"];

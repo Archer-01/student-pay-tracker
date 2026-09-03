@@ -179,9 +179,12 @@ async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Sessi
     data = resp.json()
     assert Decimal(str(data["total_collected_this_month"])) == Decimal("200")
     assert Decimal(str(data["total_outstanding"])) == Decimal("800")
+    # Ranked by money owed: B has no drift at all but owes 200, and under the old drift-only
+    # ranking they were invisible — which is the whole point of the change.
     assert [
-        (latecomer["name"], latecomer["cumulative_drift"]) for latecomer in data["top_latecomers"]
-    ] == [("A", 10)]
+        (debtor["name"], debtor["amount_owed"], debtor["cumulative_drift"])
+        for debtor in data["top_debtors"]
+    ] == [("A", "600.00", 10), ("B", "200.00", 0)]
 
 
 async def test_openapi_and_docs_render(client: AsyncClient) -> None:

@@ -135,15 +135,16 @@ export function StudentDetail() {
               </Modal>
             )}
 
-            <Card className="mb-6">
+            {/* Two groups rather than fourteen tiles in a row: who they are and what they're
+                signed up for, then the money. The split is how the teacher actually reads the
+                page — the second block is the one they open it for. */}
+            <Card className="mb-4">
+              <SectionLabel>{t("detail.sections.enrolment")}</SectionLabel>
               <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
                 <Stat label={t("detail.fields.status")}>{t(`status.${detail.status}`)}</Stat>
                 <Stat label={t("detail.fields.class")}>
                   {detail.school_class ? (
-                    <Link
-                      to={`/classes/${detail.school_class.id}`}
-                      className="hover:underline"
-                    >
+                    <Link to={`/classes/${detail.school_class.id}`} className="hover:underline">
                       {classLabel(detail.school_class)}
                     </Link>
                   ) : (
@@ -157,7 +158,7 @@ export function StudentDetail() {
                     <>
                       {detail.pack.name} · {detail.pack.level}
                       {/* The pack's level disagreeing with the class is allowed but worth
-                          seeing — it is usually a mis-click, occasionally deliberate. */}
+                          seeing — usually a mis-click, occasionally deliberate. */}
                       {detail.school_class &&
                         detail.school_class.level !== detail.pack.level && (
                           <span
@@ -172,7 +173,9 @@ export function StudentDetail() {
                         )}
                     </>
                   ) : (
-                    <span className="font-normal text-slate-400 dark:text-slate-500">
+                    /* No pack means no price, so they are billed nothing — the dashboard flags
+                       this too, but it should be obvious on the student's own page. */
+                    <span className="font-normal text-amber-700 dark:text-amber-400">
                       {t("student.noPack")}
                     </span>
                   )}
@@ -188,21 +191,6 @@ export function StudentDetail() {
                   )}
                 </Stat>
                 <Stat label={t("detail.fields.joinDate")}>{formatDate(detail.join_date)}</Stat>
-                <Stat label={t("detail.fields.drift")}>
-                  <DriftBadge drift={detail.cumulative_drift} />
-                </Stat>
-                <Stat label={t("detail.fields.overdue")}>
-                  <OverdueBadge monthsOverdue={detail.months_overdue} />
-                </Stat>
-                <Stat label={t("detail.fields.amountOwed")}>
-                  {formatMoney(detail.amount_owed)}
-                </Stat>
-                <Stat label={t("detail.fields.nextExpected")}>{formatDate(detail.next_expected_date)}</Stat>
-                <Stat label={t("detail.fields.paymentsCount")}>{detail.payments_count}</Stat>
-                <Stat label={t("detail.fields.firstPayment")}>
-                  {detail.first_payment_date ? formatDate(detail.first_payment_date) : "—"}
-                </Stat>
-                <Stat label={t("detail.fields.totalPaid")}>{formatMoney(detail.total_paid)}</Stat>
                 {/* Shown unconditionally: an empty phone is information too, and a grid that
                     changes shape per student is harder to scan. */}
                 <Stat label={t("detail.fields.phone")}>
@@ -210,6 +198,29 @@ export function StudentDetail() {
                 </Stat>
                 <Stat label={t("detail.fields.repeating")}>
                   {detail.is_repeating ? t("common.yes") : t("common.no")}
+                </Stat>
+              </dl>
+            </Card>
+
+            <Card className="mb-6">
+              <SectionLabel>{t("detail.sections.money")}</SectionLabel>
+              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
+                <Stat label={t("detail.fields.amountOwed")}>
+                  {formatMoney(detail.amount_owed)}
+                </Stat>
+                <Stat label={t("detail.fields.overdue")}>
+                  <OverdueBadge monthsOverdue={detail.months_overdue} />
+                </Stat>
+                <Stat label={t("detail.fields.drift")}>
+                  <DriftBadge drift={detail.cumulative_drift} />
+                </Stat>
+                <Stat label={t("detail.fields.nextExpected")}>
+                  {formatDate(detail.next_expected_date)}
+                </Stat>
+                <Stat label={t("detail.fields.totalPaid")}>{formatMoney(detail.total_paid)}</Stat>
+                <Stat label={t("detail.fields.paymentsCount")}>{detail.payments_count}</Stat>
+                <Stat label={t("detail.fields.firstPayment")}>
+                  {detail.first_payment_date ? formatDate(detail.first_payment_date) : "—"}
                 </Stat>
               </dl>
             </Card>
@@ -308,6 +319,14 @@ function ledgerStatus(entry: LedgerEntry, t: ReturnType<typeof useTranslation>["
   if (entry.paid_date === null) return t("ledger.status.unpaid");
   if (entry.days_late !== null && entry.days_late > 0) return t("drift.late", { count: entry.days_late });
   return t("ledger.status.onTime");
+}
+
+function SectionLabel({ children }: { children: ReactNode }) {
+  return (
+    <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      {children}
+    </h2>
+  );
 }
 
 function Stat({ label, children }: { label: string; children: ReactNode }) {

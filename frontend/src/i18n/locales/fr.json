@@ -5,7 +5,6 @@
   "nav": {
     "dashboard": "Tableau de bord",
     "students": "Élèves",
-    "enroll": "Inscrire",
     "report": "Rapport mensuel",
     "classes": "Classes",
     "packs": "Packs",
@@ -53,14 +52,25 @@
     "empty": "Aucun élève trouvé.",
     "filterClassAll": "Toutes les classes",
     "search": "Rechercher",
-    "searchPlaceholder": "Nom…"
+    "searchPlaceholder": "Nom…",
+    "add": "Ajouter un élève"
   },
   "dashboard": {
     "collectedThisMonth": "Encaissé ce mois-ci",
     "totalOutstanding": "Total impayé",
-    "topLatecomers": "Principaux retardataires",
     "asOf": "Au {{date}}",
-    "empty": "Aucun retardataire — tout le monde est à jour."
+    "empty": "Personne ne doit d'argent.",
+    "whoToChase": "À relancer",
+    "rankedByOwed": "Les plus gros montants d'abord",
+    "attention": "À vérifier",
+    "activeStudents_one": "{{count}} élève",
+    "activeStudents_other": "{{count}} élèves",
+    "monthsBehind_one": "{{count}} mois de retard",
+    "monthsBehind_other": "{{count}} mois de retard",
+    "unbilled_one": "{{count}} élève n'a aucun pack et n'est donc pas facturé :",
+    "unbilled_other": "{{count}} élèves n'ont aucun pack et ne sont donc pas facturés :",
+    "missingLeaveDate_one": "{{count}} élève est marqué parti sans date de départ ; sa facturation continue :",
+    "missingLeaveDate_other": "{{count}} élèves sont marqués partis sans date de départ ; leur facturation continue :"
   },
   "report": {
     "monthLabel": "Mois",
@@ -116,6 +126,10 @@
       "amountOwed": "Montant dû",
       "firstPayment": "Premier paiement",
       "repeating": "Redoublant"
+    },
+    "sections": {
+      "enrolment": "Inscription",
+      "money": "Argent"
     }
   },
   "ledger": {

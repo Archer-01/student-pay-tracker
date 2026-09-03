@@ -8,6 +8,7 @@ import { formatMoney } from "../lib/money";
 import { formatDate } from "../lib/dates";
 import { resolveErrorMessage } from "../lib/errors";
 import { DriftBadge } from "../components/DriftBadge";
+import { ReportTabs } from "../components/ReportTabs";
 import { AsyncView, Button, Card, PageHeader, Select, Table, TBody, THead, Th, Td, Tr } from "../components/ui";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -71,6 +72,7 @@ export function MonthlyReport() {
 
   return (
     <div>
+      <ReportTabs />
       <PageHeader title={t("pages.report")} actions={actions} />
 
       <AsyncView state={state} onRetry={state.reload}>

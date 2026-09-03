@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { Dashboard } from "./routes/Dashboard";
 import { StudentsList } from "./routes/StudentsList";
@@ -23,6 +23,9 @@ export default function App() {
         <Route path="classes" element={<ClassesList />} />
         <Route path="classes/:id" element={<ClassDetail />} />
         <Route path="packs" element={<PacksGrid />} />
+        {/* /reports is the nav destination so both report views highlight it; the month view
+            is the one you want nine times out of ten. */}
+        <Route path="reports" element={<Navigate to="/reports/monthly" replace />} />
         <Route path="reports/monthly" element={<MonthlyReport />} />
         <Route path="reports/annual" element={<AnnualReport />} />
         <Route path="debts" element={<LeaversWithDebt />} />

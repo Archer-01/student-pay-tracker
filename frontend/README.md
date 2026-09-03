@@ -131,6 +131,33 @@ Two warnings, at the two moments they matter:
 The write-off dialog says plainly that it isn't a payment. That matters: the alternative shortcut
 (recording money that never arrived) would quietly inflate the revenue reports.
 
+## Dashboard and navigation
+
+The dashboard answers two questions: **who do I chase**, and **what is quietly wrong**.
+
+It used to rank students by **drift** (cumulative days late). Drift is the metric this product is
+built on and still sits on every row, but it is the wrong key to sort a worklist by — on the seed
+data the largest debtor has one day of drift and used to rank last, while a student with 25 days
+of drift may be fully paid up. Money leads; drift breaks ties.
+
+"Needs attention" surfaces problems that raise no error and produce no bill:
+
+- a student on **no pack**, therefore charged nothing month after month;
+- a student **marked as gone with no departure date**, whose billing is still running (the state
+  migration 0006 deliberately leaves behind rather than inventing a date).
+
+Both render only when non-empty, so a healthy database shows a clean page instead of a row of
+green ticks.
+
+**Navigation is destinations only.** "Enrol a student" was a nav entry sitting between Packs and
+Reports; it is an action, and now lives as the primary button on the students page — where you
+already are when you need it. The monthly and annual reports collapsed into one entry with tabs
+inside, for the same reason a nav bar shouldn't enumerate a page's sub-views. Eight items, six.
+
+**`Card` takes `tone`, not a colour override.** Tailwind resolves classes of equal specificity by
+their order in the generated stylesheet, not the order they appear in the attribute, so passing
+`bg-amber-50` alongside the component's own `bg-white` is a coin flip.
+
 ## Money & dates
 
 Money is handled as **decimal strings** end to end (never float math on the client); render with
