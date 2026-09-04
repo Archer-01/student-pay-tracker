@@ -15,15 +15,10 @@ import {
   AsyncView,
   Button,
   Card,
+  DataTable,
   Modal,
   PageHeader,
-  Table,
-  TBody,
-  Td,
   TextField,
-  Th,
-  THead,
-  Tr,
 } from "../components/ui";
 import { updateClass } from "../api/endpoints";
 
@@ -149,53 +144,62 @@ function ClassView({
         </div>
       </Card>
 
-      {roster.length === 0 ? (
-        <Card>
-          <p className="text-sm text-slate-500 dark:text-slate-400">{t("classes.rosterEmpty")}</p>
-        </Card>
-      ) : (
-        <Table>
-          <THead>
-            <Tr>
-              <Th>{t("students.columns.name")}</Th>
-              <Th>{t("students.columns.status")}</Th>
-              <Th>{t("students.columns.price")}</Th>
-              <Th>{t("students.columns.overdue")}</Th>
-              <Th>{t("students.columns.owed")}</Th>
-              <Th>{t("students.columns.drift")}</Th>
-            </Tr>
-          </THead>
-          <TBody>
-            {roster.map((s) => (
-              <Tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                <Td>
-                  <Link
-                    to={`/students/${s.id}`}
-                    className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                  >
-                    {s.full_name}
-                  </Link>
-                </Td>
-                <Td className="capitalize text-slate-600 dark:text-slate-300">
-                  {t(`status.${s.status}`)}
-                </Td>
-                <Td className="text-slate-600 dark:text-slate-300">
-                  {formatMoney(s.monthly_price)}
-                </Td>
-                <Td>
-                  <OverdueBadge monthsOverdue={s.months_overdue} />
-                </Td>
-                <Td className="text-slate-600 dark:text-slate-300">
-                  {formatMoney(s.amount_owed)}
-                </Td>
-                <Td>
-                  <DriftBadge drift={s.cumulative_drift} />
-                </Td>
-              </Tr>
-            ))}
-          </TBody>
-        </Table>
-      )}
+      <DataTable
+        rows={roster}
+        keyOf={(s) => s.id}
+        empty={
+          <Card>
+            <p className="text-sm text-slate-500 dark:text-slate-400">{t("classes.rosterEmpty")}</p>
+          </Card>
+        }
+        rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
+        columns={[
+          {
+            key: "name",
+            header: t("students.columns.name"),
+            primary: true,
+            cell: (s) => (
+              <Link
+                to={`/students/${s.id}`}
+                className="font-medium text-slate-900 hover:underline dark:text-slate-100"
+              >
+                {s.full_name}
+              </Link>
+            ),
+          },
+          {
+            key: "status",
+            header: t("students.columns.status"),
+            cell: (s) => (
+              <span className="capitalize text-slate-600 dark:text-slate-300">
+                {t(`status.${s.status}`)}
+              </span>
+            ),
+          },
+          {
+            key: "price",
+            header: t("students.columns.price"),
+            align: "right",
+            cell: (s) => formatMoney(s.monthly_price),
+          },
+          {
+            key: "overdue",
+            header: t("students.columns.overdue"),
+            cell: (s) => <OverdueBadge monthsOverdue={s.months_overdue} />,
+          },
+          {
+            key: "owed",
+            header: t("students.columns.owed"),
+            align: "right",
+            cell: (s) => formatMoney(s.amount_owed),
+          },
+          {
+            key: "drift",
+            header: t("students.columns.drift"),
+            cell: (s) => <DriftBadge drift={s.cumulative_drift} />,
+          },
+        ]}
+      />
     </>
   );
 }

@@ -7,19 +7,7 @@ import { formatMoney } from "../lib/money";
 import { classLabel } from "../lib/classes";
 import { DriftBadge } from "../components/DriftBadge";
 import { OverdueBadge } from "../components/OverdueBadge";
-import {
-  AsyncView,
-  Button,
-  PageHeader,
-  Select,
-  Table,
-  TBody,
-  Td,
-  TextField,
-  Th,
-  THead,
-  Tr,
-} from "../components/ui";
+import { AsyncView, Button, DataTable, PageHeader, Select, TextField } from "../components/ui";
 
 type StatusFilter = "" | "active" | "inactive";
 
@@ -92,22 +80,17 @@ export function StudentsList() {
         emptyMessage={t("students.empty")}
       >
         {(rows) => (
-          <Table>
-            <THead>
-              <Tr>
-                <Th>{t("students.columns.name")}</Th>
-                <Th>{t("students.columns.status")}</Th>
-                <Th>{t("students.columns.class")}</Th>
-                <Th>{t("students.columns.price")}</Th>
-                <Th>{t("students.columns.overdue")}</Th>
-                <Th>{t("students.columns.owed")}</Th>
-                <Th>{t("students.columns.drift")}</Th>
-              </Tr>
-            </THead>
-            <TBody>
-              {rows.map((s) => (
-                <Tr key={s.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <Td>
+          <DataTable
+            rows={rows}
+            keyOf={(s) => s.id}
+            rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
+            columns={[
+              {
+                key: "name",
+                header: t("students.columns.name"),
+                primary: true,
+                cell: (s) => (
+                  <>
                     <Link
                       to={`/students/${s.id}`}
                       className="font-medium text-slate-900 hover:underline dark:text-slate-100"
@@ -115,39 +98,60 @@ export function StudentsList() {
                       {s.full_name}
                     </Link>
                     {s.is_repeating && (
-                      <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                         {t("student.repeatingShort")}
                       </span>
                     )}
-                  </Td>
-                  <Td className="capitalize text-slate-600 dark:text-slate-300">{t(`status.${s.status}`)}</Td>
-                  <Td className="text-slate-600 dark:text-slate-300">
-                    {s.school_class ? (
-                      <Link to={`/classes/${s.school_class.id}`} className="hover:underline">
-                        {classLabel(s.school_class)}
-                      </Link>
-                    ) : (
-                      <span className="text-slate-400 dark:text-slate-500">
-                        {t("classes.unassigned")}
-                      </span>
-                    )}
-                  </Td>
-                  <Td className="text-slate-600 dark:text-slate-300">
-                    {formatMoney(s.monthly_price)}
-                  </Td>
-                  <Td>
-                    <OverdueBadge monthsOverdue={s.months_overdue} />
-                  </Td>
-                  <Td className="text-slate-600 dark:text-slate-300">
-                    {formatMoney(s.amount_owed)}
-                  </Td>
-                  <Td>
-                    <DriftBadge drift={s.cumulative_drift} />
-                  </Td>
-                </Tr>
-              ))}
-            </TBody>
-          </Table>
+                  </>
+                ),
+              },
+              {
+                key: "status",
+                header: t("students.columns.status"),
+                cell: (s) => (
+                  <span className="capitalize text-slate-600 dark:text-slate-300">
+                    {t(`status.${s.status}`)}
+                  </span>
+                ),
+              },
+              {
+                key: "class",
+                header: t("students.columns.class"),
+                cell: (s) =>
+                  s.school_class ? (
+                    <Link to={`/classes/${s.school_class.id}`} className="hover:underline">
+                      {classLabel(s.school_class)}
+                    </Link>
+                  ) : (
+                    <span className="text-slate-400 dark:text-slate-500">
+                      {t("classes.unassigned")}
+                    </span>
+                  ),
+              },
+              {
+                key: "price",
+                header: t("students.columns.price"),
+                align: "right",
+                cell: (s) => formatMoney(s.monthly_price),
+              },
+              {
+                key: "overdue",
+                header: t("students.columns.overdue"),
+                cell: (s) => <OverdueBadge monthsOverdue={s.months_overdue} />,
+              },
+              {
+                key: "owed",
+                header: t("students.columns.owed"),
+                align: "right",
+                cell: (s) => formatMoney(s.amount_owed),
+              },
+              {
+                key: "drift",
+                header: t("students.columns.drift"),
+                cell: (s) => <DriftBadge drift={s.cumulative_drift} />,
+              },
+            ]}
+          />
         )}
       </AsyncView>
     </div>

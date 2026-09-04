@@ -79,12 +79,18 @@ export function PacksGrid() {
       >
         {(grid) => (
           <>
-            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">{t("packs.gridHint")}</p>
+            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
+              {t("packs.gridHint")}
+              {/* The matrix is genuinely wide — six levels — so on a phone it scrolls sideways
+                  with the offering column pinned, rather than being folded into cards that would
+                  lose the comparison the grid exists to make. */}
+              <span className="ml-1 sm:hidden">{t("packs.gridScrollHint")}</span>
+            </p>
             <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
               <table className="w-full border-collapse text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/60">
                   <tr>
-                    <th className="px-4 py-2 text-left font-medium text-slate-500 dark:text-slate-400">
+                    <th className="sticky left-0 z-10 bg-slate-50 px-4 py-2 text-left font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                       {t("packs.offering")}
                     </th>
                     {grid.levels.map((level) => (
@@ -103,7 +109,7 @@ export function PacksGrid() {
                       key={row.name}
                       className="border-t border-slate-200 dark:border-slate-800"
                     >
-                      <td className="px-4 py-2">
+                      <td className="sticky left-0 z-10 bg-white px-4 py-2 dark:bg-slate-900">
                         {/* Editing the row header edits the offering: its name and subjects,
                             across every level. Only prices are per-cell. */}
                         <button

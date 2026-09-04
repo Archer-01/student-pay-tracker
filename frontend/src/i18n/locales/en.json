@@ -258,7 +258,8 @@
     "affects": "Changes the price for {{count}} student(s) right away, including months they have not paid yet.",
     "editOffering": "Edit offering",
     "editOfferingTitle": "Edit {{name}}",
-    "appliesToAllLevels": "Name and subjects apply to every level of this offering; only prices differ."
+    "appliesToAllLevels": "Name and subjects apply to every level of this offering; only prices differ.",
+    "gridScrollHint": "Scroll sideways to see every level."
   },
   "student": {
     "pack": "Pack",

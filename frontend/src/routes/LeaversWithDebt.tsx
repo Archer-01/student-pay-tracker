@@ -12,15 +12,10 @@ import {
   AsyncView,
   Button,
   Card,
+  DataTable,
   Modal,
   PageHeader,
-  Table,
-  TBody,
-  Td,
   TextField,
-  Th,
-  THead,
-  Tr,
 } from "../components/ui";
 
 /**
@@ -66,47 +61,69 @@ export function LeaversWithDebt() {
               </p>
             </Card>
 
-            <Table>
-              <THead>
-                <Tr>
-                  <Th>{t("students.columns.name")}</Th>
-                  <Th>{t("detail.fields.phone")}</Th>
-                  <Th>{t("debts.leftOn")}</Th>
-                  <Th>{t("debts.months")}</Th>
-                  <Th>{t("debts.owed")}</Th>
-                  <Th> </Th>
-                </Tr>
-              </THead>
-              <TBody>
-                {data.leavers.map((status) => (
-                  <Tr key={status.student.id}>
-                    <Td>
-                      <Link
-                        to={`/students/${status.student.id}`}
-                        className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                      >
-                        {status.student.full_name}
-                      </Link>
-                    </Td>
-                    <Td className="text-slate-600 dark:text-slate-300">
-                      {status.student.phone ?? "—"}
-                    </Td>
-                    <Td className="text-slate-600 dark:text-slate-300">
-                      {status.left_on ? formatDate(status.left_on) : "—"}
-                    </Td>
-                    <Td className="text-slate-600 dark:text-slate-300">{status.months_owed}</Td>
-                    <Td className="font-medium text-rose-700 dark:text-rose-400">
-                      {formatMoney(status.amount_owed)}
-                    </Td>
-                    <Td>
-                      <Button variant="ghost" onClick={() => setWritingOff(status)}>
-                        {t("debts.writeOff")}
-                      </Button>
-                    </Td>
-                  </Tr>
-                ))}
-              </TBody>
-            </Table>
+            <DataTable
+              rows={data.leavers}
+              keyOf={(s) => s.student.id}
+              columns={[
+                {
+                  key: "name",
+                  header: t("students.columns.name"),
+                  primary: true,
+                  cell: (s) => (
+                    <Link
+                      to={`/students/${s.student.id}`}
+                      className="font-medium text-slate-900 hover:underline dark:text-slate-100"
+                    >
+                      {s.student.full_name}
+                    </Link>
+                  ),
+                },
+                {
+                  key: "phone",
+                  header: t("detail.fields.phone"),
+                  cell: (s) => (
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {s.student.phone ?? "—"}
+                    </span>
+                  ),
+                },
+                {
+                  key: "left",
+                  header: t("debts.leftOn"),
+                  cell: (s) => (
+                    <span className="text-slate-600 dark:text-slate-300">
+                      {s.left_on ? formatDate(s.left_on) : "—"}
+                    </span>
+                  ),
+                },
+                {
+                  key: "months",
+                  header: t("debts.months"),
+                  align: "right",
+                  cell: (s) => s.months_owed,
+                },
+                {
+                  key: "owed",
+                  header: t("debts.owed"),
+                  align: "right",
+                  cell: (s) => (
+                    <span className="font-medium text-rose-700 dark:text-rose-400">
+                      {formatMoney(s.amount_owed)}
+                    </span>
+                  ),
+                },
+                {
+                  key: "action",
+                  header: " ",
+                  align: "right",
+                  cell: (s) => (
+                    <Button variant="ghost" onClick={() => setWritingOff(s)}>
+                      {t("debts.writeOff")}
+                    </Button>
+                  ),
+                },
+              ]}
+            />
           </>
         )}
       </AsyncView>

@@ -11,16 +11,11 @@ import { DriftBadge } from "../components/DriftBadge";
 import {
   AsyncView,
   Button,
+  DataTable,
   Modal,
   PageHeader,
   Select,
-  Table,
-  TBody,
-  Td,
-  Th,
   TextField,
-  THead,
-  Tr,
 } from "../components/ui";
 
 type LevelFilter = "" | ClassLevel;
@@ -73,35 +68,43 @@ export function ClassesList() {
         emptyMessage={t("classes.empty")}
       >
         {(rows) => (
-          <Table>
-            <THead>
-              <Tr>
-                <Th>{t("classes.level")}</Th>
-                <Th>{t("classes.name")}</Th>
-                <Th>{t("classes.students")}</Th>
-                <Th>{t("classes.drift")}</Th>
-              </Tr>
-            </THead>
-            <TBody>
-              {rows.map((c) => (
-                <Tr key={c.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                  <Td className="text-slate-600 dark:text-slate-300">{c.level}</Td>
-                  <Td>
-                    <Link
-                      to={`/classes/${c.id}`}
-                      className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                    >
-                      {c.name}
-                    </Link>
-                  </Td>
-                  <Td className="text-slate-600 dark:text-slate-300">{c.student_count}</Td>
-                  <Td>
-                    <DriftBadge drift={c.cumulative_drift} />
-                  </Td>
-                </Tr>
-              ))}
-            </TBody>
-          </Table>
+          <DataTable
+            rows={rows}
+            keyOf={(c) => c.id}
+            rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
+            columns={[
+              {
+                key: "name",
+                header: t("classes.name"),
+                primary: true,
+                cell: (c) => (
+                  <Link
+                    to={`/classes/${c.id}`}
+                    className="font-medium text-slate-900 hover:underline dark:text-slate-100"
+                  >
+                    {c.level} — {c.name}
+                  </Link>
+                ),
+              },
+              {
+                key: "level",
+                header: t("classes.level"),
+                wideOnly: true,
+                cell: (c) => <span className="text-slate-600 dark:text-slate-300">{c.level}</span>,
+              },
+              {
+                key: "students",
+                header: t("classes.students"),
+                align: "right",
+                cell: (c) => c.student_count,
+              },
+              {
+                key: "drift",
+                header: t("classes.drift"),
+                cell: (c) => <DriftBadge drift={c.cumulative_drift} />,
+              },
+            ]}
+          />
         )}
       </AsyncView>
     </div>

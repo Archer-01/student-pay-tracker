@@ -16,7 +16,20 @@ import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
 import type { LedgerEntry } from "../api/types";
-import { AsyncView, Button, Card, Modal, PageHeader, Table, TBody, THead, Th, Td, Tr } from "../components/ui";
+import {
+  AsyncView,
+  Button,
+  Card,
+  DataTable,
+  Modal,
+  PageHeader,
+  Table,
+  TBody,
+  Td,
+  Th,
+  THead,
+  Tr,
+} from "../components/ui";
 
 type OpenModal = null | "payment" | "override" | "edit" | "leave" | "return";
 
@@ -268,44 +281,64 @@ export function StudentDetail() {
             <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
               {t("ledger.title")}
             </h2>
-            <Table>
-              <THead>
-                <Tr>
-                  <Th>{t("ledger.columns.cycle")}</Th>
-                  <Th>{t("ledger.columns.due")}</Th>
-                  <Th>{t("ledger.columns.paid")}</Th>
-                  <Th>{t("ledger.columns.status")}</Th>
-                  <Th>{t("ledger.columns.amount")}</Th>
-                  <Th>{t("ledger.columns.drift")}</Th>
-                </Tr>
-              </THead>
-              <TBody>
-                {ledger.entries.map((entry) => {
-                  const unpaid = entry.paid_date === null && !entry.suspended;
-                  return (
-                    <Tr
-                      key={entry.cycle_number}
-                      // An away month is styled distinctly from an unpaid one: it is not a debt,
-                      // and colouring them alike is the mistake worth avoiding here.
-                      className={
-                        entry.suspended
-                          ? "bg-slate-50 italic text-slate-400 dark:bg-slate-800/40 dark:text-slate-500"
-                          : unpaid
-                            ? "text-slate-400 dark:text-slate-500"
-                            : ""
-                      }
-                    >
-                      <Td>{entry.cycle_number}</Td>
-                      <Td>{formatDate(entry.expected_due_date)}</Td>
-                      <Td>{entry.paid_date ? formatDate(entry.paid_date) : "—"}</Td>
-                      <Td>{ledgerStatus(entry, t)}</Td>
-                      <Td>{entry.amount !== null ? formatMoney(entry.amount) : "—"}</Td>
-                      <Td>{entry.cumulative_drift}</Td>
-                    </Tr>
-                  );
-                })}
-              </TBody>
-            </Table>
+            <DataTable
+              rows={ledger.entries}
+              keyOf={(entry) => entry.cycle_number}
+              rowClassName={(entry) =>
+                // An away month is styled distinctly from an unpaid one: it is not a debt, and
+                // colouring them alike is the mistake worth avoiding here.
+                entry.suspended
+                  ? "bg-slate-50 italic text-slate-400 dark:bg-slate-800/40 dark:text-slate-500"
+                  : entry.paid_date === null
+                    ? "text-slate-400 dark:text-slate-500"
+                    : ""
+              }
+              columns={[
+                {
+                  key: "due",
+                  header: t("ledger.columns.due"),
+                  primary: true,
+                  cell: (entry) => (
+                    <>
+                      {formatDate(entry.expected_due_date)}
+                      <span className="ml-2 text-xs font-normal text-slate-400">
+                        #{entry.cycle_number}
+                      </span>
+                    </>
+                  ),
+                },
+                {
+                  key: "cycle",
+                  header: t("ledger.columns.cycle"),
+                  // Folded into the due-date heading on a phone, where a bare index earns nothing.
+                  wideOnly: true,
+                  cell: (entry) => entry.cycle_number,
+                },
+                {
+                  key: "paid",
+                  header: t("ledger.columns.paid"),
+                  cell: (entry) => (entry.paid_date ? formatDate(entry.paid_date) : "—"),
+                },
+                {
+                  key: "status",
+                  header: t("ledger.columns.status"),
+                  cell: (entry) => ledgerStatus(entry, t),
+                },
+                {
+                  key: "amount",
+                  header: t("ledger.columns.amount"),
+                  align: "right",
+                  cell: (entry) => (entry.amount !== null ? formatMoney(entry.amount) : "—"),
+                },
+                {
+                  key: "drift",
+                  header: t("ledger.columns.drift"),
+                  align: "right",
+                  wideOnly: true,
+                  cell: (entry) => entry.cumulative_drift,
+                },
+              ]}
+            />
           </>
         )}
       </AsyncView>

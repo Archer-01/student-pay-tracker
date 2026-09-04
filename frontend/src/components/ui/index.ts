@@ -8,6 +8,8 @@ export { Card } from "./Card";
 export { Modal } from "./Modal";
 export { PageHeader } from "./PageHeader";
 export { Table, THead, TBody, Tr, Th, Td } from "./Table";
+export { DataTable } from "./DataTable";
+export type { Column } from "./DataTable";
 export { Field } from "./fields/Field";
 export { inputClass } from "./fields/inputClass";
 export { TextField } from "./fields/TextField";

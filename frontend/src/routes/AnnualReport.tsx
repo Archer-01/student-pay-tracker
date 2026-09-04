@@ -134,11 +134,12 @@ export function AnnualReport() {
                               {formatMoney(m.collected)}
                             </span>
                             {/* A bar relative to the best month, so the shape of the year reads
-                                at a glance without a chart library. */}
+                                at a glance without a chart library. Hidden on a phone, where 120px
+                                of decoration would push the figures themselves off the screen. */}
                             {peak > 0 && (
                               <span
                                 aria-hidden
-                                className="h-1.5 rounded-full bg-indigo-500/70 dark:bg-indigo-400/70"
+                                className="hidden h-1.5 rounded-full bg-indigo-500/70 sm:inline-block dark:bg-indigo-400/70"
                                 style={{ width: `${(Number(m.collected) / peak) * 120}px` }}
                               />
                             )}

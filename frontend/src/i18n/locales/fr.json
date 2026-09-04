@@ -258,7 +258,8 @@
     "affects": "Modifie immédiatement le tarif de {{count}} élève(s), y compris pour les mois impayés.",
     "editOffering": "Modifier l'offre",
     "editOfferingTitle": "Modifier {{name}}",
-    "appliesToAllLevels": "Le nom et les matières s'appliquent à tous les niveaux de cette offre ; seuls les tarifs diffèrent."
+    "appliesToAllLevels": "Le nom et les matières s'appliquent à tous les niveaux de cette offre ; seuls les tarifs diffèrent.",
+    "gridScrollHint": "Faites défiler pour voir tous les niveaux."
   },
   "student": {
     "pack": "Pack",

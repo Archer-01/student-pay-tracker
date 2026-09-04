@@ -9,7 +9,14 @@ import { formatDate } from "../lib/dates";
 import { resolveErrorMessage } from "../lib/errors";
 import { DriftBadge } from "../components/DriftBadge";
 import { ReportTabs } from "../components/ReportTabs";
-import { AsyncView, Button, Card, PageHeader, Select, Table, TBody, THead, Th, Td, Tr } from "../components/ui";
+import {
+  AsyncView,
+  Button,
+  Card,
+  DataTable,
+  PageHeader,
+  Select,
+} from "../components/ui";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -92,39 +99,58 @@ export function MonthlyReport() {
                 <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">{t("report.empty")}</p>
               </Card>
             ) : (
-              <Table>
-                <THead>
-                  <Tr>
-                    <Th>{t("report.columns.name")}</Th>
-                    <Th>{t("report.columns.status")}</Th>
-                    <Th>{t("report.columns.fee")}</Th>
-                    <Th>{t("report.columns.collected")}</Th>
-                    <Th>{t("report.columns.drift")}</Th>
-                    <Th>{t("report.columns.outstanding")}</Th>
-                  </Tr>
-                </THead>
-                <TBody>
-                  {report.rows.map((row) => (
-                    <Tr key={row.student_id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50">
-                      <Td>
-                        <Link
-                          to={`/students/${row.student_id}`}
-                          className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                        >
-                          {row.name}
-                        </Link>
-                      </Td>
-                      <Td className="text-slate-600 dark:text-slate-300">{t(`status.${row.status}`)}</Td>
-                      <Td className="text-slate-600 dark:text-slate-300">{formatMoney(row.fee)}</Td>
-                      <Td className="text-slate-600 dark:text-slate-300">{formatMoney(row.collected)}</Td>
-                      <Td>
-                        <DriftBadge drift={row.cumulative_drift} />
-                      </Td>
-                      <Td className="text-slate-600 dark:text-slate-300">{formatMoney(row.outstanding)}</Td>
-                    </Tr>
-                  ))}
-                </TBody>
-              </Table>
+              <DataTable
+                rows={report.rows}
+                keyOf={(row) => row.student_id}
+                rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
+                columns={[
+                  {
+                    key: "name",
+                    header: t("report.columns.name"),
+                    primary: true,
+                    cell: (row) => (
+                      <Link
+                        to={`/students/${row.student_id}`}
+                        className="font-medium text-slate-900 hover:underline dark:text-slate-100"
+                      >
+                        {row.name}
+                      </Link>
+                    ),
+                  },
+                  {
+                    key: "status",
+                    header: t("report.columns.status"),
+                    cell: (row) => (
+                      <span className="text-slate-600 dark:text-slate-300">
+                        {t(`status.${row.status}`)}
+                      </span>
+                    ),
+                  },
+                  {
+                    key: "fee",
+                    header: t("report.columns.fee"),
+                    align: "right",
+                    cell: (row) => formatMoney(row.fee),
+                  },
+                  {
+                    key: "collected",
+                    header: t("report.columns.collected"),
+                    align: "right",
+                    cell: (row) => formatMoney(row.collected),
+                  },
+                  {
+                    key: "drift",
+                    header: t("report.columns.drift"),
+                    cell: (row) => <DriftBadge drift={row.cumulative_drift} />,
+                  },
+                  {
+                    key: "outstanding",
+                    header: t("report.columns.outstanding"),
+                    align: "right",
+                    cell: (row) => formatMoney(row.outstanding),
+                  },
+                ]}
+              />
             )}
           </>
         )}

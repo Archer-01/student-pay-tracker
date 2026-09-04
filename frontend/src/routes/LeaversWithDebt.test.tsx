@@ -1,9 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { LeaversWithDebt } from "./LeaversWithDebt";
+
+/**
+ * `DataTable` renders a table and a card list, and CSS shows one or the other. jsdom applies no
+ * CSS, so both are in the DOM and a bare `getByRole` finds two of everything. Scope to the table
+ * to assert against a single presentation.
+ */
+const table = () => within(screen.getByRole("table"));
 
 const leaver = {
   student: {
@@ -28,8 +35,9 @@ beforeEach(() => {
 describe("LeaversWithDebt", () => {
   it("lists who left owing what", async () => {
     renderWithProviders(<LeaversWithDebt />);
-    expect(await screen.findByRole("link", { name: "Fatima Zahra" })).toBeInTheDocument();
-    expect(screen.getAllByText("170.00").length).toBeGreaterThan(0);
+    await screen.findAllByRole("link", { name: "Fatima Zahra" });
+    expect(table().getByRole("link", { name: "Fatima Zahra" })).toBeInTheDocument();
+    expect(table().getAllByText("170.00").length).toBeGreaterThan(0);
   });
 
   it("invites action when nobody owes", async () => {
@@ -43,20 +51,23 @@ describe("LeaversWithDebt", () => {
   it("says a write-off is not a payment before asking for one", async () => {
     // The shortcut this wording exists to prevent is recording a fake payment to clear the list.
     renderWithProviders(<LeaversWithDebt />);
-    await userEvent.click(await screen.findByRole("button", { name: /write off/i }));
+    await screen.findAllByRole("button", { name: /write off/i });
+    await userEvent.click(table().getByRole("button", { name: /write off/i }));
     expect(screen.getByText(/not a payment/i)).toBeInTheDocument();
   });
 
   it("refuses to write off without a reason", async () => {
     renderWithProviders(<LeaversWithDebt />);
-    await userEvent.click(await screen.findByRole("button", { name: /write off/i }));
+    await screen.findAllByRole("button", { name: /write off/i });
+    await userEvent.click(table().getByRole("button", { name: /write off/i }));
     await userEvent.click(screen.getByRole("button", { name: /write off 170/i }));
     expect(endpoints.writeOffDebt).not.toHaveBeenCalled();
   });
 
   it("writes off with a reason and refreshes the list", async () => {
     renderWithProviders(<LeaversWithDebt />);
-    await userEvent.click(await screen.findByRole("button", { name: /write off/i }));
+    await screen.findAllByRole("button", { name: /write off/i });
+    await userEvent.click(table().getByRole("button", { name: /write off/i }));
     await userEvent.type(screen.getByLabelText(/reason/i), "moved abroad");
     await userEvent.click(screen.getByRole("button", { name: /write off 170/i }));
     await waitFor(() =>

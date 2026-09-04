@@ -27,16 +27,30 @@ export function Layout() {
   return (
     <div className="min-h-screen">
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-6 py-4">
-          <span className="font-semibold text-slate-900 dark:text-slate-100">{t("app.title")}</span>
-          <nav className="flex flex-wrap items-center gap-1">
+        {/* Two rows on a phone, one from `sm` up. Wrapping six nav items into three lines ate a
+            third of a 375px viewport before anything useful appeared. */}
+        <div className="mx-auto max-w-5xl px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-semibold text-slate-900 dark:text-slate-100">
+              {t("app.title")}
+            </span>
+            {/* Theme and language sit on the title row on a phone, where the nav row is already
+                full, and rejoin the nav on wider screens. */}
+            <span className="flex items-center gap-2 sm:hidden">
+              <ThemeToggle />
+              <LanguageSwitcher />
+            </span>
+          </div>
+          {/* Scrolls sideways rather than wrapping: one predictable row, and the active item is
+              always where you left it. `-mx-4 px-4` lets it bleed to the screen edge. */}
+          <nav className="-mx-4 mt-2 flex items-center gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
             {navItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
                 end={item.end}
                 className={({ isActive }) =>
-                  `rounded-md px-3 py-1.5 text-sm font-medium ${
+                  `shrink-0 rounded-md px-3 py-2 text-sm font-medium ${
                     isActive
                       ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
                       : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
@@ -46,16 +60,16 @@ export function Layout() {
                 {t(`nav.${item.key}`)}
               </NavLink>
             ))}
-            <span className="ml-2">
+            <span className="ml-2 hidden sm:inline-flex">
               <ThemeToggle />
             </span>
-            <span className="ml-2">
+            <span className="ml-2 hidden sm:inline-flex">
               <LanguageSwitcher />
             </span>
           </nav>
         </div>
       </header>
-      <main className="mx-auto max-w-5xl px-6 py-8">
+      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
         <Outlet />
       </main>
     </div>

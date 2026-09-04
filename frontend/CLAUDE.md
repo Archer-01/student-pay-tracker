@@ -101,6 +101,27 @@ i18n copy for full control. Prefer `detail` unless a specific error needs custom
   absolute URL only when the backend is directly reachable (and then it must send CORS headers itself).
 - If you point the app at the backend directly (absolute base), CORS becomes a backend concern again.
 
+## Mobile first
+
+The teacher uses this on a phone between classes, so the unprefixed styles are the phone layout
+and `sm:` upward adds what a wider screen can afford. Concretely:
+
+- **`DataTable` is how lists are built.** It takes column definitions and renders a table from
+  `sm` up and stacked cards below, from the *same* definitions — a hand-written mobile layout is
+  the kind that quietly stops being updated. Mark the identifying column `primary` (it becomes the
+  card's heading) and anything that only earns its width in a table `wideOnly`. Both presentations
+  sit in the DOM and CSS shows one, so tests must scope with `within(screen.getByRole("table"))`
+  or they will find two of everything.
+- **The header is two rows on a phone**, one from `sm` up, and the nav scrolls sideways instead of
+  wrapping — six items wrapped into three lines ate a third of a 375px viewport.
+- **`PageHeader` stacks** its title and actions below `sm`.
+- **The packs grid stays a grid.** It is a six-level matrix whose entire purpose is comparison
+  across a row; folding it into cards would destroy that, so it scrolls with the offering column
+  pinned via `sticky left-0`.
+
+Anything with a fixed pixel width needs a `hidden sm:…` escape or it will push real content off a
+375px screen.
+
 ## Dialogs
 
 `Modal` manages focus, and that is not decoration: `aria-modal="true"` is a promise to assistive
