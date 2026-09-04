@@ -11,7 +11,7 @@ from app.core.logging import configure_logging
 configure_logging()
 
 app = FastAPI(
-    title="Student Pay Tracker",
+    title="Ardoise",
     description="Backend for tracking student tuition payments and lateness (drift).",
     version="0.1.0",
 )

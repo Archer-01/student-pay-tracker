@@ -1,4 +1,4 @@
-# Student Pay Tracker — monorepo
+# Ardoise — monorepo
 
 One deployable image serving a **FastAPI** API and a **built Vite/React SPA** from the **same origin**
 (so there's no CORS and one URL to share). Single-teacher tuition tracker; SQLite, single instance.

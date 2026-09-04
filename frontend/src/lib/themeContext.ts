@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 
 export type Theme = "light" | "dark";
 
-export const THEME_STORAGE_KEY = "student-pay-tracker.theme";
+export const THEME_STORAGE_KEY = "ardoise.theme";
 
 export type ThemeContextValue = {
   theme: Theme;

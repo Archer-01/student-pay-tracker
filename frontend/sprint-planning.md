@@ -1,4 +1,4 @@
-# Frontend Sprint Planning — Student Pay Tracker
+# Frontend Sprint Planning — Ardoise
 
 A step-by-step build plan for the SPA. Each sprint is a **shippable, demoable increment** — the app
 stays runnable at every boundary. Ordering favors real value early (a usable roster and evidence screen)

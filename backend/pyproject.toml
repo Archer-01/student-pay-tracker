@@ -1,5 +1,5 @@
 [project]
-name = "student-pay-tracker-backend"
+name = "ardoise-backend"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [project.scripts]
-tracker = "app.cli:app"
+ardoise = "app.cli:app"
 
 [build-system]
 requires = ["hatchling"]

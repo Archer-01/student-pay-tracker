@@ -1,4 +1,4 @@
-"""Command-line admin tool (`uv run tracker ...`).
+"""Command-line admin tool (`uv run ardoise ...`).
 
 Thin wiring over the service layer — no domain logic lives here. The CLI and the (future) API
 both call the same services, so they produce identical results.
@@ -34,7 +34,7 @@ from app.services.student_service import StudentService
 
 _ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
 
-app = typer.Typer(help="Student payment tracker admin CLI.", no_args_is_help=True)
+app = typer.Typer(help="Ardoise admin CLI.", no_args_is_help=True)
 students_app = typer.Typer(help="Manage students.", no_args_is_help=True)
 payments_app = typer.Typer(help="Record payments.", no_args_is_help=True)
 overrides_app = typer.Typer(help="Manage anchor overrides.", no_args_is_help=True)

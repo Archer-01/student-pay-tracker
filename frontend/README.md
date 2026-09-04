@@ -1,4 +1,4 @@
-# Student Pay Tracker — Frontend
+# Ardoise — Frontend
 
 A Vite + React + TypeScript SPA for a **single-teacher student tuition tracker**. It talks to a FastAPI
 backend that tracks student payments and **"drift"** (cumulative days a student pays late — the app's

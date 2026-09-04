@@ -1,4 +1,4 @@
-# Deployment Brief — Student Pay Tracker (backend)
+# Deployment Brief — Ardoise (backend)
 
 For an agent recommending **how/where to deploy** this backend. It states the app's shape, the hard
 constraints that rule deployment choices in or out, what's already provided, and the open questions to
@@ -84,7 +84,7 @@ required.**
 
 - **The volume is the source of truth.** If it's lost, the data is gone. Pick a platform whose volume is
   durable, and/or replicate.
-- **Built-in backup:** `tracker db backup --to <dir>` writes a timestamped, consistent copy via SQLite's
+- **Built-in backup:** `ardoise db backup --to <dir>` writes a timestamped, consistent copy via SQLite's
   online-backup API (safe while running). Schedule it (cron / platform scheduled job) and, ideally, ship
   copies **off the host** (object storage). Example cron in the README.
 - **Stronger option worth considering:** **Litestream** (continuous SQLite replication to S3-compatible

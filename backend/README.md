@@ -1,4 +1,4 @@
-# Student Pay Tracker — Backend
+# Ardoise — Backend
 
 Backend for a payment tracker a teacher uses to track student tuition payments and lateness ("drift") over time. See `sprint-planning.md` for the full build plan and `CLAUDE.md` for architecture/working-style notes.
 
@@ -21,7 +21,7 @@ just test      # run tests
 just lint      # ruff check + mypy
 just run       # start the dev server (fastapi dev)
 just migrate   # apply Alembic migrations
-just backup    # tracker db backup (timestamped SQLite copy)
+just backup    # ardoise db backup (timestamped SQLite copy)
 just docker-up # docker compose up --build
 ```
 
@@ -169,17 +169,17 @@ a hatchling build backend, so `uv sync` installs it). The CLI is thin wiring —
 API will use — so CLI and API results match.
 
 ```bash
-tracker students add --name "Amina" --join-date 2023-03-05 --fee 300 [--phone …] [--status active]
-tracker students list [--sort-by-drift] [--status active] [--as-of YYYY-MM-DD]
-tracker students show <id> [--as-of YYYY-MM-DD]        # full ledger + cumulative drift
-tracker students delete <id> [--yes]                   # cascades to payments/overrides; prompts unless --yes
-tracker payments record <id> --date YYYY-MM-DD --amount 300 (--for-month YYYY-MM | --cycle N)
-tracker overrides create <id> --new-date YYYY-MM-DD --reason "agreed shift"
-tracker db reset --yes                                  # dev only; needs ALLOW_DB_RESET=1
-tracker db seed [--force]                               # dev only; loads deterministic dummy data
+ardoise students add --name "Amina" --join-date 2023-03-05 --fee 300 [--phone …] [--status active]
+ardoise students list [--sort-by-drift] [--status active] [--as-of YYYY-MM-DD]
+ardoise students show <id> [--as-of YYYY-MM-DD]        # full ledger + cumulative drift
+ardoise students delete <id> [--yes]                   # cascades to payments/overrides; prompts unless --yes
+ardoise payments record <id> --date YYYY-MM-DD --amount 300 (--for-month YYYY-MM | --cycle N)
+ardoise overrides create <id> --new-date YYYY-MM-DD --reason "agreed shift"
+ardoise db reset --yes                                  # dev only; needs ALLOW_DB_RESET=1
+ardoise db seed [--force]                               # dev only; loads deterministic dummy data
 ```
 
-`tracker db seed` populates a fixed, realistic dev dataset (6 students — on-time payers, a chronic
+`ardoise db seed` populates a fixed, realistic dev dataset (6 students — on-time payers, a chronic
 late payer, an unpaid-cycle gap, one anchor override, an inactive student, and one with no phone).
 It's deterministic (reproducible) and defined in `app/core/seed.py`; it refuses to run on a
 non-empty database unless you pass `--force`.
@@ -189,7 +189,7 @@ non-empty database unless you pass `--force`.
   is required. This is how prepayments and catching up on old months are expressed.
 - Reads compute drift **as of today** unless `--as-of` is given; `--sort-by-drift` puts chronic
   latecomers first. Output is `rich` tables.
-- Set `DATABASE_URL` (or `.env`) and run `just migrate` before first use, then `uv run tracker …`
+- Set `DATABASE_URL` (or `.env`) and run `just migrate` before first use, then `uv run ardoise …`
   (or just `tracker …` inside the venv).
 
 Tests drive the CLI end-to-end with `typer`'s `CliRunner` against a temp database, including the
@@ -293,10 +293,10 @@ dependencies.
   `synchronous=NORMAL` — safer, fewer "database is locked" errors.
 - **Health check** — `GET /health` runs `SELECT 1` → `{"status":"ok","database":"ok"}`, or **503** if
   the DB is unreachable (good for uptime monitors and the Docker healthcheck). Open (no token).
-- **Backups** — `tracker db backup [--to DIR]` writes a timestamped, consistent copy via SQLite's
+- **Backups** — `ardoise db backup [--to DIR]` writes a timestamped, consistent copy via SQLite's
   online-backup API (safe while the app runs). Cron example (daily 02:00):
   ```cron
-  0 2 * * * cd /path/to/app && DATABASE_URL=sqlite:///./app.db /path/to/.venv/bin/tracker db backup --to /path/to/backups
+  0 2 * * * cd /path/to/app && DATABASE_URL=sqlite:///./app.db /path/to/.venv/bin/ardoise db backup --to /path/to/backups
   ```
 - **Logging** — minimal stdlib logging (`LOG_LEVEL` env, default INFO); handled domain errors are
   logged with method/path/status.
@@ -347,13 +347,13 @@ the roster inherits the status/sort filters for free.
 **CLI**
 
 ```bash
-tracker classes add --level 2BAC --name "Groupe A"
-tracker classes list [--level 2BAC] [--as-of YYYY-MM-DD]   # school order, counts, class drift
-tracker classes show 1                                     # roster with drift + months overdue
-tracker classes rename 1 --name "Groupe B" [--level 1BAC]
-tracker classes delete 1 --yes                             # refuses a non-empty class
-tracker students add ... --class-id 1
-tracker students assign-class 1 --class-id 2               # or --none to unassign
+ardoise classes add --level 2BAC --name "Groupe A"
+ardoise classes list [--level 2BAC] [--as-of YYYY-MM-DD]   # school order, counts, class drift
+ardoise classes show 1                                     # roster with drift + months overdue
+ardoise classes rename 1 --name "Groupe B" [--level 1BAC]
+ardoise classes delete 1 --yes                             # refuses a non-empty class
+ardoise students add ... --class-id 1
+ardoise students assign-class 1 --class-id 2               # or --none to unassign
 ```
 
 **Note on migration 0002.** Autogenerate produced a `batch_alter_table` on `student`, which on
@@ -429,13 +429,13 @@ it would be wrong.
 ### CLI
 
 ```bash
-tracker packs grid                     # the price matrix — fastest way to check a price round
-tracker packs add --name "Maths seul" --level 2BAC --price 150 --subject Maths
-tracker packs list [--level 2BAC]
-tracker packs deactivate 6
-tracker students set-pack 1 --pack-id 6 [--price 90 --price-note "remise fratrie"]
-tracker students set-pack 1 --clear-price   # back to the pack price
-tracker students set-pack 1 --none          # off any pack
+ardoise packs grid                     # the price matrix — fastest way to check a price round
+ardoise packs add --name "Maths seul" --level 2BAC --price 150 --subject Maths
+ardoise packs list [--level 2BAC]
+ardoise packs deactivate 6
+ardoise students set-pack 1 --pack-id 6 [--price 90 --price-note "remise fratrie"]
+ardoise students set-pack 1 --clear-price   # back to the pack price
+ardoise students set-pack 1 --none          # off any pack
 ```
 
 ## Sprint 11 — Student profile & reworked PDFs
@@ -478,8 +478,8 @@ the text, so the exports are covered rather than eyeballed.
 ### CLI
 
 ```bash
-tracker students add --first-name Amina --last-name Benali --join-date 2023-03-05 [--repeating]
-tracker students list [--search benali]     # † marks a repeating student
+ardoise students add --first-name Amina --last-name Benali --join-date 2023-03-05 [--repeating]
+ardoise students list [--search benali]     # † marks a repeating student
 ```
 
 ## Annual revenue
@@ -492,7 +492,7 @@ settled — the question is what was taken, not what was owed for it.
 The monthly average is over the months that **actually earned**, not over twelve: a year that only
 ran from September would otherwise look like it took a third of what it did.
 
-Editing an offering's name or subjects is exposed as `tracker packs edit-offering <name>
+Editing an offering's name or subjects is exposed as `ardoise packs edit-offering <name>
 [--rename NEW] [--subject S ...]`, applying across every level at once — per-level edits are
 deliberately impossible, since only prices may differ between an offering's variants.
 
@@ -559,9 +559,9 @@ suspension lives in the ledger and needs a database):
 | `PATCH` | `/api/v1/students/{id}/periods/{pid}` | Correct a mistyped date |
 
 ```bash
-tracker students leave 4 --on 2023-09-30 --reason "Pause"
-tracker students return 4 --on 2024-01-15
-tracker students periods 4
+ardoise students leave 4 --on 2023-09-30 --reason "Pause"
+ardoise students return 4 --on 2024-01-15
+ardoise students periods 4
 ```
 
 Migration 0006 is additive and moves no figure: every existing student gets one **open** period at
@@ -605,8 +605,8 @@ A separate router rather than `/students/...` so the collection route can't be s
 `/students/{student_id}` — FastAPI would try to parse "debts" as an int.
 
 ```bash
-tracker debts list
-tracker debts write-off 5 --reason "Déménagement définitif"
+ardoise debts list
+ardoise debts write-off 5 --reason "Déménagement définitif"
 ```
 
 The dashboard gained a tile, kept separate from `total_outstanding`: chasing someone who has
@@ -637,5 +637,5 @@ curl "http://127.0.0.1:8000/api/v1/students/1/ledger.pdf?as_of=2023-07-31&lang=f
 
 Design: **the service layer is locale-agnostic** — exceptions carry a `code` + params, and only the
 edges (API handler, PDF exports) translate. Pydantic **422 field-format** messages (e.g. "name must
-not be blank") stay English; the frontend should validate/localize its own forms. The `tracker` CLI
+not be blank") stay English; the frontend should validate/localize its own forms. The `ardoise` CLI
 is English (dev/admin tool). Every catalog key has both `en` and `fr` (a test enforces this).

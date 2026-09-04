@@ -6,7 +6,7 @@ import fr from "./locales/fr.json";
 export const SUPPORTED_LOCALES = ["en", "fr"] as const;
 export type Locale = (typeof SUPPORTED_LOCALES)[number];
 
-const STORAGE_KEY = "student-pay-tracker.locale";
+const STORAGE_KEY = "ardoise.locale";
 
 /**
  * `localStorage` read/write that survives not having one.

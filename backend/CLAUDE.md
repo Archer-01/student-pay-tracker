@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 All eight sprints in `sprint-planning.md` are implemented: the pure drift core
 (`app/services/schedule.py`), SQLAlchemy models + Alembic migration, the sync service layer, a
 `typer` CLI (`tracker`), the FastAPI read + write API under `/api/v1` (open, no auth), monthly/CSV
-reports, ops hardening (SQLite pragmas, DB health check, `tracker db backup`, minimal logging,
+reports, ops hardening (SQLite pragmas, DB health check, `ardoise db backup`, minimal logging,
 Docker), and English/French i18n on API error messages + CSV exports (`app/core/i18n.py`). `uv run pytest` is green with 100% coverage on `app/services` (100% branch on `schedule.py`);
 `ruff` and `mypy` are clean. `sprint-planning.md` remains the record of *why* things are shaped this
 way; this CLAUDE.md governs how ongoing changes should be made. The invariants and layering rules
@@ -31,11 +31,11 @@ just test      # uv run pytest
 just lint      # uv run ruff check . && uv run mypy app
 just run       # uv run fastapi dev app/main.py
 just migrate   # uv run alembic upgrade head
-just backup    # uv run tracker db backup
+just backup    # uv run ardoise db backup
 just docker-up # docker compose up --build
 ```
 Run a single test with `uv run pytest path/to/test_file.py::test_name`. The API is open (no auth);
-admin tasks also run via the `tracker` CLI, which talks to the DB directly.
+admin tasks also run via the `ardoise` CLI, which talks to the DB directly.
 
 Definition of done for any sprint: tests green, `ruff check` clean, `mypy app` clean, README updated with what shipped, git tag `sprint-N`.
 
@@ -70,7 +70,7 @@ via `app/core/i18n.translate` (English/French; locale chosen per request by `Acc
 `?lang`, default from `settings.default_locale`). The **service layer is locale-agnostic**: domain
 exceptions carry a stable `code` + params (never a formatted sentence), and the API handler / CSV
 endpoints translate. Every new user-facing string gets both `en` and `fr` in the catalog (a test
-enforces completeness). The `tracker` CLI renders in English — it's the dev/admin tool.
+enforces completeness). The `ardoise` CLI renders in English — it's the dev/admin tool.
 
 Build order matters and is intentional — each layer depends on the previous being correct:
 

@@ -1,4 +1,4 @@
-# Student Pay Tracker — Backlog v2
+# Ardoise — Backlog v2
 
 Structured specification for the next round of features, expanded from notes taken during the
 client conversation with the teacher, then revised after a follow-up round of answers.
@@ -7,7 +7,7 @@ client conversation with the teacher, then revised after a follow-up round of an
 frozen — where the client's original phrasing implied a design that would cause trouble, this
 document proposes an alternative and says why (see §2).
 
-**Baseline:** sprints 0–8 are shipped (drift core, models, services, `tracker` CLI, open REST API,
+**Baseline:** sprints 0–8 are shipped (drift core, models, services, `ardoise` CLI, open REST API,
 reports/CSV/PDF, ops hardening, en/fr i18n) plus the React SPA. This document covers sprints 9–13.
 
 ---
@@ -234,7 +234,7 @@ with one group and Physics with another, this becomes a join table and the roste
   *"Adding to 2BAC — Groupe A"* affordance with a way to change it. **Pre-filling invisibly is the
   bug to avoid** — the teacher must be able to see, and correct, which class they're adding to.
 
-**CLI:** `tracker classes add|list|show|rename|delete`.
+**CLI:** `ardoise classes add|list|show|rename|delete`.
 
 **Acceptance criteria**
 
@@ -382,8 +382,8 @@ Pack complet        220     220     250     250     280     300
 Money is a **decimal string** end to end — render with `formatMoney()`, never do float math on the
 client, send strings back. On a grid of 24 editable numbers this is the single most likely bug here.
 
-**CLI:** `tracker packs grid|add|list|edit|deactivate|reprice`, `tracker students assign-pack`.
-`tracker packs grid` printing the matrix as a table is the fastest way to sanity-check a price round.
+**CLI:** `ardoise packs grid|add|list|edit|deactivate|reprice`, `ardoise students assign-pack`.
+`ardoise packs grid` printing the matrix as a table is the fastest way to sanity-check a price round.
 
 **Acceptance criteria**
 
@@ -623,7 +623,7 @@ what it is, and it doesn't imply an enforcement the app deliberately doesn't do.
 | `POST` | `/api/v1/students/{id}/debt/write-off` | `{reason}` → write-off row |
 | `GET` | `/api/v1/students?left_with_debt=true` | New filter |
 
-**CLI:** `tracker debts list`, `tracker debts write-off`.
+**CLI:** `ardoise debts list`, `ardoise debts write-off`.
 
 **Acceptance criteria**
 
@@ -681,7 +681,7 @@ backed by a server-side `session` table rather than a JWT — because the SPA is
 production, because server-side sessions can be revoked instantly, and, decisively, because
 `frontend/CLAUDE.md` relies on plain `<a href>` links for CSV/PDF downloads: a bearer token in
 `localStorage` would break every download link. `/health` stays open for the Docker healthcheck, and
-the `tracker` CLI keeps working without a session — it talks to the DB directly and is the
+the `ardoise` CLI keeps working without a session — it talks to the DB directly and is the
 break-glass tool.
 
 **What sprints 9–13 must do now so this stays cheap later:**
@@ -742,7 +742,7 @@ Every sprint inherits the existing house rules — they are not optional:
   (`app/core/i18n.py`, completeness is test-enforced) and frontend catalogs
   (`src/i18n/locales/{en,fr}.json`). New copy: class levels, pack and subject labels, leave/return
   actions, suspended-cycle wording, debt warnings.
-- **CLI parity:** the `tracker` CLI and the API produce identical results for the same operation.
+- **CLI parity:** the `ardoise` CLI and the API produce identical results for the same operation.
   Every new write operation gets a CLI verb.
 - **`npm run gen:api`** after every backend schema change; `src/api/schema.d.ts` is generated, never
   hand-edited; all calls go through `endpoints.ts`.

@@ -122,7 +122,7 @@ Not really a sprint. Setup only. Skip if you have a template you like.
   - `payments record <student-id> --date --amount`
   - `overrides create <student-id> --new-date --reason`
   - `db reset` (dev only, gated by env var)
-- Entry point wired via `pyproject.toml` so `uv run tracker students list` works
+- Entry point wired via `pyproject.toml` so `uv run ardoise students list` works
 
 **Tests:**
 - CLI tests using typer's `CliRunner`, hitting a temp SQLite file

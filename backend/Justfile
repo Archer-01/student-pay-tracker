@@ -12,7 +12,7 @@ migrate:
     uv run alembic upgrade head
 
 backup:
-    uv run tracker db backup
+    uv run ardoise db backup
 
 docker-up:
     docker compose up --build

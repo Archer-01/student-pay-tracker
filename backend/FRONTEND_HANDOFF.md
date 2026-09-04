@@ -1,4 +1,4 @@
-# Frontend Handoff — Student Pay Tracker
+# Frontend Handoff — Ardoise
 
 This backend is **complete** (all 8 sprints, 179 tests green). It's a single-teacher tool for tracking
 student tuition payments and **"drift"** (how chronically late a student pays). This document is
@@ -26,12 +26,12 @@ just run             # → http://127.0.0.1:8000  (fastapi dev, auto-reload)
 Seed some data quickly via the admin CLI (talks to the DB directly, **no token needed**):
 
 ```bash
-tracker students add --name "Amina" --join-date 2023-03-05 --fee 300
-tracker payments record 1 --date 2023-04-10 --amount 300 --for-month 2023-04
-tracker students show 1
+ardoise students add --name "Amina" --join-date 2023-03-05 --fee 300
+ardoise payments record 1 --date 2023-04-10 --amount 300 --for-month 2023-04
+ardoise students show 1
 ```
 
-- SQLite file at `./app.db`. `tracker db reset --yes` (needs `ALLOW_DB_RESET=1`) wipes it for a clean demo.
+- SQLite file at `./app.db`. `ardoise db reset --yes` (needs `ALLOW_DB_RESET=1`) wipes it for a clean demo.
 - `Decimal` money, `date` everywhere — SQLite, single writer, low traffic (~20–30 students).
 
 ### ⚠️ CORS is NOT configured yet (backend action needed)
