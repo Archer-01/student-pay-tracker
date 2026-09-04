@@ -101,6 +101,15 @@ i18n copy for full control. Prefer `detail` unless a specific error needs custom
   absolute URL only when the backend is directly reachable (and then it must send CORS headers itself).
 - If you point the app at the backend directly (absolute base), CORS becomes a backend concern again.
 
+## Dialogs
+
+`Modal` manages focus, and that is not decoration: `aria-modal="true"` is a promise to assistive
+technology that the rest of the page is inert, and the attribute alone does nothing to make that
+true. Opening moves focus to the first field (not the × button — these dialogs are mostly forms,
+and landing on "close" is a poor first stop), Tab and Shift+Tab wrap inside the panel, closing
+returns focus to whatever opened it, and the page behind is locked from scrolling. If you build
+another overlay, reuse `Modal` rather than reimplementing the parts that are easy to forget.
+
 ## Tests
 
 Vitest + Testing Library, jsdom. `src/test/setup.ts` registers the jest-dom matchers, resets the
