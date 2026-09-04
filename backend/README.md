@@ -615,6 +615,28 @@ already left is a different conversation from chasing someone still attending.
 **Assumption worth confirming (backlog §6 Q6):** a month counts as owed if its due date fell on or
 before the leave date. A student who leaves on the 3rd therefore owes that month.
 
+## Reloading the demo data
+
+`scripts/reset-demo-data.sh` wipes the database and reloads the seed. It is for **before launch
+only** — the moment the teacher records a real payment, it must never run again.
+
+```bash
+docker compose exec -it app scripts/reset-demo-data.sh    # prompts before wiping
+docker compose exec app env ASSUME_YES=1 scripts/reset-demo-data.sh
+```
+
+**A schema change does not need it.** The container runs `alembic upgrade head` on every start
+(the Dockerfile CMD), and every migration here is verified in both directions against a
+*populated* copy of the database. Wiping only changes which rows exist; upgrading is the supported
+path forever.
+
+The script therefore protects itself: it reads the expected roster from `app/core/seed.py` and
+**refuses** if it finds a student the seed doesn't know, on the assumption that anyone
+unrecognised is a real person whose payment history is about to be deleted. `FORCE=1` overrides
+that deliberately. It also backs up to `/data/backups` first — on the mounted volume, not the
+container's own filesystem, where `ardoise db backup`'s relative default would put a copy that
+dies with the container — and refuses to continue unless that backup exists and is non-empty.
+
 ## Internationalization (i18n)
 
 The backend speaks **English and French** (`app/core/i18n.py` — a small dependency-free catalog; no
