@@ -77,9 +77,8 @@ Every student is on exactly one pack. **Adding a new enrollment type is creating
 zero migration, zero deploy.** That is precisely the extensibility the client asked for, and it
 arrives for free rather than as a `type` enum that needs a code change every time.
 
-⚠ **6 levels assumed** — the teacher's "4×6=24" implies six, but only five were listed
-(1AC, 2AC, 3AC, 1BAC, 2BAC). The sixth is presumably **Tronc Commun**. If TC isn't taught, it's 20
-packs and one fewer enum value; nothing else changes. See §6 Q1.
+**6 levels, confirmed.** The sixth is **Tronc Commun**, which the teacher does teach — so the grid
+is the full 4 × 6 = 24.
 
 Consequence: **`student.fee` disappears** as an independently-typed number (§2.2). The set of packs
 *is* the price list.
@@ -705,9 +704,8 @@ with a `role` column already present, so restricting later is route-guard work, 
 
 Each one changes what gets built. Worth a single short call before sprint 9.
 
-1. **Tronc Commun — the 24 doesn't match the list.** "4×6=24" implies six levels, but five were
-   named (1AC, 2AC, 3AC, 1BAC, 2BAC). We've assumed the sixth is Tronc Commun. Confirm — if TC isn't
-   taught it's 20 packs, and if the sixth is something else entirely we need its name. (§2.1, §3.1)
+1. ~~Tronc Commun — the 24 doesn't match the list.~~ **Answered: TC is a real level.** Six levels
+   (1AC, 2AC, 3AC, TC, 1BAC, 2BAC) and 24 packs, as built. (§2.1, §3.1)
 2. **One class per student**, or can a student attend more than one group? (§3.1)
 3. ~~Does "Maths only" cost the same at every level?~~ **Answered: no.** Prices vary by level, so
    `pack` carries a `level` and there are 24 of them. (§2.1, §3.2)

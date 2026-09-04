@@ -31,6 +31,8 @@ npm run dev        # → http://localhost:5173
 npm run dev        # Vite dev server
 npm run build      # tsc -b (typecheck) then vite build → dist/
 npm run lint       # eslint
+npm test           # vitest run (jsdom)
+npm run test:watch # vitest, watching
 npm run preview    # preview the production build
 npm run gen:api    # regenerate src/api/schema.d.ts from the backend's /openapi.json
 ```

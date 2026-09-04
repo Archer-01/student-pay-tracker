@@ -13,16 +13,24 @@ export class ApiError extends Error {
   code?: string;
 
   constructor(status: number, detail: string | ValidationDetail[], code?: string) {
-    super(typeof detail === "string" ? detail : "Validation error");
+    super(ApiError.describe(detail));
     this.status = status;
     this.detail = detail;
     this.code = code;
   }
 
-  /** Human-readable message regardless of whether this was a domain (string) or validation (array) error. */
-  get message(): string {
-    if (typeof this.detail === "string") return this.detail;
-    return this.detail.map((d) => `${d.loc.at(-1)}: ${d.msg}`).join("; ");
+  /**
+   * Human-readable text for either `detail` shape the backend uses: an already-localized string
+   * for domain errors, or a 422 array flattened to "field: message".
+   *
+   * Computed here and handed to `super` rather than exposed as a getter. `Error`'s constructor
+   * assigns `message` as an *own* property on the instance, and an own data property shadows a
+   * prototype getter — so a `get message()` on the subclass is never called, and every validation
+   * error read back as the literal "Validation error".
+   */
+  private static describe(detail: string | ValidationDetail[]): string {
+    if (typeof detail === "string") return detail;
+    return detail.map((d) => `${d.loc.at(-1)}: ${d.msg}`).join("; ");
   }
 }
 

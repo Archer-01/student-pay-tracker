@@ -16,9 +16,11 @@ npm run dev        # Vite dev server → http://localhost:5173
 npm run build      # tsc -b (typecheck) then vite build → dist/
 npm run lint       # eslint
 npm run gen:api    # regenerate src/api/schema.d.ts from the running backend's /openapi.json
+npm test           # vitest run (jsdom); npm run test:watch to iterate
 ```
 
-- **Typecheck without building:** `npx tsc -b`. There is no test runner configured yet.
+- **Typecheck without building:** `npx tsc -b`. Tests are Vitest + Testing Library: `npm test`
+  (single run) or `npm run test:watch`.
 - `gen:api` requires the **backend running locally** at `http://127.0.0.1:8000`. Re-run it whenever the
   backend schema changes — `src/api/schema.d.ts` is generated, do not hand-edit it.
 - **`allowScripts` in package.json** gates native postinstall scripts (esbuild). After changing deps you
@@ -98,3 +100,25 @@ i18n copy for full control. Prefer `detail` unless a specific error needs custom
   builds the full URL against `window.location.origin`, so a relative base works; override with an
   absolute URL only when the backend is directly reachable (and then it must send CORS headers itself).
 - If you point the app at the backend directly (absolute base), CORS becomes a backend concern again.
+
+## Tests
+
+Vitest + Testing Library, jsdom. `src/test/setup.ts` registers the jest-dom matchers, resets the
+locale between tests, and loads the **real i18n singleton** — so tests assert on the copy the
+teacher actually sees, and a missing translation key fails a test instead of rendering its own
+name. `src/test/render.tsx` wraps a component in the providers every screen assumes (router + i18n).
+
+What is worth testing here, and what isn't: the suite covers **logic**, not markup. Formatting and
+locale behaviour, the API client's two error shapes, the `useApi` / `useMutation` state machines,
+and the handful of components that make real decisions — explicit-null semantics in the edit form,
+the pack level-mismatch warning, the dashboard's conditional attention block, the return-with-debt
+acknowledgement, the write-off flow. Rendering a `<Card>` and asserting it has a border is not.
+
+Two things the suite found on the way in, both worth keeping in mind:
+
+- `ApiError` defined `message` as a getter, but `Error`'s constructor assigns `message` as an own
+  property and an own data property shadows a prototype getter — so every validation error read
+  back as the literal "Validation error". Compute in the constructor, don't override with a getter.
+- A `required` input means the browser blocks submission before any handler runs, so a custom
+  "field is required" message is unreachable for an empty value. Ours exists for whitespace-only
+  input, which `required` accepts; the tests assert each path separately.
