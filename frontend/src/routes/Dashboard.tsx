@@ -45,8 +45,13 @@ export function Dashboard() {
               {/* Kept apart from the figure above, which covers students still attending:
                   chasing someone who already left is a different conversation. Only rendered
                   when there is something to chase. */}
+              {/* focus-visible rather than a bare outline-none: this tile is a link, and
+                  removing the outline without replacing it hides it from keyboard users. */}
               {data.leavers_with_debt > 0 && (
-                <Link to="/debts" className="block focus:outline-none">
+                <Link
+                  to="/debts"
+                  className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
+                >
                   <StatTile label={t("debts.onDashboard")} tone="alert">
                     {formatMoney(data.owed_by_leavers)}
                     <span className="ml-2 text-sm font-normal text-slate-400">

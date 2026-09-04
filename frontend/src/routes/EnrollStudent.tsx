@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { createStudent, findSimilarLeavers, listClasses } from "../api/endpoints";
 import { useApi } from "../lib/useApi";
+import { useDebounced } from "../lib/useDebounced";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { classLabel } from "../lib/classes";
@@ -34,16 +35,24 @@ export function EnrollStudent() {
   const [priceNote, setPriceNote] = useState("");
   // The obvious loophole is re-enrolling a debtor under a fresh record. Checked as they type the
   // name or phone, and shown as a warning — real people share names, so it never blocks.
+  //
+  // Debounced: the lookup scans every student, and firing it per keystroke sent a dozen requests
+  // to answer one question.
+  const lookup = useDebounced({
+    first: firstName.trim(),
+    last: lastName.trim(),
+    phone: phone.trim(),
+  });
   const similar = useApi(
     () =>
-      firstName.trim() || phone.trim()
+      lookup.first || lookup.phone
         ? findSimilarLeavers({
-            first_name: firstName.trim() || undefined,
-            last_name: lastName.trim() || undefined,
-            phone: phone.trim() || undefined,
+            first_name: lookup.first || undefined,
+            last_name: lookup.last || undefined,
+            phone: lookup.phone || undefined,
           })
         : Promise.resolve([]),
-    [firstName, lastName, phone],
+    [lookup],
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
