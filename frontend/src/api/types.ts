@@ -1,5 +1,9 @@
 import type { components } from "./schema";
 
+/** The signed-in user. Deliberately has no password field — the backend schema never sends one. */
+export type UserOut = components["schemas"]["UserOut"];
+export type LoginRequest = components["schemas"]["LoginRequest"];
+
 export type StudentOut = components["schemas"]["StudentOut"];
 /** List rows carry `cumulative_drift` on top of the base StudentOut fields. */
 export type StudentListItem = components["schemas"]["StudentListItemOut"];

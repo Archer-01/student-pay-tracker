@@ -10,7 +10,7 @@ that split is what stops a level-variant's subject list drifting away from its s
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.core.db import get_db
+from app.api.deps import get_db
 from app.models import ClassLevel, Pack
 from app.schemas.pack import (
     GridCellOut,

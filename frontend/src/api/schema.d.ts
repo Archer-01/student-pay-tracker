@@ -21,6 +21,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Login
+         * @description Exchange a username and password for a session cookie.
+         *
+         *     Throttled per (username, IP): argon2id alone only slows guessing down, it doesn't stop it.
+         *
+         *     The service call goes through `run_in_threadpool` because argon2id burns ~25ms of CPU by
+         *     design, and this route is `async` — left on the event loop it would stall *every* concurrent
+         *     request for that long, turning the login endpoint into a lever for slowing the whole app.
+         */
+        post: operations["login_api_v1_auth_login_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Logout
+         * @description Drop the session and clear the cookie. Safe to call when already signed out.
+         */
+        post: operations["logout_api_v1_auth_logout_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Me
+         * @description The signed-in user. 401 when there's no valid session — the SPA's "am I logged in?" probe.
+         */
+        get: operations["me_api_v1_auth_me_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/students": {
         parameters: {
             query?: never;
@@ -799,6 +865,13 @@ export interface components {
             /** Entries */
             entries: components["schemas"]["LedgerEntryOut"][];
         };
+        /** LoginRequest */
+        LoginRequest: {
+            /** Username */
+            username: string;
+            /** Password */
+            password: string;
+        };
         /** MonthlyReportOut */
         MonthlyReportOut: {
             /** Year */
@@ -1292,6 +1365,15 @@ export interface components {
             /** Price Note */
             price_note?: string | null;
         };
+        /** UserOut */
+        UserOut: {
+            /** Id */
+            id: number;
+            /** Username */
+            username: string;
+            /** Display Name */
+            display_name: string;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -1357,6 +1439,99 @@ export interface operations {
             };
         };
     };
+    login_api_v1_auth_login_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    logout_api_v1_auth_logout_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    me_api_v1_auth_me_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_students_api_v1_students_get: {
         parameters: {
             query?: {
@@ -1370,7 +1545,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1399,7 +1576,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1436,7 +1615,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1467,7 +1648,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1496,7 +1679,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1533,7 +1718,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1566,7 +1753,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1603,7 +1792,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1634,7 +1825,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1669,7 +1862,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1704,7 +1899,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1735,7 +1932,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1775,7 +1974,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1811,7 +2012,9 @@ export interface operations {
                 student_id: number;
                 period_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1847,7 +2050,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1876,7 +2081,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -1913,7 +2120,9 @@ export interface operations {
             path: {
                 class_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1944,7 +2153,9 @@ export interface operations {
             path: {
                 class_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -1973,7 +2184,9 @@ export interface operations {
             path: {
                 class_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2014,7 +2227,9 @@ export interface operations {
             path: {
                 class_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2046,7 +2261,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2075,7 +2292,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2108,7 +2327,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2121,6 +2342,15 @@ export interface operations {
                     "application/json": components["schemas"]["PackGridOut"];
                 };
             };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
         };
     };
     create_offering_api_v1_packs_offerings_post: {
@@ -2128,7 +2358,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2163,7 +2395,9 @@ export interface operations {
             path: {
                 name: string;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2198,7 +2432,9 @@ export interface operations {
             path: {
                 pack_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2229,7 +2465,9 @@ export interface operations {
             path: {
                 pack_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2258,7 +2496,9 @@ export interface operations {
             path: {
                 pack_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2291,7 +2531,9 @@ export interface operations {
             query?: never;
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2302,6 +2544,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LeaversOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2315,7 +2566,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2346,7 +2599,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2377,7 +2632,9 @@ export interface operations {
             path: {
                 student_id: number;
             };
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody: {
             content: {
@@ -2413,7 +2670,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2445,7 +2704,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2481,7 +2742,9 @@ export interface operations {
                 "accept-language"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2512,7 +2775,9 @@ export interface operations {
             };
             header?: never;
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {
@@ -2547,7 +2812,9 @@ export interface operations {
                 "accept-language"?: string | null;
             };
             path?: never;
-            cookie?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
         };
         requestBody?: never;
         responses: {

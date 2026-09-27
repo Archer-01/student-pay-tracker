@@ -10,7 +10,7 @@ endpoints exist so that decision is an informed one.
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.core.db import get_db
+from app.api.deps import get_db
 from app.schemas.debt import DebtStatusOut, LeaversOut, WriteoffCreate, WriteoffOut
 from app.schemas.student import StudentOut
 from app.services.debt_service import DebtService, DebtStatus

@@ -317,5 +317,18 @@
     "returnedWithDebt": "Cet élève est parti en devant de l'argent",
     "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti en devant {{amount}}.",
     "onDashboard": "Partis en devant"
+  },
+  "auth": {
+    "title": "Connexion",
+    "subtitle": "Ardoise est privé. Connectez-vous pour continuer.",
+    "username": "Nom d'utilisateur",
+    "password": "Mot de passe",
+    "submit": "Se connecter",
+    "signOut": "Se déconnecter",
+    "signedInAs": "Connecté en tant que {{name}}",
+    "checking": "Vérification de votre session…",
+    "usernameRequired": "Saisissez votre nom d'utilisateur",
+    "passwordRequired": "Saisissez votre mot de passe",
+    "expired": "Votre session a expiré. Veuillez vous reconnecter."
   }
 }

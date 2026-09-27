@@ -13,6 +13,7 @@ export type { Column } from "./DataTable";
 export { Field } from "./fields/Field";
 export { inputClass } from "./fields/inputClass";
 export { TextField } from "./fields/TextField";
+export { PasswordField } from "./fields/PasswordField";
 export type { FieldProps } from "./fields/TextField";
 export { MoneyField } from "./fields/MoneyField";
 export { DateField } from "./fields/DateField";

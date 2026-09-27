@@ -11,9 +11,8 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_locale
+from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf, slugify_name
-from app.core.db import get_db
 from app.core.i18n import translate
 from app.models import ClassLevel, SchoolClass
 from app.schemas.school_class import (

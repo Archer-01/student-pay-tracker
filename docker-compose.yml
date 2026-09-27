@@ -4,6 +4,9 @@ services:
     ports:
       - "8000:8000"
     environment:
+      # The *central* (accounts) database. Each teacher's data lives in a sibling
+      # /data/tenant-<id>.db, created along with their account — so the thing to back up is the
+      # volume, not a single file. `ardoise db backup` copies all of them.
       DATABASE_URL: "sqlite:////data/app.db"
     volumes:
       - tracker-data:/data

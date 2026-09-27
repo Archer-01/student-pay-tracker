@@ -5,12 +5,15 @@ import "./index.css";
 import "./i18n";
 import App from "./App.tsx";
 import { ThemeProvider } from "./lib/theme.tsx";
+import { AuthProvider } from "./lib/auth.tsx";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <ThemeProvider>
-        <App />
+        <AuthProvider>
+          <App />
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,

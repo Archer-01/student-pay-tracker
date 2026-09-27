@@ -11,13 +11,22 @@ resolve. It does **not** prescribe a platform — that's your call after reading
 A tiny Python **FastAPI + SQLite** API for **one teacher** tracking ~20–30 students' tuition payments.
 Traffic is a handful of requests per day. Two facts dominate every deployment decision:
 
-1. **It's a single-node, single-writer SQLite app.** The database is one file on disk. Deploy **one
-   instance** with a **persistent volume**. Do **not** run multiple replicas/nodes (they'd each get a
-   separate DB file, or corrupt a shared one). No load balancer fan-out, no autoscaling.
-2. **The API has no authentication** (intentionally removed — single trusted user). Anyone who can
-   reach it can read/write real student PII. **Access control must be provided by the infrastructure**
-   (private network, VPN/tunnel, IP allowlist, or an auth proxy at the edge). Do not expose it openly
-   on the public internet as-is.
+1. **It's a single-node SQLite app.** Deploy **one instance** with a **persistent volume**. Do
+   **not** run multiple replicas/nodes (they'd each get separate DB files, or corrupt shared ones).
+   No load balancer fan-out, no autoscaling.
+
+   Note it is now **several** files on that volume, not one: `central.db` holds the accounts and
+   each teacher gets their own `tenant-<id>.db`. Back up the directory, not a single file (`ardoise
+   db backup` handles this). Each file has its own write lock, so the teachers no longer contend
+   with each other.
+2. **The app requires a sign-in, and that changes the deployment bar — it does not remove it.**
+   Every `/api/v1` route except `/auth/*` needs a session cookie; `/health` stays open for probes.
+   Accounts are created with `ardoise users add` (no signup route). Two consequences:
+   - **TLS is now mandatory, not advisory.** The session cookie defaults to `Secure`, so the app
+     must be behind HTTPS or nobody can log in. Set `COOKIE_SECURE=false` **only** for local http.
+   - **Defence in depth is still worth it.** The data is real student PII behind one password. A
+     private network, VPN/tunnel, IP allowlist, or identity proxy in front remains the safer
+     posture — the login is a lock on the door, not a reason to put the door on a busy street.
 
 Everything else is easy: it's small, container-ready, and cheap to run (a $5 VPS or a Raspberry Pi is
 plenty).
@@ -60,8 +69,11 @@ required.**
 
 | Var | Default | Purpose |
 |---|---|---|
-| `DATABASE_URL` | `sqlite:///./app.db` | SQLite URL. In Docker it's `sqlite:////data/app.db` (absolute, on the volume). |
+| `DATABASE_URL` | `sqlite:///./app.db` | The **central** (accounts) database. In Docker `sqlite:////data/app.db`. Each teacher's data goes in a `tenant-<id>.db` beside it. |
+| `ARDOISE_USER` | — | CLI only: which teacher's data to work on, instead of passing `--user`. |
 | `DEFAULT_LOCALE` | `en` | Fallback language (`en`/`fr`) when a request sets none. |
+| `SESSION_TTL_DAYS` | `7` | How long a sign-in lasts. Fixed from login, never slid forward. |
+| `COOKIE_SECURE` | `true` | `Secure` flag on the session cookie. **Only** set `false` for local http — over https, leaving it true is what keeps the session off the wire in the clear. |
 | `LOG_LEVEL` | `INFO` | Stdlib logging level. Logs go to stdout/stderr. |
 
 > Heads-up: a `DATABASE_URL` exported in the shell **overrides** `.env`. On the deploy host make sure it
@@ -69,12 +81,32 @@ required.**
 
 ## 5. Security posture (read carefully)
 
-- **No auth in the app.** This is deliberate for a single-teacher tool. For any non-local deployment,
-  put access control in front of it — e.g. a reverse proxy with Basic auth, an identity proxy
-  (Cloudflare Access / Tailscale / Authelia), an IP allowlist, or keep it on a private network / VPN.
+- **Auth: session cookie, argon2id, server-side sessions.** Accounts are provisioned with
+  `ardoise users add`; there is no self-service signup and no password-reset flow, so a forgotten
+  password is fixed with `ardoise users passwd <username>` on the host. `ardoise users deactivate`
+  revokes an account and all of its live sessions immediately.
+- **Sessions are fixed 7-day (`SESSION_TTL_DAYS`), refreshed at login**, not sliding — everyone
+  re-authenticates at least weekly.
+- **`COOKIE_SECURE` must stay `true` in any real deployment** (the default). Setting it false over
+  a public network would expose the session cookie to anyone on the path.
+- **Failed logins are throttled in-process**: 10 per (username, IP) per 15 minutes, then 429 for
+  15 minutes. Counters live in memory, so a restart clears them — acceptable for a single instance,
+  and worth knowing if you restart often.
+- **Each teacher's data is in its own database file**, so one account cannot read another's
+  students even through a bug in a query.
+- **There is no "delete account" command** — `ardoise users deactivate` switches an account off and
+  revokes its sessions while leaving its database untouched. Removing a teacher's data is a
+  deliberate `rm` of their `tenant-<id>.db`, which is the right amount of friction for an
+  irreversible act on someone's records.
+- **`/docs`, `/redoc` and `/openapi.json` require a session**, same as the data routes.
+- Layering an identity proxy (Cloudflare Access / Tailscale / Authelia), an IP allowlist, or a VPN
+  in front is still recommended for a public deployment.
+- **Run one worker** (already the design). The throttle is per-process, so multiple workers would
+  each keep their own counters and multiply the effective guess budget.
 - **Data is PII** — student names, phone numbers, fees, payment history. Treat backups and access
   accordingly; prefer HTTPS end-to-end and a non-public surface.
-- **TLS:** the app speaks plain HTTP; put it behind a proxy/platform that provides HTTPS.
+- **TLS:** the app speaks plain HTTP; put it behind a proxy/platform that provides HTTPS. This is
+  now required rather than merely advised — see the `Secure` cookie note above.
 - **CORS is not configured in the app.** If the frontend is served from a **different origin**, either
   (a) serve the frontend same-origin (reverse-proxy both under one domain — simplest), or (b) ask the
   backend team to add `CORSMiddleware` for the frontend's origin. A separate **frontend** (SPA) consumes
@@ -141,7 +173,9 @@ All must satisfy §3 (single instance + persistent volume + a non-public/authent
 ## 11. Repo pointers
 
 - `README.md` — full feature/endpoint reference (sprint-by-sprint), Docker + backup + i18n sections.
-- `CLAUDE.md` — architecture, invariants, out-of-scope (note: **no auth, SQLite only, single writer**).
-- `FRONTEND_HANDOFF.md` — the frontend contract (auth-free API, `Accept-Language`/`?lang`, CORS caveat).
+- `CLAUDE.md` — architecture, invariants, out-of-scope (note: **SQLite only, single writer**; the
+  Auth section covers the session gate).
+- `FRONTEND_HANDOFF.md` — the frontend contract (`Accept-Language`/`?lang`, CORS caveat). Predates
+  the session gate; `frontend/CLAUDE.md` is current on auth.
 - `Dockerfile` / `docker-compose.yml` — the deployment artifacts described above.
 - `app/core/settings.py` — the exact config surface.

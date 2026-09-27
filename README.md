@@ -44,5 +44,35 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 ## Constraints (do not change)
 
 SQLite, **single instance / single writer**, one uvicorn worker. Migrations run on startup
-(`alembic upgrade head`). The app is **open (no auth)** by design — put access control in front of it for
-any non-local deployment. See `backend/DEPLOYMENT_BRIEF.md`.
+(`alembic upgrade head`).
+
+The app **requires a sign-in**: every `/api/v1` route except `/auth/*` needs a session cookie, and
+`/health` stays open for the healthcheck. There is no signup — create accounts from the CLI:
+
+```bash
+uv run ardoise users add aymen --name "Aymen"     # prompts for the password
+uv run ardoise users list
+```
+
+Set `COOKIE_SECURE=false` for local HTTP dev (a `Secure` cookie is dropped over plain http, which
+looks like "login succeeds but never sticks"). Leave it at its default of `true` behind TLS.
+Sessions last `SESSION_TTL_DAYS` (7 by default), fixed from the moment you sign in.
+
+**Each account's data is private**, in its own SQLite file next to the central one:
+
+```
+/data/central.db     accounts (who can sign in)
+/data/tenant-1.db    one teacher's students, classes, packs, payments
+/data/tenant-2.db    the other's — a physically separate file
+```
+
+Nothing is shared between them, and a teacher's database is created with their account. The CLI
+therefore needs to know whose data it is working on:
+
+```bash
+uv run ardoise --user aymen students list     # or set ARDOISE_USER
+uv run ardoise users list                     # account commands need no --user
+uv run ardoise db backup --to backups         # backs up every database
+```
+
+See `backend/DEPLOYMENT_BRIEF.md`.

@@ -21,8 +21,10 @@ npm test           # vitest run (jsdom); npm run test:watch to iterate
 
 - **Typecheck without building:** `npx tsc -b`. Tests are Vitest + Testing Library: `npm test`
   (single run) or `npm run test:watch`.
-- `gen:api` requires the **backend running locally** at `http://127.0.0.1:8000`. Re-run it whenever the
-  backend schema changes — `src/api/schema.d.ts` is generated, do not hand-edit it.
+- `gen:api` shells out to `ardoise openapi` in `../backend`, so it needs **no running server** —
+  `/openapi.json` is behind the session gate now, and a CLI dump sidesteps that entirely. Re-run it
+  whenever the backend schema changes; `src/api/schema.d.ts` is generated, do not hand-edit it. The
+  intermediate `.openapi.json` is gitignored.
 - **`allowScripts` in package.json** gates native postinstall scripts (esbuild). After changing deps you
   may need `npm approve-scripts <pkg>` for the install script to run.
 
@@ -36,9 +38,27 @@ npm test           # vitest run (jsdom); npm run test:watch to iterate
 - `endpoints.ts` — one typed function per backend route. **All API calls go through here**; components
   never call `fetch` or `apiRequest` directly.
 
-**Auth — there is none.** The API is open (single-teacher tool on a trusted host); do not send an
-`Authorization` header, build a login/token gate, or add auth state. If the backend is ever exposed
-publicly, auth becomes a backend concern to add first.
+**Auth — a session cookie, and nothing for this code to store.** The backend gates every `/api/v1`
+route except `/auth/*`. The session lives in an **HttpOnly cookie**, so JS cannot read it and there
+is no token to keep in `localStorage`: `client.ts` sets `credentials: "include"` on every request
+and the browser does the rest. Never send an `Authorization` header.
+
+- `lib/auth.tsx` (`AuthProvider`) owns "who is signed in" and probes `GET /auth/me` on mount. Three
+  states, and the distinction matters: `undefined` = still asking, `null` = signed out, a user =
+  signed in. Rendering the login form while `undefined` flashes it on every reload.
+- **401 from anywhere** drops the app to the login screen, via `setUnauthorizedHandler` in
+  `client.ts`. Registered once centrally — do not handle 401 per call site.
+- **`sessionExpired` distinguishes being *cut off* from being signed out.** Only a 401 that
+  interrupts an already-signed-in session sets it; a failed login or a cold start must not, or the
+  app would claim your session expired when you simply mistyped a password.
+- `App.tsx` swaps the whole tree rather than redirecting: signed out, `<Login />` is all that
+  renders, so a deep link like `/students/3` keeps its URL and lands there after signing in.
+- This gate is **convenience, not security**. Every figure comes from a gated API call, so bypassing
+  it yields a shell full of 401s.
+- Accounts are created with `ardoise users add` on the backend. There is no signup screen — don't
+  build one (see `backend/CLAUDE.md`).
+- **Local dev needs `COOKIE_SECURE=false` on the backend.** Over plain http a `Secure` cookie is
+  silently dropped, which presents as "login succeeds, then everything 401s".
 
 **Routing (`src/App.tsx`)** — React Router. All pages render inside `Layout` (`src/components/Layout.tsx`,
 the nav shell). Route pages live in `src/routes/` and are currently **stubs** awaiting implementation:
@@ -75,9 +95,11 @@ These come from the backend contract (`FRONTEND_HANDOFF.md`) and are easy to get
 - **Drift** is an integer, cumulative days late, always ≥ 0, higher is worse. It's *the* metric — surface
   it prominently (see `DriftBadge`). Sort students with `sort=drift_desc` (the only supported sort).
 - **`as_of=YYYY-MM-DD`** on most read endpoints drives historical / "as of" views; omit for "today".
-- **CSV downloads:** the API is open and sets `Content-Disposition: attachment`, so a plain `<a href>`
-  download link works. `downloadCsv()` in `client.ts` (fetch → blob → synthetic anchor click) is still
-  provided for programmatic downloads / error surfacing.
+- **PDF downloads go through `downloadFile()`** in `client.ts` (fetch → blob → synthetic anchor
+  click), never a plain `<a href>`. Two reasons, and the second is now load-bearing: it surfaces
+  errors as an `ApiError` instead of downloading an error page, and a bare anchor would not carry
+  the credentials the gated API needs. (`BACKLOG.md` §5 once argued the reverse — that anchors
+  forced cookie auth — but the anchors were already gone by the time login landed.)
 - **No hard delete** of students — "left the school" is modeled as `status: "inactive"` via PATCH.
 
 ## Error handling

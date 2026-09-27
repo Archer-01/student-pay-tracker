@@ -86,3 +86,48 @@ class InvalidPackError(DomainError):
     """Bad pack data or pricing. ``code`` is one of: pack_name_empty / pack_no_subjects /
     pack_no_prices / pack_price_negative / pack_offering_unknown / pack_inactive /
     custom_price_negative."""
+
+
+class InvalidCredentialsError(DomainError):
+    """Wrong username or password, or the account is deactivated.
+
+    Deliberately one error for all three cases: telling an attacker *which* part was wrong tells
+    them which usernames exist. The distinction is in the logs, not the response.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("invalid_credentials")
+
+
+class TooManyAttemptsError(DomainError):
+    """Too many failed sign-ins from this username + IP pair; the lock is time-based, not manual.
+
+    Carries ``retry_after`` seconds so the API can set a ``Retry-After`` header and tell the user
+    how long rather than leaving them guessing.
+    """
+
+    def __init__(self, retry_after: int) -> None:
+        super().__init__("too_many_attempts", retry_after=retry_after)
+        self.retry_after = retry_after
+
+
+class NotAuthenticatedError(DomainError):
+    """No session cookie, or one that is expired, revoked, or belongs to a deactivated user."""
+
+    def __init__(self) -> None:
+        super().__init__("not_authenticated")
+
+
+class UserNotFoundError(DomainError):
+    def __init__(self, username: str) -> None:
+        super().__init__("user_not_found", username=username)
+
+
+class DuplicateUserError(DomainError):
+    def __init__(self, username: str) -> None:
+        super().__init__("duplicate_user", username=username)
+
+
+class InvalidUserError(DomainError):
+    """Bad account data. ``code`` is one of: username_empty / display_name_empty /
+    password_too_short."""

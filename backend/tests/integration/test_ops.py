@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy import create_engine, text
 
 import app.core.db  # noqa: F401 - importing registers the connect-time pragma listener
-from app.core.db import get_db
+from app.core.db import get_auth_db
 from app.main import app as fastapi_app
 from app.services.exceptions import StudentNotFoundError
 
@@ -41,7 +41,8 @@ async def test_health_reports_503_when_db_down(client: AsyncClient) -> None:
     def _broken_db() -> Iterator[object]:
         yield _BrokenSession()
 
-    fastapi_app.dependency_overrides[get_db] = _broken_db  # overrides the fixture's override
+    # /health probes the central accounts database, not a teacher's — see app/api/health.py.
+    fastapi_app.dependency_overrides[get_auth_db] = _broken_db  # overrides the fixture's override
     resp = await client.get("/health")
     assert resp.status_code == 503
 

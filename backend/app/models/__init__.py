@@ -10,10 +10,13 @@ from app.models.enrollment import EnrollmentPeriod
 from app.models.pack import Pack, Subject, pack_subject
 from app.models.payment import Payment
 from app.models.school_class import ClassLevel, SchoolClass
+from app.models.session import AuthSession
 from app.models.student import Student, StudentStatus
+from app.models.user import User
 
 __all__ = [
     "AnchorOverride",
+    "AuthSession",
     "Base",
     "ClassLevel",
     "DebtWriteoff",
@@ -24,5 +27,6 @@ __all__ = [
     "Student",
     "StudentStatus",
     "Subject",
+    "User",
     "pack_subject",
 ]

@@ -37,7 +37,7 @@ reports/CSV/PDF, ops hardening, en/fr i18n) plus the React SPA. This document co
 | 11 | Student profile rework (name split, redoublant, derived first payment) | No | Medium |
 | 12 | Enrollment periods: leave & return | **Yes** | **High** |
 | 13 | Debt on departure — leavers-with-debt list & re-entry warnings | Reads arrears | Low |
-| — | Login / two accounts | No | Deferred, see §5 |
+| — | Login / two accounts | No | **Shipped**, see §5 |
 
 Ordering rationale: risk ramps up, and every sprint is independently shippable.
 
@@ -670,19 +670,41 @@ way leaving is recorded. Both statements need rewriting — fix them together in
 
 ---
 
-## 5. Deferred: login / two accounts
+## 5. Shipped: login / two accounts
 
-**Not being built now** — kept in the backlog because it lands at some point.
+Built as sketched, with two deliberate departures noted below. A `user` table (username,
+display_name, password_hash, is_active), **argon2id** hashing, accounts provisioned via
+`ardoise users add` (no self-service signup, no email, no password-reset flow), and an
+**HttpOnly / Secure / SameSite=Lax session cookie** backed by a server-side `auth_session` table
+rather than a JWT — because the SPA is same-origin in production and because server-side sessions
+can be revoked instantly. `/health` stays open for the Docker healthcheck, the SPA fallback stays
+open (it serves the login page itself), and the `ardoise` CLI keeps working without a session — it
+talks to the DB directly and is the break-glass tool.
 
-Sketch, so the reasoning isn't lost: a `user` table (username, display_name, password_hash, role,
-is_active), **argon2id** hashing, accounts provisioned via `tracker users add` (no self-service
-signup, no email, no password-reset flow), and an **HttpOnly / Secure / SameSite=Lax session cookie**
-backed by a server-side `session` table rather than a JWT — because the SPA is same-origin in
-production, because server-side sessions can be revoked instantly, and, decisively, because
-`frontend/CLAUDE.md` relies on plain `<a href>` links for CSV/PDF downloads: a bearer token in
-`localStorage` would break every download link. `/health` stays open for the Docker healthcheck, and
-the `ardoise` CLI keeps working without a session — it talks to the DB directly and is the
-break-glass tool.
+**Two departures from the sketch:**
+
+1. **No `role` column.** The sketch recommended shipping one unused so restricting an action later
+   would be route-guard work rather than a migration. But in SQLite that migration is a
+   non-rewriting `ALTER TABLE ... ADD COLUMN ... DEFAULT`, so the insurance cost about as much as
+   the risk. `is_active` is carried instead, and it does real work from day one.
+2. **The download argument was already stale when this was written.** §5 originally called the
+   `<a href>` download links "decisive" for cookies over bearer tokens. By the time login landed,
+   all three PDF exports went through `downloadFile()` — a `fetch`→blob — so a bearer token would
+   not in fact have broken them. Cookies remain the right choice (revocable, and no token sitting
+   in `localStorage` for any XSS to lift), but on the other two reasons, not that one. Recorded
+   because a future reader would otherwise inherit a dead argument as settled fact.
+
+The model is named `AuthSession` (table `auth_session`), not `Session`, because every module does
+`from sqlalchemy.orm import Session` — the same reasoning that made `SchoolClass` not `Class`.
+
+**Each account's data is private, not just gated behind login.** Every account gets its own SQLite
+file (`tenant-<id>.db`), created alongside it by `ardoise users add`; the central database holds
+only `user`/`auth_session` and never a scrap of student data. This was chosen over a shared table +
+an `owner_id` column because the guarantee then lives in the filesystem instead of in ~330 query
+call sites that would each have to stay correct forever, and because it splits SQLite's single
+write lock so the two teachers stop contending for it. Full mechanics in `backend/CLAUDE.md`'s
+"Per-teacher databases" section. **This supersedes §8's old "both users see the same data" line —
+see the note there.**
 
 **What sprints 9–13 must do now so this stays cheap later:**
 
@@ -690,13 +712,13 @@ break-glass tool.
   deliberately omits one; adding a nullable `user_id` later is a one-line migration.
 - **Keep the frontend API seam intact** — every call through `endpoints.ts`, never raw `fetch` in a
   component. Adding `credentials: "include"` and a 401 interceptor then touches one file.
-- **Don't build anything user-scoped** (no "my students", no per-user preferences).
-- Leave `backend/CLAUDE.md`'s out-of-scope entry as *deferred*, not *forbidden*, so a future session
-  doesn't treat it as a settled no.
+- **Don't add an `owner_id` column to any new domain table** (classes, packs, enrollment periods,
+  debt write-offs). Privacy is already the per-teacher database file; an owner column would be a
+  second, redundant mechanism for the same guarantee. This is now a settled decision, not a deferred
+  one — `backend/CLAUDE.md` documents it under "Explicitly out of scope."
 
-Open when it lands: do Aymen and Ayoub have identical permissions, or are some actions (deleting
-students, repricing packs, writing off debt) owner-only? Recommend shipping identical permissions
-with a `role` column already present, so restricting later is route-guard work, not a migration.
+**Resolved:** Aymen and Ayoub have identical permissions. If that ever needs to change, add the
+`role` column then — see departure (1) above for why it wasn't carried pre-emptively.
 
 ---
 
@@ -766,7 +788,12 @@ Every sprint inherits the existing house rules — they are not optional:
 - Actually sending WhatsApp/SMS messages (the API returns message text only).
 - PostgreSQL. SQLite remains correct for one teacher and hundreds of students.
 - Async service layer.
-- Multi-teacher / multi-tenant data separation. Both users see the same data.
+- ~~Multi-teacher / multi-tenant data separation. Both users see the same data.~~ **Superseded —
+  see §5.** That assumption no longer holds: login shipped with genuine separation, each account
+  gets its own database file, so there's nothing left to build here. What's still out of scope is a
+  *cross-teacher view* (a combined roster, or the deferred commission split below) — that needs a
+  deliberate design, not a default, precisely because the data now lives in separate files. Ask
+  first.
 - Grades, exam marks, report cards.
 - **Commission / revenue share between Aymen and Ayoub.** Sketched in `draft-backlog.md` but
   deliberately deferred: the percentages there are ambiguous (20% vs. a flat 50 DH vs. 25% for
@@ -774,4 +801,6 @@ Every sprint inherits the existing house rules — they are not optional:
   money calculation guessed at. Nothing commission-related exists in the code.
 - Per-subject billing or partial-month proration. A pack is a flat monthly price; if a student
   changes pack mid-month, the change takes effect from the next cycle.
-- Self-service signup, email verification, password-reset emails, OAuth/SSO — even when login lands.
+- Self-service signup, email verification, password-reset emails, OAuth/SSO. Still out of scope
+  now that login has landed: two users, no email infrastructure. A forgotten password is fixed
+  with `ardoise users passwd` on the host.

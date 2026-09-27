@@ -6,6 +6,29 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 
 export type ValidationDetail = { loc: (string | number)[]; msg: string; type: string };
 
+/**
+ * Called whenever the API answers 401 — i.e. the session cookie is missing, expired, or was
+ * revoked. `AuthProvider` registers a handler that drops to the login screen.
+ *
+ * A module-level hook rather than a React import because this file must stay framework-free: it
+ * is imported by non-component code, and importing a context here would be a cycle.
+ */
+let onUnauthorized: (() => void) | null = null;
+
+export function setUnauthorizedHandler(handler: (() => void) | null): void {
+  onUnauthorized = handler;
+}
+
+/**
+ * The session cookie is HttpOnly, so it is never visible to this code — `credentials: "include"`
+ * is what makes the browser attach it. Required on *every* request, including the PDF downloads.
+ */
+const CREDENTIALS: RequestCredentials = "include";
+
+function handleUnauthorized(status: number): void {
+  if (status === 401) onUnauthorized?.();
+}
+
 export class ApiError extends Error {
   status: number;
   detail: string | ValidationDetail[];
@@ -55,6 +78,7 @@ export async function apiRequest<T>(
 ): Promise<T> {
   const res = await fetch(buildUrl(path, query), {
     method,
+    credentials: CREDENTIALS,
     headers: {
       "Accept-Language": i18n.language,
       ...(body ? { "Content-Type": "application/json" } : {}),
@@ -63,6 +87,7 @@ export async function apiRequest<T>(
   });
 
   if (!res.ok) {
+    handleUnauthorized(res.status);
     const payload = await res.json().catch(() => null);
     throw new ApiError(res.status, payload?.detail ?? res.statusText, payload?.code);
   }
@@ -72,15 +97,19 @@ export async function apiRequest<T>(
 }
 
 /**
- * Trigger a file download (e.g. a PDF export). The API is open and sets `Content-Disposition:
- * attachment`, so a plain anchor would also work — this fetch→blob path lets us surface errors.
+ * Trigger a file download (e.g. a PDF export). Goes through fetch→blob rather than a plain
+ * `<a href>` so errors surface as an ApiError instead of a downloaded error page — and, since
+ * auth landed, so the request is a credentialed one the gated API will actually answer.
  * Content-type agnostic: whatever bytes the endpoint returns are saved under `filename`.
  */
 export async function downloadFile(path: string, filename: string, query?: RequestOptions["query"]) {
   // `lang` drives the localized export (headers + status column) the backend renders.
-  const res = await fetch(buildUrl(path, { lang: i18n.language, ...query }));
+  const res = await fetch(buildUrl(path, { lang: i18n.language, ...query }), {
+    credentials: CREDENTIALS,
+  });
 
   if (!res.ok) {
+    handleUnauthorized(res.status);
     const payload = await res.json().catch(() => null);
     throw new ApiError(res.status, payload?.detail ?? res.statusText, payload?.code);
   }

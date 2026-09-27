@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, apiRequest } from "./client";
+import { ApiError, apiRequest, downloadFile, setUnauthorizedHandler } from "./client";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -73,5 +73,56 @@ describe("ApiError.message", () => {
       { loc: ["body", "first_name"], msg: "Field required", type: "missing" },
     ]);
     expect(err.message).toBe("first_name: Field required");
+  });
+});
+
+describe("session handling", () => {
+  afterEach(() => setUnauthorizedHandler(null));
+
+  it("sends credentials so the browser attaches the HttpOnly session cookie", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse([]));
+    await apiRequest("/students");
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    expect(init?.credentials).toBe("include");
+  });
+
+  it("sends credentials on downloads too, so PDF exports don't 401", async () => {
+    // The exports go through fetch→blob rather than a plain <a href>, which is exactly why they
+    // need this: an anchor would have carried the cookie for free, a bare fetch does not.
+    vi.mocked(fetch).mockResolvedValue(new Response(new Blob(["pdf"]), { status: 200 }));
+    // Patch the two statics onto the real URL rather than replacing the global: `buildUrl` needs
+    // `new URL(...)`, and jsdom ships no object-URL support.
+    Object.assign(URL, { createObjectURL: () => "blob:x", revokeObjectURL: () => {} });
+    await downloadFile("/reports/annual.pdf", "annual.pdf");
+    const [, init] = vi.mocked(fetch).mock.calls[0];
+    expect(init?.credentials).toBe("include");
+  });
+
+  it("notifies the unauthorized handler on a 401 so the app can show the login page", async () => {
+    const onUnauthorized = vi.fn();
+    setUnauthorizedHandler(onUnauthorized);
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ detail: "nope" }, 401));
+
+    await expect(apiRequest("/students")).rejects.toBeInstanceOf(ApiError);
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
+
+  it("does not notify it for other failures, which are not a session problem", async () => {
+    const onUnauthorized = vi.fn();
+    setUnauthorizedHandler(onUnauthorized);
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ detail: "boom" }, 500));
+
+    await expect(apiRequest("/students")).rejects.toBeInstanceOf(ApiError);
+    expect(onUnauthorized).not.toHaveBeenCalled();
+  });
+
+  it("still rejects with the ApiError after notifying, so callers can show the message", async () => {
+    setUnauthorizedHandler(vi.fn());
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ detail: "Please sign in", code: "not_authenticated" }, 401));
+
+    await expect(apiRequest("/students")).rejects.toMatchObject({
+      status: 401,
+      code: "not_authenticated",
+    });
   });
 });

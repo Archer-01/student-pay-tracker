@@ -5,7 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
-from app.core.db import get_db
+from app.api.deps import get_db
 from app.schemas.dashboard import DashboardSummaryOut
 from app.services.dashboard_service import DashboardService
 

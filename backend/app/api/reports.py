@@ -6,9 +6,8 @@ from decimal import Decimal
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_locale
+from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf
-from app.core.db import get_db
 from app.core.i18n import translate
 from app.schemas.reports import AnnualReportOut, MonthlyReportOut
 from app.services.reports_service import AnnualReport, MonthlyReport, ReportsService

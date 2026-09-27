@@ -65,13 +65,11 @@ def test_backup_rejects_missing_source(tmp_path: Path) -> None:
 def test_backup_cli(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     url = f"sqlite:///{tmp_path / 'cli.db'}"
     monkeypatch.setattr(settings, "database_url", url)
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
     _migrate_file_db(url)
 
     result = CliRunner().invoke(cli_app, ["db", "backup", "--to", str(tmp_path / "backups")])
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
 
     assert result.exit_code == 0, result.output
     assert list((tmp_path / "backups").glob("backup-*.db"))

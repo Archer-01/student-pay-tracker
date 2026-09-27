@@ -317,5 +317,18 @@
     "returnedWithDebt": "This student left owing money",
     "duplicateWarning": "A former student with this name or number left owing {{amount}}.",
     "onDashboard": "Left owing"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "Ardoise is private. Sign in to continue.",
+    "username": "Username",
+    "password": "Password",
+    "submit": "Sign in",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {{name}}",
+    "checking": "Checking your session…",
+    "usernameRequired": "Enter your username",
+    "passwordRequired": "Enter your password",
+    "expired": "Your session expired. Please sign in again."
   }
 }

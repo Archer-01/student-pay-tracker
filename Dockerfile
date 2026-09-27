@@ -34,8 +34,15 @@ COPY --from=builder --chown=appuser:appuser /app /app
 # The built SPA, where app/main.py's FRONTEND_DIR expects it (/app/static).
 COPY --from=frontend --chown=appuser:appuser /fe/dist /app/static
 ENV PATH="/app/.venv/bin:$PATH" \
+    # The *central* (accounts) database. Each teacher's data lives in a sibling
+    # /data/tenant-<id>.db on the same volume, created with their account.
     DATABASE_URL="sqlite:////data/app.db"
 USER appuser
 EXPOSE 8000
-# One worker (single SQLite writer). Apply migrations, then serve the API + SPA.
+# One worker — the login throttle keeps its counters in memory, so a second worker would keep its
+# own and double the guess budget.
+#
+# `alembic upgrade head` migrates the central database only; the app's lifespan then migrates it
+# again (free — alembic checks the version table) plus every teacher's. Kept here so a broken
+# migration fails the container immediately rather than at the first request.
 CMD ["sh", "-c", "alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port 8000"]

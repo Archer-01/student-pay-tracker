@@ -29,3 +29,6 @@ dist-ssr
 
 # Claude Code local/harness state
 .claude/
+
+# Schema dump produced by `npm run gen:api` (via `ardoise openapi`); regenerate, don't commit.
+.openapi.json

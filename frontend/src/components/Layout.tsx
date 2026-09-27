@@ -2,6 +2,7 @@ import { NavLink, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { ThemeToggle } from "./ThemeToggle";
+import { SignOutButton } from "./SignOutButton";
 
 /**
  * Destinations only, in the order the work happens: who you teach, what you charge, what came in,
@@ -39,6 +40,7 @@ export function Layout() {
             <span className="flex items-center gap-2 sm:hidden">
               <ThemeToggle />
               <LanguageSwitcher />
+              <SignOutButton />
             </span>
           </div>
           {/* Scrolls sideways rather than wrapping: one predictable row, and the active item is
@@ -65,6 +67,9 @@ export function Layout() {
             </span>
             <span className="ml-2 hidden sm:inline-flex">
               <LanguageSwitcher />
+            </span>
+            <span className="ml-2 hidden sm:inline-flex">
+              <SignOutButton />
             </span>
           </nav>
         </div>

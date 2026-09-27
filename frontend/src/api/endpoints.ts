@@ -1,5 +1,7 @@
 import { apiRequest, downloadFile } from "./client";
 import type {
+  UserOut,
+  LoginRequest,
   ClassCreate,
   ClassDetailOut,
   ClassLevel,
@@ -187,4 +189,21 @@ export function findSimilarLeavers(params: {
   last_name?: string;
 }) {
   return apiRequest<DebtStatus[]>("/debts/matches", { query: params });
+}
+
+// --- auth ------------------------------------------------------------------ //
+// The session lives in an HttpOnly cookie, so none of these return or accept a token: the
+// browser attaches it (see `credentials: "include"` in client.ts) and JS never sees it.
+
+export function login(body: LoginRequest) {
+  return apiRequest<UserOut>("/auth/login", { method: "POST", body });
+}
+
+export function logout() {
+  return apiRequest<void>("/auth/logout", { method: "POST" });
+}
+
+/** Who am I? 401s when signed out — that is how the app decides to show the login page. */
+export function getCurrentUser() {
+  return apiRequest<UserOut>("/auth/me");
 }

@@ -14,7 +14,9 @@ from typer.testing import CliRunner
 from alembic import command
 from app.cli import app
 from app.core import db as db_module
+from app.core.provisioning import provision_tenant
 from app.core.settings import settings
+from app.models import User
 
 _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 runner = CliRunner()
@@ -22,14 +24,35 @@ runner = CliRunner()
 
 @pytest.fixture
 def cli_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
+    """A migrated central database plus one teacher, selected via ARDOISE_USER.
+
+    Domain commands operate on a teacher's own database and refuse to guess which one, so every
+    invocation below would otherwise have to pass `--user`. Setting the environment variable once
+    here keeps ~100 call sites unchanged and matches how the CLI is actually used on a host.
+
+    The account row is inserted directly rather than through `AuthService.create_user`: that hashes
+    with argon2id (~25ms by design), and paying it once per test in this file is ~2s of pure waste
+    for a password nothing here ever verifies.
+    """
     url = f"sqlite:///{tmp_path / 'cli.db'}"
     monkeypatch.setattr(settings, "database_url", url)
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
     command.upgrade(Config(str(_ALEMBIC_INI)), "head")  # env.py reads the patched url
+
+    with db_module.get_sessionmaker()() as session:
+        user = User(
+            username="cli",
+            display_name="CLI",
+            password_hash="unused-in-these-tests",
+            is_active=True,
+        )
+        session.add(user)
+        session.commit()
+        provision_tenant(user.id)
+
+    monkeypatch.setenv("ARDOISE_USER", "cli")
     yield url
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
 
 
 def _add_student(name: str = "Amina", join: str = "2023-03-05") -> None:

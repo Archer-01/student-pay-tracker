@@ -92,6 +92,41 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Agreed price must not be negative",
         "fr": "Le tarif convenu ne doit pas être négatif",
     },
+    # --- Sign-in / accounts (BACKLOG §5) ---
+    # One message for wrong-username, wrong-password and deactivated alike: naming which one
+    # failed would let an attacker enumerate accounts.
+    "error.invalid_credentials": {
+        "en": "Incorrect username or password",
+        "fr": "Nom d'utilisateur ou mot de passe incorrect",
+    },
+    "error.too_many_attempts": {
+        "en": "Too many failed sign-in attempts. Try again in {retry_after} seconds.",
+        "fr": "Trop de tentatives de connexion échouées. Réessayez dans {retry_after} secondes.",
+    },
+    "error.not_authenticated": {
+        "en": "Please sign in to continue",
+        "fr": "Veuillez vous connecter pour continuer",
+    },
+    "error.user_not_found": {
+        "en": "No account named '{username}'",
+        "fr": "Aucun compte nommé « {username} »",
+    },
+    "error.duplicate_user": {
+        "en": "An account named '{username}' already exists",
+        "fr": "Un compte nommé « {username} » existe déjà",
+    },
+    "error.username_empty": {
+        "en": "Username must not be empty",
+        "fr": "Le nom d'utilisateur ne doit pas être vide",
+    },
+    "error.display_name_empty": {
+        "en": "Display name must not be empty",
+        "fr": "Le nom affiché ne doit pas être vide",
+    },
+    "error.password_too_short": {
+        "en": "Password must be at least {minimum} characters",
+        "fr": "Le mot de passe doit comporter au moins {minimum} caractères",
+    },
     "error.period_not_open": {
         "en": "Student {student_id} has already left; there is no open period to close",
         "fr": "L'élève {student_id} est déjà parti ; aucune période ouverte à clôturer",

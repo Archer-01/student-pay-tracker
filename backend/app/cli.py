@@ -17,10 +17,12 @@ from rich.console import Console
 from rich.table import Table
 from sqlalchemy.orm import Session
 
-from app.core.db import get_engine, get_sessionmaker
+from app.core.db import central_url, clear_engine_cache, get_sessionmaker, tenant_url
 from app.core.i18n import translate
+from app.core.provisioning import ensure_tenant, provision_tenant
 from app.core.settings import settings
 from app.models import ClassLevel, Pack, StudentStatus
+from app.services.auth_service import AuthService
 from app.services.class_service import ClassService
 from app.services.debt_service import DebtService
 from app.services.enrollment_service import EnrollmentService
@@ -41,6 +43,7 @@ overrides_app = typer.Typer(help="Manage anchor overrides.", no_args_is_help=Tru
 classes_app = typer.Typer(help="Manage classes.", no_args_is_help=True)
 packs_app = typer.Typer(help="Manage packs (the price list).", no_args_is_help=True)
 debts_app = typer.Typer(help="Students who left owing money.", no_args_is_help=True)
+users_app = typer.Typer(help="Manage the accounts that can sign in.", no_args_is_help=True)
 db_app = typer.Typer(help="Database maintenance (dev only).", no_args_is_help=True)
 app.add_typer(students_app, name="students")
 app.add_typer(payments_app, name="payments")
@@ -48,14 +51,70 @@ app.add_typer(overrides_app, name="overrides")
 app.add_typer(classes_app, name="classes")
 app.add_typer(packs_app, name="packs")
 app.add_typer(debts_app, name="debts")
+app.add_typer(users_app, name="users")
 app.add_typer(db_app, name="db")
 
 console = Console()
 
 
+# Which teacher's database the domain commands operate on. Set by the global `--user` option (or
+# ARDOISE_USER); `None` means "not chosen yet", which the domain commands refuse rather than
+# guessing at — writing a student into the wrong teacher's database is not something you would
+# notice quickly.
+_selected_user: str | None = None
+
+
+@app.callback()
+def main(
+    user: str | None = typer.Option(
+        None,
+        "--user",
+        "-u",
+        envvar="ARDOISE_USER",
+        help="Which teacher's data to work with (their username). Not needed for `users` or `db`.",
+    ),
+) -> None:
+    """Ardoise admin CLI."""
+    global _selected_user
+    _selected_user = user
+
+
+@contextmanager
+def _auth_session() -> Iterator[Session]:
+    """A session on the central database — accounts and sessions."""
+    session = get_sessionmaker()()
+    try:
+        yield session
+    finally:
+        session.close()
+
+
 @contextmanager
 def _session() -> Iterator[Session]:
-    session = get_sessionmaker()()
+    """A session on the selected teacher's database.
+
+    Every domain command goes through here, which is why none of them needed to change when data
+    moved into per-teacher files: the routing happens once, in this function.
+    """
+    if _selected_user is None:
+        _abort(
+            "Which teacher? Pass --user <username> (or set ARDOISE_USER). "
+            "Run `ardoise users list` to see the accounts."
+        )
+    with _auth_session() as central:
+        try:
+            user = AuthService(central).get_user(_selected_user)
+        except DomainError as exc:
+            # Same treatment every other command gives a domain error: a one-line message and a
+            # non-zero exit, not a traceback.
+            _abort(_render_error(exc))
+        # ensure_tenant, not tenant_url: same reasoning as the API's get_db — SQLite opens a
+        # missing file as an empty database, so without this a teacher whose database was never
+        # built would get "no such table" instead of working. `db backup` below deliberately does
+        # *not* do this: backing something up should never create it.
+        url = ensure_tenant(user.id)
+
+    session = get_sessionmaker(url)()
     try:
         yield session
     finally:
@@ -786,11 +845,15 @@ def db_reset(
 
     from alembic import command
 
-    get_engine.cache_clear()
+    clear_engine_cache()
     cfg = Config(str(_ALEMBIC_INI))
     command.downgrade(cfg, "base")
     command.upgrade(cfg, "head")
     console.print(f"Database reset to a clean migrated state ({settings.database_url}).")
+    console.print(
+        "[yellow]Note:[/yellow] this resets the central account database only. "
+        "A teacher's data lives in its own file; delete that file to reset it."
+    )
 
 
 @db_app.command("seed")
@@ -822,14 +885,176 @@ def db_seed(
 def db_backup(
     to: Path = typer.Option(Path("backups"), "--to", help="Destination directory."),
 ) -> None:
-    """Write a timestamped backup of the SQLite database (cron-friendly)."""
+    """Back up every database — the central account store and each teacher's (cron-friendly).
+
+    Backing up only the central file would save the list of who can log in and none of the
+    students, which is the opposite of what matters.
+    """
     from app.core.backup import backup_database
 
+    sources = [settings.database_url]
+    with _auth_session() as session:
+        sources += [tenant_url(user.id) for user in AuthService(session).list_users()]
+
+    written = []
+    for source in sources:
+        try:
+            written.append(backup_database(source, to))
+        except ValueError as exc:
+            # A teacher who has never had their database built yet is not a reason to fail the
+            # whole backup; skip them and say so.
+            console.print(f"[yellow]Skipped[/yellow] {source}: {exc}")
+    if not written:
+        _abort("Nothing was backed up.")
+    console.print(f"Backed up [bold]{len(written)}[/bold] database(s) to [bold]{to}[/bold].")
+
+
+# --------------------------------------------------------------------------- #
+# users
+#
+# The only way to create an account — there is no signup route in the API. Because this talks to
+# the database directly rather than over HTTP, it keeps working when nobody can sign in, which
+# makes it the break-glass tool if the last account is lost or disabled.
+# --------------------------------------------------------------------------- #
+
+
+@users_app.command("add")
+def users_add(
+    username: str = typer.Argument(..., help="Sign-in name; case-insensitive."),
+    display_name: str = typer.Option(..., "--name", help='Shown in the app, e.g. "Mr. Ayoub".'),
+    password: str = typer.Option(
+        ...,
+        "--password",
+        prompt=True,
+        hide_input=True,
+        confirmation_prompt=True,
+        help="Prompted for (hidden) if omitted.",
+    ),
+) -> None:
+    """Create an account that can sign in to the web app, and its own private database."""
+    # Bring the central database up first. This is the bootstrap command — on a fresh host it runs
+    # before the app has ever started, so the accounts table may not exist yet, and failing with a
+    # raw "no such table: user" traceback is a poor welcome. Idempotent and quick on an existing
+    # database.
+    from app.core.provisioning import migrate
+
+    migrate(central_url())
+
+    with _auth_session() as session:
+        try:
+            user = AuthService(session).create_user(
+                username=username, display_name=display_name, password=password
+            )
+        except DomainError as exc:
+            _abort(_render_error(exc))
+        user_id, username, display = user.id, user.display_name, user.username
+
+    # Create their database *after* the account row commits, so the id is final. If this fails the
+    # account exists without a database — `ardoise db migrate` repairs that, and it is the
+    # recoverable direction: a database with no account would be invisible and orphaned.
     try:
-        dest = backup_database(settings.database_url, to)
-    except ValueError as exc:
-        _abort(_render_error(exc))
-    console.print(f"Backup written to [bold]{dest}[/bold].")
+        url = provision_tenant(user_id)
+    except Exception as exc:  # noqa: BLE001 - the message matters more than the type here
+        _abort(
+            f"Account '{display}' was created, but building its database failed ({exc}). "
+            "Run `ardoise db migrate` to finish setting it up."
+        )
+    console.print(f"Created account [bold]{display}[/bold] ({username}).")
+    console.print(f"Its data lives in [dim]{url}[/dim] — separate from every other account.")
+
+
+@users_app.command("list")
+def users_list() -> None:
+    """List every account and whether it can currently sign in."""
+    with _auth_session() as session:
+        users = AuthService(session).list_users()
+    if not users:
+        console.print("[yellow]No accounts yet.[/yellow] Create one with: ardoise users add")
+        return
+    table = Table("ID", "Username", "Name", "Active", "Created")
+    for user in users:
+        table.add_row(
+            str(user.id),
+            user.username,
+            user.display_name,
+            "yes" if user.is_active else "no",
+            user.created_at.date().isoformat(),
+        )
+    console.print(table)
+
+
+@users_app.command("passwd")
+def users_passwd(
+    username: str = typer.Argument(...),
+    password: str = typer.Option(
+        ..., "--password", prompt=True, hide_input=True, confirmation_prompt=True
+    ),
+) -> None:
+    """Set a new password. Signs the account out everywhere, which is the point if it leaked."""
+    with _auth_session() as session:
+        try:
+            user = AuthService(session).set_password(username, password)
+        except DomainError as exc:
+            _abort(_render_error(exc))
+        console.print(
+            f"Password updated for [bold]{user.username}[/bold]; all its sessions were revoked."
+        )
+
+
+@users_app.command("deactivate")
+def users_deactivate(username: str = typer.Argument(...)) -> None:
+    """Disable an account and sign it out immediately. Reversible with `users activate`."""
+    with _auth_session() as session:
+        try:
+            user = AuthService(session).set_active(username, False)
+        except DomainError as exc:
+            _abort(_render_error(exc))
+        console.print(f"Deactivated [bold]{user.username}[/bold] and revoked its sessions.")
+
+
+@users_app.command("activate")
+def users_activate(username: str = typer.Argument(...)) -> None:
+    """Re-enable a disabled account. It will need to sign in again."""
+    with _auth_session() as session:
+        try:
+            user = AuthService(session).set_active(username, True)
+        except DomainError as exc:
+            _abort(_render_error(exc))
+        console.print(f"Activated [bold]{user.username}[/bold].")
+
+
+@app.command("openapi")
+def openapi_dump() -> None:
+    """Print the OpenAPI schema as JSON.
+
+    Exists so `npm run gen:api` can regenerate the frontend's types without a running server and
+    without a session — /openapi.json is gated like every other route. Prints with `typer.echo`
+    rather than `console.print` so the output is pipeable JSON, not Rich-formatted text.
+    """
+    import json
+
+    from app.main import app as fastapi_app
+
+    typer.echo(json.dumps(fastapi_app.openapi(), indent=2))
+
+
+@db_app.command("migrate")
+def db_migrate() -> None:
+    """Bring the central database and every teacher's up to head.
+
+    The app does this on startup too; this exists for repairing an account whose database failed
+    to build, and for applying a migration without a restart.
+    """
+    from app.core.provisioning import migrate_all
+
+    with _auth_session() as session:
+        users = AuthService(session).list_users()
+        user_ids = [user.id for user in users]
+
+    failed = migrate_all(user_ids)
+    console.print(f"Migrated the central database and {len(user_ids) - len(failed)} teacher(s).")
+    if failed:
+        _abort(f"Failed for user id(s): {', '.join(str(i) for i in failed)} — see the log.")
 
 
 if __name__ == "__main__":

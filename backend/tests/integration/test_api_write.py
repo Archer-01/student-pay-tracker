@@ -13,7 +13,9 @@ from typer.testing import CliRunner
 from alembic import command
 from app.cli import app as cli_app
 from app.core import db as db_module
+from app.core.provisioning import provision_tenant
 from app.core.settings import settings
+from app.models import User
 
 _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
@@ -264,9 +266,18 @@ async def test_cli_and_api_agree(
 
     # --- Same flow through the CLI (separate temp-file DB) ---
     monkeypatch.setattr(settings, "database_url", f"sqlite:///{tmp_path / 'cli.db'}")
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
     command.upgrade(Config(str(_ALEMBIC_INI)), "head")
+
+    # The CLI works on one teacher's database, so it needs an account to work on. Inserted
+    # directly rather than via AuthService to skip argon2 for a password nothing verifies here.
+    with db_module.get_sessionmaker()() as session:
+        user = User(username="cli", display_name="CLI", password_hash="unused", is_active=True)
+        session.add(user)
+        session.commit()
+        provision_tenant(user.id)
+    monkeypatch.setenv("ARDOISE_USER", "cli")
+
     runner = CliRunner()
     runner.invoke(
         cli_app,
@@ -288,8 +299,7 @@ async def test_cli_and_api_agree(
             ],
         )
     show = runner.invoke(cli_app, ["students", "show", "1", "--as-of", "2023-06-30"])
-    db_module.get_engine.cache_clear()
-    db_module.get_sessionmaker.cache_clear()
+    db_module.clear_engine_cache()
 
     match = re.search(r"Cumulative drift:\s*(\d+)", show.output)
     assert match is not None, show.output
