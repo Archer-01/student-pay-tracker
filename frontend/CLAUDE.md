@@ -150,8 +150,11 @@ and `sm:` upward adds what a wider screen can afford. Concretely:
   behind "⋯"; classes and prices under Réglages. A page leads with what is done every week.
 - **Arrows, not dropdowns**, for stepping through months and years (`Stepper` in
   `src/components/report.tsx`, with `Figure` and a plain-element `BarChart`).
-- **The price grid is a grid from `sm` up** and one card per offering on a phone, listing its
-  six levels top to bottom: the comparison within an offering survives, the sideways scroll doesn't.
+- **A pack is one name at one level**, listed and edited on its own (Réglages › Packs,
+  `routes/PacksList.tsx`). There is no grouping of packs across levels any more: the teacher names
+  each pack for its level ("Pack TC Scientifique"), and an offer × level grid was mostly empty
+  cells. A pack's level is locked once a student has it (the server refuses it too). The backend's
+  offering and grid endpoints still exist for the CLI; the app doesn't call them.
 
 Anything with a fixed pixel width needs a `hidden sm:…` escape or it will push real content off a
 375px screen.

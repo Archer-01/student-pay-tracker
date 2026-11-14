@@ -107,6 +107,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "No pack offering named '{name}'",
         "fr": "Aucune offre nommée «\u00a0{name}\u00a0»",
     },
+    "error.pack_level_locked": {
+        "en": "{student_count} student(s) are on this pack, so its level can no longer change",
+        "fr": "{student_count} élève(s) ont ce pack\u00a0: son niveau ne peut plus changer",
+    },
     "error.pack_inactive": {
         "en": "Pack {pack_id} is retired and cannot be assigned to a student",
         "fr": "Ce pack n'est plus proposé et ne peut pas être attribué à un élève",

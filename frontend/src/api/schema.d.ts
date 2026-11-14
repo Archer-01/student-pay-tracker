@@ -1025,9 +1025,15 @@ export interface components {
         };
         /**
          * PackUpdate
-         * @description Edit one grid cell. Name/subjects belong to the offering, so they're not accepted here.
+         * @description Edit one pack: its name, level (only while no student is on it), subjects, price, and
+         *     whether it's still offered. Only the fields sent are changed.
          */
         PackUpdate: {
+            /** Name */
+            name?: string | null;
+            level?: components["schemas"]["ClassLevel"] | null;
+            /** Subjects */
+            subjects?: string[] | null;
             /** Price */
             price?: (number | string) | null;
             /** Is Active */

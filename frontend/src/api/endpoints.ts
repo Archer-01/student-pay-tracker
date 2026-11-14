@@ -24,11 +24,8 @@ import type {
   StudentDetailOut,
   StudentListItem,
   StudentOut,
-  OfferingCreate,
-  OfferingUpdate,
   PackCreate,
   PackDetail,
-  PackGrid,
   PackUpdate,
   StudentUpdate,
 } from "./types";
@@ -117,26 +114,8 @@ export function listPacks(params: { level?: ClassLevel; active?: boolean } = {})
   return apiRequest<PackDetail[]>("/packs", { query: params });
 }
 
-/** The offerings x levels price matrix. A cell with a null `pack_id` is simply not offered. */
-export function getPackGrid() {
-  return apiRequest<PackGrid>("/packs/grid");
-}
-
 export function createPack(body: PackCreate) {
   return apiRequest<PackDetail>("/packs", { method: "POST", body });
-}
-
-/** Create a whole grid row: one pack per priced level, sharing one subject set. */
-export function createOffering(body: OfferingCreate) {
-  return apiRequest<PackDetail[]>("/packs/offerings", { method: "POST", body });
-}
-
-/** Rename an offering and/or set its subjects — applied to every level-variant at once. */
-export function updateOffering(name: string, body: OfferingUpdate) {
-  return apiRequest<PackDetail[]>(`/packs/offerings/${encodeURIComponent(name)}`, {
-    method: "PATCH",
-    body,
-  });
 }
 
 /** Edit one grid cell (its price, or whether it is offered). */

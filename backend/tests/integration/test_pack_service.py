@@ -270,3 +270,66 @@ def test_renaming_an_offering_to_its_own_name_is_a_no_op(db_session: Session) ->
     service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
     service.update_offering("Maths seul", new_name="Maths seul")
     assert {p.name for p in service.list()} == {"Maths seul"}
+
+
+# --------------------------------------------------------------------------- #
+# one pack, one level: editing a pack on its own
+# --------------------------------------------------------------------------- #
+
+
+def _pack(session: Session, name: str = "Pack TC", level: ClassLevel = ClassLevel.TC):
+    return PackService(session).create(
+        name=name, level=level, price=Decimal("400"), subjects=["Maths", "Physique"]
+    )
+
+
+def test_a_pack_is_renamed_and_its_subjects_changed_on_its_own(db_session: Session) -> None:
+    # A pack is one name at one level. Editing it must not reach a same-named pack at another
+    # level, which the old offering edit did.
+    edited = _pack(db_session, "Pack", ClassLevel.TC)
+    other = _pack(db_session, "Pack", ClassLevel.BAC1)
+    PackService(db_session).update(edited.id, name="Pack TC Scientifique", subjects=["Maths"])
+    assert (edited.name, [s.name for s in edited.subjects]) == ("Pack TC Scientifique", ["Maths"])
+    assert (other.name, sorted(s.name for s in other.subjects)) == ("Pack", ["Maths", "Physique"])
+
+
+def test_a_pack_nobody_is_on_can_change_level(db_session: Session) -> None:
+    pack = _pack(db_session)
+    PackService(db_session).update(pack.id, level=ClassLevel.BAC1)
+    assert pack.level is ClassLevel.BAC1
+
+
+def test_a_packs_level_is_locked_once_a_student_has_it(db_session: Session) -> None:
+    # Otherwise students would silently end up on a pack for another level.
+    pack = _pack(db_session)
+    _student(db_session, pack_id=pack.id)
+    with pytest.raises(InvalidPackError) as exc:
+        PackService(db_session).update(pack.id, level=ClassLevel.BAC1)
+    assert exc.value.code == "pack_level_locked"
+    assert exc.value.params == {"student_count": 1}
+    assert pack.level is ClassLevel.TC
+
+
+def test_keeping_the_same_level_is_not_a_level_change(db_session: Session) -> None:
+    pack = _pack(db_session)
+    _student(db_session, pack_id=pack.id)
+    PackService(db_session).update(pack.id, level=ClassLevel.TC, price=Decimal("450"))
+    assert pack.price == Decimal("450")
+
+
+def test_a_pack_cannot_take_the_name_and_level_of_another(db_session: Session) -> None:
+    _pack(db_session, "Pack A", ClassLevel.TC)
+    pack = _pack(db_session, "Pack B", ClassLevel.TC)
+    with pytest.raises(DuplicatePackError):
+        PackService(db_session).update(pack.id, name="Pack A")
+    with pytest.raises(DuplicatePackError):
+        moved = _pack(db_session, "Pack A", ClassLevel.BAC1)
+        PackService(db_session).update(moved.id, level=ClassLevel.TC)
+
+
+def test_editing_a_pack_cleans_its_name_and_subjects(db_session: Session) -> None:
+    pack = _pack(db_session)
+    with pytest.raises(InvalidPackError):
+        PackService(db_session).update(pack.id, name="   ")
+    with pytest.raises(InvalidPackError):
+        PackService(db_session).update(pack.id, subjects=[" ", ""])

@@ -136,16 +136,33 @@ class PackService:
         self,
         pack_id: int,
         *,
+        name: str | _Unset = _UNSET,
+        level: ClassLevel | _Unset = _UNSET,
+        subjects: SubjectNames | _Unset = _UNSET,
         price: Decimal | _Unset = _UNSET,
         is_active: bool | _Unset = _UNSET,
     ) -> Pack:
-        """Edit one cell of the grid: this pack's price and/or whether it's offered.
+        """Edit one pack on its own: a pack is one name at one level, so nothing here reaches a
+        same-named pack at another level.
 
-        Name and subjects are deliberately **not** editable here — they belong to the offering as
-        a whole (:meth:`update_offering`). Changing ``price`` immediately changes what every
-        student on this pack pays, including for months they have not yet paid.
+        The level can change only while no student is on the pack: otherwise its students would
+        silently find themselves on a pack for another level. Changing ``price`` immediately
+        changes what every student on it pays, including for months they have not yet paid.
         """
         pack = self.get(pack_id)
+        new_name = pack.name if isinstance(name, _Unset) else _clean_name(name)
+        new_level = pack.level if isinstance(level, _Unset) else level
+        if new_level is not pack.level:
+            count = self.students.count_on_pack(pack_id)
+            if count:
+                raise InvalidPackError("pack_level_locked", student_count=count)
+        if (new_name, new_level) != (pack.name, pack.level):
+            clash = self.packs.find(new_name, new_level)
+            if clash is not None and clash.id != pack.id:
+                raise DuplicatePackError(new_name, new_level.value)
+        if not isinstance(subjects, _Unset):
+            pack.subjects = self._resolve_subjects(_clean_subjects(subjects))
+        pack.name, pack.level = new_name, new_level
         if not isinstance(price, _Unset):
             if price < 0:
                 raise InvalidPackError("pack_price_negative")

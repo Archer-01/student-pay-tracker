@@ -76,10 +76,14 @@ class OfferingUpdate(BaseModel):
 
 
 class PackUpdate(BaseModel):
-    """Edit one grid cell. Name/subjects belong to the offering, so they're not accepted here."""
+    """Edit one pack: its name, level (only while no student is on it), subjects, price, and
+    whether it's still offered. Only the fields sent are changed."""
 
     model_config = ConfigDict(extra="forbid")
 
+    name: str | None = Field(default=None, min_length=1)
+    level: ClassLevel | None = None
+    subjects: list[str] | None = Field(default=None, min_length=1)
     price: Money | None = Field(default=None, ge=0)
     is_active: bool | None = None
 

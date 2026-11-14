@@ -35,7 +35,7 @@ export function Settings() {
       )}
 
       <Group label={t("settings.school")}>
-        <LinkRow to="/settings/prices">{t("settings.prices")}</LinkRow>
+        <LinkRow to="/settings/packs">{t("settings.prices")}</LinkRow>
         <LinkRow to="/settings/classes">{t("settings.classes")}</LinkRow>
       </Group>
 

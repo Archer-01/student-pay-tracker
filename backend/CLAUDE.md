@@ -212,6 +212,10 @@ the file that fails if privacy ever regresses.
   "fix" this by reintroducing snapshots without asking: it was chosen knowingly, in exchange for
   one number per student instead of three. What must *not* change is `payment.amount` — money
   already taken stays frozen, so only the outstanding estimate moves.
+- **A pack is one name at one level** (unique together). `PackService.update` edits one pack
+  on its own (name, subjects, price, offered or not) and changes its level only while no student
+  is on it (`pack_level_locked`). The "offering" calls (`create_offering`, `update_offering`, the
+  grid) group same-named packs across levels; the app no longer uses them, only the CLI does.
 - **Money is quoted through `PricingService.price_of`, never by reading `pack.price` at a call
   site.** That is what keeps the `custom_price` override and the "no pack means not billed" rule in
   one place instead of being re-derived (and forgotten) per screen.

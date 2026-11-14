@@ -11,7 +11,7 @@ import { EnrollStudent } from "./routes/EnrollStudent";
 import { MonthlyReport } from "./routes/MonthlyReport";
 import { ClassesList } from "./routes/ClassesList";
 import { ClassDetail } from "./routes/ClassDetail";
-import { PacksGrid } from "./routes/PacksGrid";
+import { PacksList } from "./routes/PacksList";
 import { AnnualReport } from "./routes/AnnualReport";
 import { LeaversWithDebt } from "./routes/LeaversWithDebt";
 import { NotFound } from "./routes/NotFound";
@@ -51,12 +51,13 @@ export default function App() {
         <Route path="settings" element={<Settings />} />
         <Route path="settings/classes" element={<ClassesList />} />
         <Route path="settings/classes/:id" element={<ClassDetail />} />
-        <Route path="settings/prices" element={<PacksGrid />} />
+        <Route path="settings/packs" element={<PacksList />} />
+        <Route path="settings/prices" element={<Navigate to="/settings/packs" replace />} />
 
         {/* Where these pages used to live, so bookmarks and muscle memory still land. */}
         <Route path="classes" element={<Navigate to="/settings/classes" replace />} />
         <Route path="classes/:id" element={<LegacyClassRedirect />} />
-        <Route path="packs" element={<Navigate to="/settings/prices" replace />} />
+        <Route path="packs" element={<Navigate to="/settings/packs" replace />} />
         <Route path="debts" element={<Navigate to="/reports/leavers" replace />} />
         <Route path="*" element={<NotFound />} />
       </Route>

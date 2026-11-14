@@ -266,3 +266,46 @@ async def test_error_detail_is_localized(client: AsyncClient, db_session: Sessio
         headers={"Accept-Language": "fr"},
     )
     assert "existe" in resp.json()["detail"].lower()
+
+
+async def test_one_pack_is_edited_on_its_own(client: AsyncClient) -> None:
+    created = await client.post(
+        "/api/v1/packs",
+        json={"name": "Pack", "level": "TC", "price": "400", "subjects": ["Maths", "Physique"]},
+    )
+    pack_id = created.json()["id"]
+    resp = await client.patch(
+        f"/api/v1/packs/{pack_id}",
+        json={
+            "name": "Pack TC Scientifique",
+            "level": "1BAC",
+            "subjects": ["Maths"],
+            "price": "420",
+        },
+    )
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert (body["name"], body["level"], body["subjects"], body["price"]) == (
+        "Pack TC Scientifique",
+        "1BAC",
+        ["Maths"],
+        "420.00",
+    )
+
+
+async def test_a_pack_with_students_keeps_its_level(
+    client: AsyncClient, db_session: Session
+) -> None:
+    created = await client.post(
+        "/api/v1/packs", json={"name": "Pack", "level": "TC", "price": "400", "subjects": ["Maths"]}
+    )
+    pack_id = created.json()["id"]
+    _student(db_session, pack_id=pack_id)
+    resp = await client.patch(
+        f"/api/v1/packs/{pack_id}", json={"level": "1BAC"}, headers={"Accept-Language": "fr"}
+    )
+    assert resp.status_code == 400
+    assert resp.json() == {
+        "detail": "1 élève(s) ont ce pack : son niveau ne peut plus changer",
+        "code": "pack_level_locked",
+    }
