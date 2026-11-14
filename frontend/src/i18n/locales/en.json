@@ -62,7 +62,7 @@
     "filters": {
       "label": "Show",
       "all": "All",
-      "owing": "Owe money",
+      "owing": "Unpaid",
       "left": "Former"
     },
     "addShort": "Student"

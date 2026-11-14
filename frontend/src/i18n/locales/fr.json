@@ -62,7 +62,7 @@
     "filters": {
       "label": "Afficher",
       "all": "Tous",
-      "owing": "Doivent de l'argent",
+      "owing": "Avec impayés",
       "left": "Anciens"
     },
     "addShort": "Élève"

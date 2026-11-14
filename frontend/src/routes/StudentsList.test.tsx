@@ -50,7 +50,7 @@ describe("StudentsList", () => {
   it("shows who owes money, most first, with one tap", async () => {
     renderWithProviders(<StudentsList />);
     await screen.findByText("Amina Benali");
-    await userEvent.click(screen.getByRole("radio", { name: "Owe money" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Unpaid" }));
     await waitFor(() => expect(list().getAllByRole("link")).toHaveLength(2));
     const names = list().getAllByRole("link").map((a) => a.textContent);
     expect(names[0]).toMatch(/Youssef/);
