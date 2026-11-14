@@ -23,6 +23,7 @@ from app.services.enrollment_service import EnrollmentService
 from app.services.ledger_service import LedgerService
 from app.services.pricing_service import PricingService
 from app.services.schedule import add_months
+from app.services.school_share import ShareSplit, split
 
 
 @dataclass(frozen=True)
@@ -42,6 +43,7 @@ class StudentDigest:
 class DashboardSummary:
     as_of: date
     total_collected_this_month: Decimal
+    share_this_month: ShareSplit
     total_outstanding: Decimal
     active_students: int
     # Ranked by money owed, then by drift — the order you would work down the list in.
@@ -70,7 +72,9 @@ class DashboardService:
         self.debts = DebtService(session)
         self.enrollment = EnrollmentService(session)
 
-    def get_summary(self, as_of: date, top_n: int = 5) -> DashboardSummary:
+    def get_summary(
+        self, as_of: date, top_n: int = 5, *, share_percent: Decimal = Decimal("0")
+    ) -> DashboardSummary:
         month_start = as_of.replace(day=1)
         next_month_start = add_months(month_start, 1)
         collected = sum(
@@ -98,6 +102,7 @@ class DashboardService:
         return DashboardSummary(
             as_of=as_of,
             total_collected_this_month=collected,
+            share_this_month=split(collected, share_percent),
             total_outstanding=outstanding,
             active_students=len(active),
             top_debtors=debtors[:top_n],

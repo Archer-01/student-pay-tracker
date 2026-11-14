@@ -16,3 +16,10 @@ export function formatMoney(value: string, { currency = true }: { currency?: boo
   }).format(Number(value));
   return currency ? `${number}\u00a0DH` : number;
 }
+
+/** "25" → "25 %" in French, "25%" in English. `Number` only feeds `Intl` for display. */
+export function formatPercent(value: string): string {
+  return new Intl.NumberFormat(i18n.language, { style: "percent", maximumFractionDigits: 2 }).format(
+    Number(value) / 100,
+  );
+}

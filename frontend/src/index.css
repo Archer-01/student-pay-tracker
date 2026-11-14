@@ -35,6 +35,8 @@
   --brand: #1f4e4a;
   --brand-soft: #e2eeec;
   --brand-mid: #8db8b2;
+  /* The school owner's share: the wood of the logo's frame, clearly apart from the brand green. */
+  --school: #b98252;
   --brand-ink: #ffffff;
   --placeholder: #94a19e;
   --ok: #1d7a4c;
@@ -56,6 +58,7 @@
   --brand: #79bdb3;
   --brand-soft: #1c2e2c;
   --brand-mid: #3d7871;
+  --school: #d4a373;
   --brand-ink: #0c1d1c;
   --placeholder: #66736f;
   --ok: #55c98d;

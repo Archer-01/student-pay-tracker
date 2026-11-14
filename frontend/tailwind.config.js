@@ -54,6 +54,7 @@ export default {
         warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
         bad: { DEFAULT: "var(--bad)", soft: "var(--bad-soft)" },
         off: { DEFAULT: "var(--off)", soft: "var(--off-soft)" },
+        school: "var(--school)",
         surface: "var(--surface)",
         ground: "var(--ground)",
         ink: "var(--ink)",

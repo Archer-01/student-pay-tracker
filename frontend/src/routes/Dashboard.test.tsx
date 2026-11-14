@@ -18,6 +18,7 @@ function summary(over: Partial<Record<string, unknown>> = {}) {
   return {
     as_of: "2026-11-14",
     total_collected_this_month: "1300.00",
+    share_this_month: { percent: "25", school: "325.00", teacher: "975.00" },
     total_outstanding: "6400.00",
     active_students: 4,
     leavers_with_debt: 0,
@@ -133,5 +134,20 @@ describe("Accueil", () => {
     vi.mocked(endpoints.getDashboardSummary).mockRejectedValue(new Error("down"));
     renderHome();
     expect(await screen.findByText(/something went wrong/i)).toBeInTheDocument();
+  });
+
+  it("says how much of this month's money is yours, after the school's share", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(summary() as never);
+    renderHome();
+    expect(await screen.findByText("of which 975 DH is yours")).toBeInTheDocument();
+  });
+
+  it("says nothing about a share when there is none", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
+      summary({ share_this_month: { percent: "0", school: "0.00", teacher: "1300.00" } }) as never,
+    );
+    renderHome();
+    await screen.findByText("1,300 DH");
+    expect(screen.queryByText(/is yours/)).toBeNull();
   });
 });

@@ -216,6 +216,15 @@ the file that fails if privacy ever regresses.
   site.** That is what keeps the `custom_price` override and the "no pack means not billed" rule in
   one place instead of being re-derived (and forgotten) per screen.
 - **Duplicate payments are rejected, not overwritten.** Recording a payment for a cycle that already has one raises an explicit error (`DuplicatePaymentError` or similar).
+- **The school share is a flat percentage of money received** (`services/school_share.py`,
+  setting `SCHOOL_SHARE_PERCENT`, default 25, 0–100; 0 hides it). The teacher pays the school owner
+  that share of every payment, so it is computed on the same "collected" figures the reports
+  already show (by paid date) and never on anything else: not on amounts owed, and never on a
+  write-off. The school's part of a month rounds half-up to the cent, the teacher's part is the
+  rest, and a year's share is the sum of its months. Services take the percent as a parameter
+  (default 0); only the API layer reads the setting. Known limits, chosen knowingly: one rate for
+  every account (Aymen is the only user; the owner's account would need 0%), and no history, so
+  changing the rate recalculates past months.
 - **A write-off is not a payment.** `debt_writeoff` forgives a departed student's balance; it must
   never appear in collected revenue, in the annual report, or in drift. The shortcut it exists to
   prevent is recording a fake payment to clear the leavers list.
@@ -238,12 +247,11 @@ Don't smuggle these in even if they seem like natural extensions:
 - **An `owner_id` column on the domain tables.** Data separation is done with one database per
   teacher, not a shared table filtered by owner — see "Per-teacher databases". An owner column now
   would be a second, redundant mechanism for the same guarantee.
-- **Cross-teacher views** (e.g. the deferred commission split between Aymen and Ayoub). The data
-  is in separate files, so this is not a query — it needs a deliberate design. Ask first.
-- **Revenue sharing / commission between the two teachers.** `draft-backlog.md` sketches a split
-  ("20%, ayoub takes 50DH from the pack", "College: 25%"), but the rule was never pinned down and
-  the client has explicitly deferred it: the app's job is tracking late students. Don't infer a
-  formula from those notes — ask.
+- **Cross-teacher views** (e.g. a combined roster). The data is in separate files, so this is
+  not a query — it needs a deliberate design. Ask first.
+- **Anything beyond the school share as pinned below** (per-level rates, a flat amount per pack,
+  rate history, per-account rates). `draft-backlog.md` sketched several rules; only the one below
+  was confirmed. Ask before extending it.
 - Actually sending WhatsApp messages (API only returns the message text as a string)
 - PostgreSQL (SQLite is fine for one teacher and hundreds of students)
 - Async service layer (routes are `async def`, but the service layer stays sync — SQLite + sync SQLAlchemy is the intended design)

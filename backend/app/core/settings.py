@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +19,10 @@ class Settings(BaseSettings):
     cookie_secure: bool = True
     # Fallback locale when a request doesn't specify one (Accept-Language / ?lang). "en" or "fr".
     default_locale: str = "en"
+    # The school owner's percentage of every payment the teacher receives. Bilan and Accueil show
+    # it next to what came in, with what's left for the teacher. 0 hides the split entirely.
+    # One value for every account and every month: changing it recalculates past months too.
+    school_share_percent: Decimal = Field(default=Decimal("25"), ge=0, le=100)
 
 
 settings = Settings()

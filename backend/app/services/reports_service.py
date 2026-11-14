@@ -15,6 +15,7 @@ from app.repos import PaymentRepo, StudentRepo
 from app.services.ledger_service import LedgerService
 from app.services.pricing_service import PricingService
 from app.services.schedule import add_months
+from app.services.school_share import ShareSplit, split, split_months
 
 
 @dataclass(frozen=True)
@@ -35,6 +36,7 @@ class AnnualMonth:
     month: int
     collected: Decimal
     payments_count: int
+    share: ShareSplit
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,7 @@ class AnnualReport:
     months: list[AnnualMonth]
     total_collected: Decimal
     payments_count: int
+    share: ShareSplit
 
 
 @dataclass(frozen=True)
@@ -53,6 +56,7 @@ class MonthlyReport:
     total_collected: Decimal
     total_outstanding: Decimal
     rows: list[MonthlyReportRow]
+    share: ShareSplit
 
 
 class ReportsService:
@@ -63,7 +67,11 @@ class ReportsService:
         self.ledger = LedgerService(session)
         self.pricing = PricingService(session)
 
-    def monthly_report(self, year: int, month: int) -> MonthlyReport:
+    def monthly_report(
+        self, year: int, month: int, *, share_percent: Decimal = Decimal("0")
+    ) -> MonthlyReport:
+        """The month's money, per student. ``share_percent`` is the school's cut (see
+        ``school_share``); the caller passes the configured value, the default keeps it all."""
         month_start = date(year, month, 1)
         next_month_start = add_months(month_start, 1)
         as_of = next_month_start - timedelta(days=1)  # last day of the month
@@ -74,8 +82,15 @@ class ReportsService:
                 collected_by_student.get(payment.student_id, Decimal("0")) + payment.amount
             )
 
+        # Current students, plus anyone who has since left but paid this month: money that came
+        # in stays counted in the month it came in, whatever happened to the student afterwards.
+        listed = [
+            student
+            for student in self.students.list()
+            if student.status is StudentStatus.ACTIVE or student.id in collected_by_student
+        ]
         rows: list[MonthlyReportRow] = []
-        for student in self.students.list(status=StudentStatus.ACTIVE):
+        for student in listed:
             entries = self.ledger.get_ledger(student.id, as_of)
             drift = entries[-1].cumulative_drift if entries else 0
             unpaid_due = self.ledger.unpaid_due_dates(student, entries)
@@ -91,16 +106,21 @@ class ReportsService:
                 )
             )
 
+        total_collected = sum(collected_by_student.values(), Decimal("0"))
         return MonthlyReport(
             year=year,
             month=month,
             as_of=as_of,
-            total_collected=sum((row.collected for row in rows), Decimal("0")),
+            # Every payment received in the month: the same count Accueil and the year make.
+            total_collected=total_collected,
             total_outstanding=sum((row.outstanding for row in rows), Decimal("0")),
             rows=rows,
+            share=split(total_collected, share_percent),
         )
 
-    def annual_report(self, year: int) -> AnnualReport:
+    def annual_report(
+        self, year: int, *, share_percent: Decimal = Decimal("0")
+    ) -> AnnualReport:
         """What came in over a year, month by month.
 
         Every month is returned, including empty ones, so callers can chart or tabulate a year
@@ -116,8 +136,15 @@ class ReportsService:
             collected[index] += payment.amount
             counts[index] += 1
 
+        # Split month by month: the year's share is the sum of the months' (see school_share).
+        shares, year_share = split_months(collected, share_percent)
         months = [
-            AnnualMonth(month=index + 1, collected=collected[index], payments_count=counts[index])
+            AnnualMonth(
+                month=index + 1,
+                collected=collected[index],
+                payments_count=counts[index],
+                share=shares[index],
+            )
             for index in range(12)
         ]
         return AnnualReport(
@@ -125,4 +152,5 @@ class ReportsService:
             months=months,
             total_collected=sum(collected, Decimal("0")),
             payments_count=sum(counts),
+            share=year_share,
         )

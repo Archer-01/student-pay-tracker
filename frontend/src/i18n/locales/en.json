@@ -432,8 +432,8 @@
     "title": "Record a payment",
     "pickStudent": "Which student?",
     "searchStudent": "Search for a student",
-    "owes_one": "Owes {{count}} month · {{amount}}",
-    "owes_other": "Owes {{count}} months · {{amount}}",
+    "owes_one": "{{count}} month unpaid · {{amount}}",
+    "owes_other": "{{count}} months unpaid · {{amount}}",
     "upToDate": "Up to date",
     "change": "Change",
     "month": "Month paid",
@@ -473,5 +473,12 @@
     "notPaid": "Not paid yet. This month was due on {{date}}.",
     "away": "The student wasn't enrolled that month: nothing is owed.",
     "upcoming": "This month isn't due yet."
+  },
+  "share": {
+    "title": "Split",
+    "yours": "Your share",
+    "school": "School's share ({{percent}})",
+    "yoursOf": "of which {{amount}} is yours",
+    "yoursShort": "Your share: {{amount}}"
   }
 }

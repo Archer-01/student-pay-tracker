@@ -85,7 +85,7 @@ describe("StudentDetail status", () => {
     } as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
     renderPage();
-    expect(await screen.findByText(/owes 1 month · 200 DH/i)).toBeInTheDocument();
+    expect(await screen.findByText(/1 month unpaid · 200 DH/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Record November 2026" })).toBeInTheDocument();
     // The year as tiles: September paid, October paid late, November owed.
     expect(screen.getByRole("button", { name: /September 2026 · paid$/ })).toBeInTheDocument();

@@ -13,6 +13,7 @@ import { OwedPill } from "../components/people";
 import { StudentRow, StudentRows } from "../components/StudentRow";
 import { useMoneyFacts } from "../lib/useMoneyFacts";
 import { CheckIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
+import { Figure } from "../components/report";
 
 /**
  * Accueil: this month's money, one button to take a payment, then who to chase, worst first.
@@ -41,7 +42,15 @@ export function Dashboard() {
           </header>
 
           <section className="grid grid-cols-2 gap-3">
-            <Figure label={t("home.collected")} value={formatMoney(data.total_collected_this_month)} />
+            <Figure
+              label={t("home.collected")}
+              value={formatMoney(data.total_collected_this_month)}
+              hint={
+                Number(data.share_this_month.percent) > 0
+                  ? t("share.yoursOf", { amount: formatMoney(data.share_this_month.teacher) })
+                  : undefined
+              }
+            />
             <Figure
               label={t("home.outstanding", { date: formatDate(data.as_of) })}
               value={formatMoney(data.total_outstanding)}
@@ -111,21 +120,6 @@ export function Dashboard() {
         </div>
       )}
     </AsyncView>
-  );
-}
-
-function Figure({ label, value, alarming = false }: { label: string; value: string; alarming?: boolean }) {
-  return (
-    <div className="flex flex-col justify-between gap-1 rounded-2xl border border-line bg-surface p-4">
-      <span className="text-sm text-muted">{label}</span>
-      <span
-        className={`font-display text-2xl font-extrabold tabular-nums tracking-tight sm:text-3xl ${
-          alarming ? "text-bad" : "text-ink"
-        }`}
-      >
-        {value}
-      </span>
-    </div>
   );
 }
 

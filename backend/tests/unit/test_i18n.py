@@ -11,6 +11,7 @@ from app.core.i18n import (
     SUPPORTED_LOCALES,
     format_date,
     format_money,
+    format_percent,
     normalize_locale,
     resolve_locale,
     translate,
@@ -145,3 +146,19 @@ def test_french_never_glues_punctuation_to_the_word() -> None:
     for key, translations in MESSAGES.items():
         text = re.sub(r"\{[^}]*\}", "x", translations["fr"])  # {month:02d} is not punctuation
         assert not glued.search(text), f"{key}: {translations['fr']!r}"
+
+
+@pytest.mark.parametrize(
+    ("value", "fr", "en"),
+    [
+        (Decimal("25"), f"25{NBSP}%", "25%"),
+        (Decimal("25.00"), f"25{NBSP}%", "25%"),
+        (Decimal("12.5"), f"12,5{NBSP}%", "12.5%"),
+    ],
+)
+def test_percentages_read_the_way_each_language_writes_them(
+    value: Decimal, fr: str, en: str
+) -> None:
+    # Not formatted as money ("25,00"): a rate is written "25 %" in French, "25%" in English.
+    assert format_percent(value, "fr") == fr
+    assert format_percent(value, "en") == en

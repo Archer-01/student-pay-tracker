@@ -791,14 +791,15 @@ Every sprint inherits the existing house rules — they are not optional:
 - ~~Multi-teacher / multi-tenant data separation. Both users see the same data.~~ **Superseded —
   see §5.** That assumption no longer holds: login shipped with genuine separation, each account
   gets its own database file, so there's nothing left to build here. What's still out of scope is a
-  *cross-teacher view* (a combined roster, or the deferred commission split below) — that needs a
+  *cross-teacher view* (a combined roster, say) — that needs a
   deliberate design, not a default, precisely because the data now lives in separate files. Ask
   first.
 - Grades, exam marks, report cards.
-- **Commission / revenue share between Aymen and Ayoub.** Sketched in `draft-backlog.md` but
-  deliberately deferred: the percentages there are ambiguous (20% vs. a flat 50 DH vs. 25% for
-  collège may be one rule or three), and the client would rather pin it down later than have a
-  money calculation guessed at. Nothing commission-related exists in the code.
+- ~~**Commission / revenue share between Aymen and Ayoub.**~~ **Pinned and shipped:** Aymen gives
+  the school owner 25% of every payment received, the same rate for every student since September.
+  It is one setting (`SCHOOL_SHARE_PERCENT`), shown in Bilan and on Accueil as the school's part and
+  his own. Still out of scope until asked: per-level rates, a flat amount per pack, rate history,
+  and a separate rate per account (see `backend/CLAUDE.md`).
 - Per-subject billing or partial-month proration. A pack is a flat monthly price; if a student
   changes pack mid-month, the change takes effect from the next cycle.
 - Self-service signup, email verification, password-reset emails, OAuth/SSO. Still out of scope

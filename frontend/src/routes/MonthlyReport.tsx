@@ -12,6 +12,7 @@ import { ReportTabs } from "../components/ReportTabs";
 import { AsyncView, Button } from "../components/ui";
 import { BarChart, Figure, Stepper } from "../components/report";
 import { StudentRow, StudentRows } from "../components/StudentRow";
+import { ShareSplit } from "../components/ShareSplit";
 
 type YearMonth = { year: number; month: number };
 
@@ -80,6 +81,8 @@ export function MonthlyReport() {
                 alarming={Number(data.total_outstanding) > 0}
               />
             </section>
+
+            <ShareSplit share={data.share} />
 
             {annual.status === "success" && (
               <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">

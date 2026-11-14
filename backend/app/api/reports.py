@@ -8,9 +8,11 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf
-from app.core.i18n import format_money, translate
+from app.core.i18n import format_money, format_percent, translate
+from app.core.settings import settings
 from app.schemas.reports import AnnualReportOut, MonthlyReportOut
 from app.services.reports_service import AnnualReport, MonthlyReport, ReportsService
+from app.services.school_share import ShareSplit
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
@@ -50,7 +52,9 @@ def _monthly_export(report: MonthlyReport, locale: str) -> tuple[list[str], list
 async def monthly_report(
     year: int = _YEAR, month: int = _MONTH, db: Session = Depends(get_db)
 ) -> MonthlyReportOut:
-    report = ReportsService(db).monthly_report(year, month)
+    report = ReportsService(db).monthly_report(
+        year, month, share_percent=settings.school_share_percent
+    )
     return MonthlyReportOut.model_validate(report)
 
 
@@ -61,7 +65,9 @@ async def monthly_report_pdf(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> Response:
-    report = ReportsService(db).monthly_report(year, month)
+    report = ReportsService(db).monthly_report(
+        year, month, share_percent=settings.school_share_percent
+    )
     header, rows = _monthly_export(report, locale)
     behind = sum(1 for row in report.rows if row.outstanding > 0)
     return render_report_pdf(
@@ -77,6 +83,7 @@ async def monthly_report_pdf(
                 format_money(report.total_outstanding, locale),
             ),
             Stat(translate("csv.roster.months_overdue", locale), str(behind)),
+            *_share_stats(report.share, locale),
         ],
         header=header,
         rows=rows,
@@ -127,13 +134,32 @@ def _annual_stats(report: AnnualReport, locale: str) -> list[Stat]:
             if best
             else translate("pdf.value.none", locale),
         ),
+        *_share_stats(report.share, locale),
+    ]
+
+
+def _share_stats(share: ShareSplit, locale: str) -> list[Stat]:
+    """The school's part and the teacher's, when there is a share to show at all."""
+    if share.percent <= 0:
+        return []
+    return [
+        Stat(
+            translate(
+                "pdf.stat.school_share", locale, percent=format_percent(share.percent, locale)
+            ),
+            format_money(share.school, locale),
+        ),
+        Stat(translate("pdf.stat.teacher_share", locale), format_money(share.teacher, locale)),
     ]
 
 
 @router.get("/annual", response_model=AnnualReportOut)
 async def annual_report(year: int = _YEAR, db: Session = Depends(get_db)) -> AnnualReportOut:
     """What came in over a year, month by month. Every month is present, including empty ones."""
-    return AnnualReportOut.model_validate(ReportsService(db).annual_report(year))
+    report = ReportsService(db).annual_report(
+        year, share_percent=settings.school_share_percent
+    )
+    return AnnualReportOut.model_validate(report)
 
 
 @router.get("/annual.pdf")
@@ -142,7 +168,9 @@ async def annual_report_pdf(
     db: Session = Depends(get_db),
     locale: str = Depends(get_locale),
 ) -> Response:
-    report = ReportsService(db).annual_report(year)
+    report = ReportsService(db).annual_report(
+        year, share_percent=settings.school_share_percent
+    )
     header, rows = _annual_export(report, locale)
     return render_report_pdf(
         title=translate("pdf.annual.title", locale, year=year),

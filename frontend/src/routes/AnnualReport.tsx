@@ -9,6 +9,7 @@ import { usePaymentsVersion } from "../lib/paymentSheetContext";
 import { ReportTabs } from "../components/ReportTabs";
 import { AsyncView, Button } from "../components/ui";
 import { BarChart, Figure, Stepper } from "../components/report";
+import { ShareSplit } from "../components/ShareSplit";
 
 /** Bilan › Année: the calendar year's takings, month by month, with arrows between years. */
 export function AnnualReport() {
@@ -74,6 +75,8 @@ export function AnnualReport() {
                 <Figure label={t("annual.best")} value={best ? capitalized(best.month) : "—"} />
               </section>
 
+              <ShareSplit share={report.share} />
+
               {report.payments_count === 0 ? (
                 <p className="rounded-2xl border border-line bg-surface p-4 text-muted">{t("annual.empty")}</p>
               ) : (
@@ -100,6 +103,11 @@ export function AnnualReport() {
                           <span className="block text-sm text-muted">
                             {t("student.paymentsCount", { count: m.payments_count })}
                           </span>
+                          {Number(m.share.percent) > 0 && Number(m.collected) > 0 && (
+                            <span className="block text-sm text-muted">
+                              {t("share.yoursShort", { amount: formatMoney(m.share.teacher) })}
+                            </span>
+                          )}
                         </span>
                       </li>
                     ))}

@@ -254,6 +254,11 @@ MESSAGES: dict[str, dict[str, str]] = {
         "fr": "Aucun paiement enregistré cette année.",
     },
     "pdf.stat.best_month": {"en": "Best month", "fr": "Meilleur mois"},
+    "pdf.stat.school_share": {
+        "en": "School's share ({percent})",
+        "fr": "Part de l'école ({percent})",
+    },
+    "pdf.stat.teacher_share": {"en": "Your share", "fr": "Votre part"},
     "pdf.stat.monthly_average": {"en": "Monthly average", "fr": "Moyenne mensuelle"},
     # --- Monthly report headers ---
     "csv.monthly.student_id": {"en": "Student ID", "fr": "N° élève"},
@@ -358,6 +363,14 @@ def format_money(value: Decimal, locale: str) -> str:
     if locale != "fr":
         return f"{value:.2f}"
     return f"{value:,.2f}".replace(",", "\u00a0").replace(".", ",")
+
+
+def format_percent(value: Decimal, locale: str) -> str:
+    """``25`` → "25 %" in French (no-break space), "25%" in English; "12,5 %" keeps its decimal."""
+    text = format(value.normalize(), "f")
+    if locale != "fr":
+        return f"{text}%"
+    return text.replace(".", ",") + "\u00a0%"
 
 
 def _plural_form(locale: str, count: int) -> str:

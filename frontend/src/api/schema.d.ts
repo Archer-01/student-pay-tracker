@@ -635,6 +635,7 @@ export interface components {
             collected: string;
             /** Payments Count */
             payments_count: number;
+            share: components["schemas"]["ShareOut"];
         };
         /** AnnualReportOut */
         AnnualReportOut: {
@@ -646,6 +647,7 @@ export interface components {
             total_collected: string;
             /** Payments Count */
             payments_count: number;
+            share: components["schemas"]["ShareOut"];
         };
         /**
          * ClassBriefOut
@@ -742,6 +744,7 @@ export interface components {
             as_of: string;
             /** Total Collected This Month */
             total_collected_this_month: string;
+            share_this_month: components["schemas"]["ShareOut"];
             /** Total Outstanding */
             total_outstanding: string;
             /** Active Students */
@@ -889,6 +892,7 @@ export interface components {
             total_outstanding: string;
             /** Rows */
             rows: components["schemas"]["MonthlyReportRowOut"][];
+            share: components["schemas"]["ShareOut"];
         };
         /** MonthlyReportRowOut */
         MonthlyReportRowOut: {
@@ -1144,6 +1148,18 @@ export interface components {
             months_owed: number;
             /** Debt Warning */
             debt_warning?: string | null;
+        };
+        /**
+         * ShareOut
+         * @description What came in, split between the school owner and the teacher (see services/school_share).
+         */
+        ShareOut: {
+            /** Percent */
+            percent: string;
+            /** School */
+            school: string;
+            /** Teacher */
+            teacher: string;
         };
         /** StudentCreate */
         StudentCreate: {

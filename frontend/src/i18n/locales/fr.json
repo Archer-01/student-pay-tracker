@@ -432,8 +432,8 @@
     "title": "Encaisser un paiement",
     "pickStudent": "Pour quel élève ?",
     "searchStudent": "Rechercher un élève",
-    "owes_one": "Doit {{count}} mois · {{amount}}",
-    "owes_other": "Doit {{count}} mois · {{amount}}",
+    "owes_one": "{{count}} mois impayé · {{amount}}",
+    "owes_other": "{{count}} mois impayés · {{amount}}",
     "upToDate": "À jour",
     "change": "Changer",
     "month": "Mois payé",
@@ -473,5 +473,12 @@
     "notPaid": "Pas encore payé. Ce mois était dû le {{date}}.",
     "away": "L'élève n'était pas inscrit ce mois-là : rien n'est dû.",
     "upcoming": "Ce mois n'est pas encore arrivé à échéance."
+  },
+  "share": {
+    "title": "Répartition",
+    "yours": "Votre part",
+    "school": "Part de l'école ({{percent}})",
+    "yoursOf": "dont {{amount}} pour vous",
+    "yoursShort": "Votre part : {{amount}}"
   }
 }

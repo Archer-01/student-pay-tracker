@@ -17,6 +17,7 @@ from app.models import ClassLevel, SchoolClass, Student, StudentStatus
 from app.services.class_service import RosterRow
 from app.services.ledger_service import LedgerEntry
 from app.services.reports_service import MonthlyReport, MonthlyReportRow
+from app.services.school_share import split
 
 
 def _entries() -> list[LedgerEntry]:
@@ -110,6 +111,7 @@ def _report(name: str = "Amïra") -> MonthlyReport:
         as_of=date(2023, 3, 31),
         total_collected=Decimal("300"),
         total_outstanding=Decimal("0"),
+        share=split(Decimal("300"), Decimal("0")),
         rows=[
             MonthlyReportRow(
                 student_id=1,

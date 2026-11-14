@@ -20,6 +20,16 @@ class MonthlyReportRowOut(BaseModel):
     outstanding: Decimal
 
 
+class ShareOut(BaseModel):
+    """What came in, split between the school owner and the teacher (see services/school_share)."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    percent: Decimal
+    school: Decimal
+    teacher: Decimal
+
+
 class MonthlyReportOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -29,6 +39,7 @@ class MonthlyReportOut(BaseModel):
     total_collected: Decimal
     total_outstanding: Decimal
     rows: list[MonthlyReportRowOut]
+    share: ShareOut
 
 
 class AnnualMonthOut(BaseModel):
@@ -37,6 +48,7 @@ class AnnualMonthOut(BaseModel):
     month: int
     collected: Decimal
     payments_count: int
+    share: ShareOut
 
 
 class AnnualReportOut(BaseModel):
@@ -46,3 +58,4 @@ class AnnualReportOut(BaseModel):
     months: list[AnnualMonthOut]
     total_collected: Decimal
     payments_count: int
+    share: ShareOut

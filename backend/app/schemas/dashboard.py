@@ -5,6 +5,8 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict
 
+from app.schemas.reports import ShareOut
+
 
 class StudentDigestOut(BaseModel):
     """One student as the dashboard needs them: who, where, and how far behind."""
@@ -25,6 +27,7 @@ class DashboardSummaryOut(BaseModel):
 
     as_of: date
     total_collected_this_month: Decimal
+    share_this_month: ShareOut
     total_outstanding: Decimal
     active_students: int
     leavers_with_debt: int
