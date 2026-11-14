@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getLedger, getStudent, listPeriods } from "../api/endpoints";
@@ -20,7 +20,18 @@ import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
 import { AsyncView, Button, Modal } from "../components/ui";
 import { Avatar } from "../components/people";
-import { ChevronLeftIcon, ChevronRightIcon, MoreIcon, PhoneIcon, WhatsAppIcon } from "../components/icons";
+import {
+  CalendarIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  DownloadIcon,
+  LeaveIcon,
+  MoreIcon,
+  PencilIcon,
+  PhoneIcon,
+  ReturnIcon,
+  WhatsAppIcon,
+} from "../components/icons";
 import { whatsappLink } from "../lib/phone";
 
 type OpenModal = null | "more" | "override" | "edit" | "leave" | "return" | { tile: MonthTile };
@@ -569,29 +580,34 @@ function MoreActions({
     }
   }
 
-  const items: { label: string; onClick: () => void }[] = [
-    { label: t("detail.actions.edit"), onClick: () => onPick("edit") },
+  // Each action leads with its own picture, so the teacher can find one without reading the list.
+  const items: { label: string; icon: ComponentType<SVGProps<SVGSVGElement>>; onClick: () => void }[] = [
+    { label: t("detail.actions.edit"), icon: PencilIcon, onClick: () => onPick("edit") },
     // Follows the enrolment, not `status`: see `isEnrolled`.
     {
       label: t(enrolled ? "student.markLeft" : "student.markReturned"),
+      icon: enrolled ? LeaveIcon : ReturnIcon,
       onClick: () => onPick(enrolled ? "leave" : "return"),
     },
-    { label: t("detail.actions.addOverride"), onClick: () => onPick("override") },
-    { label: t("detail.downloadPdf"), onClick: () => void handleDownload() },
+    { label: t("detail.actions.addOverride"), icon: CalendarIcon, onClick: () => onPick("override") },
+    { label: t("detail.downloadPdf"), icon: DownloadIcon, onClick: () => void handleDownload() },
   ];
   return (
     <Modal title={detail.full_name} onClose={onClose}>
       <ul className="-mx-2 flex flex-col">
-        {items.map((item) => (
-          <li key={item.label}>
+        {items.map(({ label, icon: Icon, onClick }) => (
+          <li key={label}>
             <button
               type="button"
-              onClick={item.onClick}
+              onClick={onClick}
               disabled={readOnly}
-              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-3 text-left font-bold hover:bg-ground disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex min-h-14 w-full items-center gap-3 rounded-xl px-3 text-left font-bold hover:bg-ground disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {item.label}
-              <ChevronRightIcon className="h-5 w-5 text-muted" />
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="min-w-0 flex-1">{label}</span>
+              <ChevronRightIcon className="h-5 w-5 shrink-0 text-muted" />
             </button>
           </li>
         ))}

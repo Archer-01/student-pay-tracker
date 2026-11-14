@@ -111,3 +111,38 @@ export const SignOutIcon = (p: IconProps) => (
     <path d="M16 17l5-5-5-5M21 12H9" />
   </Icon>
 );
+
+export const PencilIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z" />
+    <path d="M13.5 6.5l4 4" />
+  </Icon>
+);
+
+/** A doorway with an arrow walking out of it; `ReturnIcon` is the same arrow walking back in. */
+export const LeaveIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M10 4H6a1 1 0 0 0-1 1v14a1 1 0 0 0 1 1h4" />
+    <path d="M15 8l4 4-4 4M19 12H9" />
+  </Icon>
+);
+
+export const ReturnIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M14 4h4a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4" />
+    <path d="M10 8l4 4-4 4M14 12H4" />
+  </Icon>
+);
+
+export const CalendarIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <rect x="4" y="5" width="16" height="15" rx="2" />
+    <path d="M4 10h16M8 3v4M16 3v4" />
+  </Icon>
+);
+
+export const DownloadIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 4v11M7 10l5 5 5-5M5 20h14" />
+  </Icon>
+);
