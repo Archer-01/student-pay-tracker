@@ -56,7 +56,7 @@
     "filters": {
       "label": "Afficher",
       "all": "Tous",
-      "owing": "Avec impayés",
+      "owing": "Impayés",
       "left": "Anciens"
     },
     "addShort": "Élève"
