@@ -106,7 +106,12 @@ export function StudentDetail() {
 
             {openModal === "payment" && (
               <Modal title={t("payment.title")} onClose={close}>
-                <RecordPaymentForm studentId={studentId} onSuccess={handleSaved} onCancel={close} />
+                <RecordPaymentForm
+                  studentId={studentId}
+                  monthlyPrice={detail.monthly_price}
+                  onSuccess={handleSaved}
+                  onCancel={close}
+                />
               </Modal>
             )}
             {openModal === "override" && (

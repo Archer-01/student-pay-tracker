@@ -161,6 +161,26 @@ async def test_duplicate_payment_is_409(client: AsyncClient) -> None:
 
 
 @pytest.mark.parametrize(
+    ("lang", "message"),
+    [
+        ("en", "350.00 is more than this student's monthly price of 300.00"),
+        ("fr", "350.00 dépasse le tarif mensuel de cet élève (300.00)"),
+    ],
+)
+async def test_payment_above_the_monthly_price_is_400_with_a_readable_reason(
+    client: AsyncClient, lang: str, message: str
+) -> None:
+    # The web form shows `detail` as is, so it has to make sense to the teacher.
+    sid = await _create_student(client, price="300")
+    resp = await client.post(
+        f"/api/v1/students/{sid}/payments?lang={lang}",
+        json={"paid_date": "2023-04-10", "amount": "350", "cycle_number": 1},
+    )
+    assert resp.status_code == 400
+    assert resp.json() == {"detail": message, "code": "payment_exceeds_price"}
+
+
+@pytest.mark.parametrize(
     "body",
     [
         {"paid_date": "2999-01-01", "amount": "300", "cycle_number": 1},  # future

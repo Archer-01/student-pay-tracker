@@ -605,3 +605,136 @@ def test_debts_write_off_with_nothing_owed_fails(cli_db: str) -> None:
     result = runner.invoke(app, ["debts", "write-off", "1", "--reason", "x"])
     assert result.exit_code == 1
     assert "no outstanding balance" in result.output
+
+
+# --------------------------------------------------------------------------- #
+# payments edit / delete — correcting a mistake after the fact
+# --------------------------------------------------------------------------- #
+
+
+def _priced_student_paid_250_in_april() -> None:
+    """Amina at an agreed 300/month, April (cycle 1) recorded as 250 paid on Apr 10."""
+    added = runner.invoke(
+        app,
+        ["students", "add", "--first-name", "Amina", "--join-date", "2023-03-05", "--price", "300"],
+    )
+    assert added.exit_code == 0, added.output
+    paid = runner.invoke(
+        app,
+        [
+            "payments",
+            "record",
+            "1",
+            "--date",
+            "2023-04-10",
+            "--amount",
+            "250",
+            "--for-month",
+            "2023-04",
+        ],
+    )
+    assert paid.exit_code == 0, paid.output
+
+
+def test_payments_record_refuses_more_than_the_monthly_price(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(
+        app,
+        [
+            "payments",
+            "record",
+            "1",
+            "--date",
+            "2023-05-05",
+            "--amount",
+            "350",
+            "--for-month",
+            "2023-05",
+        ],
+    )
+    assert result.exit_code == 1
+    assert "350" in result.output and "300" in result.output
+
+
+def test_payments_edit_corrects_the_amount(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(
+        app, ["payments", "edit", "1", "--for-month", "2023-04", "--amount", "200"]
+    )
+    assert result.exit_code == 0, result.output
+    assert "250" in result.output and "200" in result.output  # before -> after
+    show = runner.invoke(app, ["students", "show", "1", "--as-of", "2023-04-30"])
+    assert "200.00" in show.output and "250.00" not in show.output
+
+
+def test_payments_edit_corrects_the_date_and_lateness(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(app, ["payments", "edit", "1", "--cycle", "1", "--date", "2023-04-05"])
+    assert result.exit_code == 0, result.output
+    show = runner.invoke(app, ["students", "show", "1", "--as-of", "2023-04-30"])
+    assert "Cumulative drift: 0" in show.output
+
+
+def test_payments_edit_needs_something_to_change(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(app, ["payments", "edit", "1", "--for-month", "2023-04"])
+    assert result.exit_code != 0
+    assert "--amount" in result.output
+
+
+def test_payments_edit_obeys_the_cap(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(
+        app, ["payments", "edit", "1", "--for-month", "2023-04", "--amount", "400"]
+    )
+    assert result.exit_code == 1
+    assert "300" in result.output
+
+
+def test_payments_edit_unknown_payment_errors(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(
+        app, ["payments", "edit", "1", "--for-month", "2023-06", "--amount", "100"]
+    )
+    assert result.exit_code == 1
+    assert "No payment" in result.output
+
+
+def test_payments_delete(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(app, ["payments", "delete", "1", "--for-month", "2023-04", "--yes"])
+    assert result.exit_code == 0, result.output
+    # The month is free again, so it can be recorded correctly.
+    again = runner.invoke(
+        app,
+        [
+            "payments",
+            "record",
+            "1",
+            "--date",
+            "2023-04-05",
+            "--amount",
+            "300",
+            "--for-month",
+            "2023-04",
+        ],
+    )
+    assert again.exit_code == 0, again.output
+
+
+def test_payments_delete_requires_confirmation(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(app, ["payments", "delete", "1", "--for-month", "2023-04"], input="n\n")
+    assert result.exit_code != 0
+    # Declined: still there, so editing it works.
+    edit = runner.invoke(
+        app, ["payments", "edit", "1", "--for-month", "2023-04", "--amount", "300"]
+    )
+    assert edit.exit_code == 0, edit.output
+
+
+def test_payments_delete_unknown_payment_errors(cli_db: str) -> None:
+    _priced_student_paid_250_in_april()
+    result = runner.invoke(app, ["payments", "delete", "1", "--cycle", "5", "--yes"])
+    assert result.exit_code == 1
+    assert "No payment" in result.output

@@ -3,6 +3,10 @@
 ``record_payment`` computes the cycle's expected due date (override-aware) and the resulting
 ``days_late`` and **freezes** both onto the payment row. Once written they are never
 recomputed, so a later override can never rewrite recorded history.
+
+Corrections are a different thing from recomputation: when the teacher typed the wrong amount or
+date, ``update_payment`` fixes exactly that. The frozen due date never moves, and lateness is
+re-derived from it only when the paid date itself was the mistake.
 """
 
 from datetime import date
@@ -10,9 +14,15 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.models import Payment
+from app.models import Payment, Student
 from app.repos import OverrideRepo, PaymentRepo, StudentRepo
-from app.services.exceptions import DuplicatePaymentError, StudentNotFoundError
+from app.services.exceptions import (
+    DuplicatePaymentError,
+    InvalidPaymentError,
+    PaymentNotFoundError,
+    StudentNotFoundError,
+)
+from app.services.pricing_service import PricingService
 from app.services.schedule import cycle_number_for_month, days_late, expected_due_date_for_cycle
 
 
@@ -22,6 +32,30 @@ class PaymentService:
         self.students = StudentRepo(session)
         self.payments = PaymentRepo(session)
         self.overrides = OverrideRepo(session)
+        self.pricing = PricingService(session)
+
+    def _require_student(self, student_id: int) -> Student:
+        student = self.students.get(student_id)
+        if student is None:
+            raise StudentNotFoundError(student_id)
+        return student
+
+    def _check_amount(self, student: Student, amount: Decimal) -> None:
+        """A payment is real money, and never more than the student's monthly price.
+
+        The cap catches the slip it exists for: typing another student's price, or the pack's,
+        instead of this student's. Paying *less* is normal (part of a month, the rest owed). A
+        student with no price at all (no pack, no agreed price) has nothing to compare against.
+        """
+        if amount <= 0:
+            raise InvalidPaymentError("payment_amount_not_positive")
+        price = self.pricing.price_of(student)
+        if price > 0 and amount > price:
+            # Quoted to the cent so a typed "350" and a stored "300.00" read alike in the message.
+            cents = Decimal("0.01")
+            raise InvalidPaymentError(
+                "payment_exceeds_price", amount=amount.quantize(cents), price=price.quantize(cents)
+            )
 
     def cycle_for_month(self, student_id: int, year: int, month: int) -> int:
         """Resolve a calendar month to its cycle number for a student (override-aware)."""
@@ -34,9 +68,8 @@ class PaymentService:
     def record_payment(
         self, *, student_id: int, cycle_number: int, paid_date: date, amount: Decimal
     ) -> Payment:
-        student = self.students.get(student_id)
-        if student is None:
-            raise StudentNotFoundError(student_id)
+        student = self._require_student(student_id)
+        self._check_amount(student, amount)
 
         if self.payments.get_by_student_cycle(student_id, cycle_number) is not None:
             raise DuplicatePaymentError(student_id, cycle_number)
@@ -55,3 +88,40 @@ class PaymentService:
         self.payments.create(payment)
         self.session.commit()
         return payment
+
+    def get_payment(self, *, student_id: int, cycle_number: int) -> Payment:
+        self._require_student(student_id)
+        payment = self.payments.get_by_student_cycle(student_id, cycle_number)
+        if payment is None:
+            raise PaymentNotFoundError(student_id, cycle_number)
+        return payment
+
+    def update_payment(
+        self,
+        *,
+        student_id: int,
+        cycle_number: int,
+        amount: Decimal | None = None,
+        paid_date: date | None = None,
+    ) -> Payment:
+        """Correct a recorded payment's amount and/or paid date; ``None`` leaves a field alone.
+
+        Only a changed amount is checked against the cap. Pricing is current, not historical, so
+        a payment genuinely made before a price cut can exceed today's price, and fixing its date
+        must not be blocked by an amount nobody is touching.
+        """
+        payment = self.get_payment(student_id=student_id, cycle_number=cycle_number)
+        if amount is not None:
+            self._check_amount(payment.student, amount)
+            payment.amount = amount
+        if paid_date is not None:
+            payment.paid_date = paid_date
+            payment.days_late = days_late(payment.expected_due_date, paid_date)
+        self.session.commit()
+        return payment
+
+    def delete_payment(self, *, student_id: int, cycle_number: int) -> None:
+        """Remove a payment — the way to move one recorded against the wrong month."""
+        payment = self.get_payment(student_id=student_id, cycle_number=cycle_number)
+        self.payments.delete(payment)
+        self.session.commit()

@@ -177,7 +177,11 @@
     "validation": {
       "monthRequired": "Choisissez le mois réglé par ce paiement.",
       "paidDateRequired": "La date de paiement est obligatoire.",
-      "amountInvalid": "Saisissez un montant supérieur à 0."
+      "amountInvalid": "Saisissez un montant supérieur à 0.",
+      "amountAbovePrice": "C'est plus que le tarif mensuel de cet élève ({{price}})."
+    },
+    "hints": {
+      "amountUpTo": "Jusqu'à {{price}}, le tarif mensuel de cet élève."
     }
   },
   "override": {

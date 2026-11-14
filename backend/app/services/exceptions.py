@@ -39,6 +39,16 @@ class DuplicatePaymentError(DomainError):
         super().__init__("duplicate_payment", student_id=student_id, cycle_number=cycle_number)
 
 
+class PaymentNotFoundError(DomainError):
+    def __init__(self, student_id: int, cycle_number: int) -> None:
+        super().__init__("payment_not_found", student_id=student_id, cycle_number=cycle_number)
+
+
+class InvalidPaymentError(DomainError):
+    """Bad payment amount. ``code`` is one of: payment_amount_not_positive /
+    payment_exceeds_price."""
+
+
 class InvalidOverrideError(DomainError):
     """Bad override. ``code`` is one of: override_reason_empty / override_before_join /
     override_backwards."""

@@ -150,9 +150,9 @@ SEED_STUDENTS: tuple[_SeedStudent, ...] = (
         join_date=date(2023, 3, 5),
         status=StudentStatus.ACTIVE,
         payments=(
-            _Payment((2023, 4), date(2023, 4, 15), Decimal("300")),  # 10 days late
-            _Payment((2023, 5), date(2023, 5, 20), Decimal("300")),  # 15 days late
-            _Payment((2023, 6), date(2023, 6, 5), Decimal("300")),  # on time
+            _Payment((2023, 4), date(2023, 4, 15), Decimal("240")),  # 10 days late
+            _Payment((2023, 5), date(2023, 5, 20), Decimal("240")),  # 15 days late
+            _Payment((2023, 6), date(2023, 6, 5), Decimal("240")),  # on time
         ),
     ),
     # Reliable payer: on time / slightly early -> zero (or near-zero) drift.
@@ -185,8 +185,8 @@ SEED_STUDENTS: tuple[_SeedStudent, ...] = (
         status=StudentStatus.ACTIVE,
         overrides=(_Override(date(2024, 4, 25), "Agreed to shift the due date to end of month"),),
         payments=(
-            _Payment((2024, 1), date(2024, 1, 20), Decimal("350")),  # 5 days late
-            _Payment((2024, 2), date(2024, 2, 18), Decimal("350")),  # 3 days late
+            _Payment((2024, 1), date(2024, 1, 20), Decimal("200")),  # 5 days late
+            _Payment((2024, 2), date(2024, 2, 18), Decimal("200")),  # 3 days late
         ),
     ),
     # No phone on file (ledger PDF shows name only); has an unpaid July gap between payments.
@@ -202,8 +202,8 @@ SEED_STUDENTS: tuple[_SeedStudent, ...] = (
         join_date=date(2023, 6, 20),
         status=StudentStatus.ACTIVE,
         payments=(
-            _Payment((2023, 6), date(2023, 6, 25), Decimal("200")),  # 5 days late
-            _Payment((2023, 8), date(2023, 8, 28), Decimal("200")),  # July unpaid; Aug 8 days late
+            _Payment((2023, 6), date(2023, 6, 25), Decimal("120")),  # 5 days late
+            _Payment((2023, 8), date(2023, 8, 28), Decimal("120")),  # July unpaid; Aug 8 days late
         ),
     ),
     # Left mid-year — excluded from active-only views, and not billed for months away.
@@ -218,8 +218,8 @@ SEED_STUDENTS: tuple[_SeedStudent, ...] = (
         join_date=date(2023, 11, 1),
         status=StudentStatus.ACTIVE,
         payments=(
-            _Payment((2023, 11), date(2023, 11, 1), Decimal("400")),  # on time
-            _Payment((2023, 12), date(2023, 12, 10), Decimal("400")),  # 9 days late
+            _Payment((2023, 11), date(2023, 11, 1), Decimal("170")),  # on time
+            _Payment((2023, 12), date(2023, 12, 10), Decimal("170")),  # 9 days late
         ),
     ),
     # No class and no pack: exercises the "Unassigned" filter and the not-yet-billed state a

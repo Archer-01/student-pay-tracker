@@ -177,7 +177,11 @@
     "validation": {
       "monthRequired": "Choose the month this payment settles.",
       "paidDateRequired": "Paid date is required.",
-      "amountInvalid": "Enter an amount greater than 0."
+      "amountInvalid": "Enter an amount greater than 0.",
+      "amountAbovePrice": "That's more than this student's monthly price of {{price}}."
+    },
+    "hints": {
+      "amountUpTo": "Up to {{price}}, this student's monthly price."
     }
   },
   "override": {

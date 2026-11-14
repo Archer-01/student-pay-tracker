@@ -38,7 +38,7 @@ _ALEMBIC_INI = Path(__file__).resolve().parents[1] / "alembic.ini"
 
 app = typer.Typer(help="Ardoise admin CLI.", no_args_is_help=True)
 students_app = typer.Typer(help="Manage students.", no_args_is_help=True)
-payments_app = typer.Typer(help="Record payments.", no_args_is_help=True)
+payments_app = typer.Typer(help="Record and correct payments.", no_args_is_help=True)
 overrides_app = typer.Typer(help="Manage anchor overrides.", no_args_is_help=True)
 classes_app = typer.Typer(help="Manage classes.", no_args_is_help=True)
 packs_app = typer.Typer(help="Manage packs (the price list).", no_args_is_help=True)
@@ -716,31 +716,38 @@ def packs_delete(
 # --------------------------------------------------------------------------- #
 
 
+_FOR_MONTH_HELP = "Which month it settles, YYYY-MM"
+_CYCLE_HELP = "Cycle index (from `students show`)"
+
+
+def _resolve_cycle(
+    payments: PaymentService, student_id: int, for_month: str | None, cycle: int | None
+) -> int:
+    """The cycle a command means, given exactly one of --for-month / --cycle."""
+    if (for_month is None) == (cycle is None):
+        raise typer.BadParameter("Provide exactly one of --for-month or --cycle.")
+    if cycle is not None:
+        return cycle
+    assert for_month is not None  # guaranteed by the exactly-one check
+    year, month = _parse_month(for_month)
+    return payments.cycle_for_month(student_id, year, month)
+
+
 @payments_app.command("record")
 def payments_record(
     student_id: int = typer.Argument(...),
     date_: str = typer.Option(..., "--date", help="Paid date, YYYY-MM-DD"),
     amount: str = typer.Option(..., "--amount"),
-    for_month: str | None = typer.Option(
-        None, "--for-month", help="Which month it settles, YYYY-MM"
-    ),
-    cycle: int | None = typer.Option(None, "--cycle", help="Cycle index (from `students show`)"),
+    for_month: str | None = typer.Option(None, "--for-month", help=_FOR_MONTH_HELP),
+    cycle: int | None = typer.Option(None, "--cycle", help=_CYCLE_HELP),
 ) -> None:
     """Record a payment. Provide exactly one of --for-month or --cycle."""
-    if (for_month is None) == (cycle is None):
-        raise typer.BadParameter("Provide exactly one of --for-month or --cycle.")
-
     paid = _parse_date(date_)
     amt = _parse_decimal(amount)
     with _session() as session:
         payments = PaymentService(session)
         try:
-            if for_month is not None:
-                year, month = _parse_month(for_month)
-                cycle_number = payments.cycle_for_month(student_id, year, month)
-            else:
-                assert cycle is not None  # guaranteed by the exactly-one check
-                cycle_number = cycle
+            cycle_number = _resolve_cycle(payments, student_id, for_month, cycle)
             payment = payments.record_payment(
                 student_id=student_id, cycle_number=cycle_number, paid_date=paid, amount=amt
             )
@@ -751,6 +758,76 @@ def payments_record(
             f"Recorded payment for cycle [bold]{payment.cycle_number}[/bold] "
             f"(due {payment.expected_due_date}, {payment.days_late} days late)."
         )
+
+
+@payments_app.command("edit")
+def payments_edit(
+    student_id: int = typer.Argument(...),
+    for_month: str | None = typer.Option(None, "--for-month", help=_FOR_MONTH_HELP),
+    cycle: int | None = typer.Option(None, "--cycle", help=_CYCLE_HELP),
+    amount: str | None = typer.Option(None, "--amount", help="Corrected amount"),
+    date_: str | None = typer.Option(None, "--date", help="Corrected paid date, YYYY-MM-DD"),
+) -> None:
+    """Correct a recorded payment's amount and/or paid date.
+
+    Identify the payment with exactly one of --for-month or --cycle. The month it settles cannot
+    be changed here: delete it and record it again.
+    """
+    if amount is None and date_ is None:
+        raise typer.BadParameter("Nothing to change: pass --amount and/or --date.")
+    new_amount = _parse_decimal(amount) if amount is not None else None
+    new_date = _parse_date(date_) if date_ is not None else None
+    with _session() as session:
+        payments = PaymentService(session)
+        try:
+            cycle_number = _resolve_cycle(payments, student_id, for_month, cycle)
+            before = payments.get_payment(student_id=student_id, cycle_number=cycle_number)
+            old_amount, old_date = before.amount, before.paid_date
+            payment = payments.update_payment(
+                student_id=student_id,
+                cycle_number=cycle_number,
+                amount=new_amount,
+                paid_date=new_date,
+            )
+        except (DomainError, ValueError) as exc:
+            _abort(_render_error(exc))
+
+        console.print(
+            f"Updated payment for cycle [bold]{payment.cycle_number}[/bold] "
+            f"(due {payment.expected_due_date}):"
+        )
+        if new_amount is not None:
+            console.print(f"  amount     {old_amount} -> [bold]{payment.amount}[/bold]")
+        if new_date is not None:
+            console.print(
+                f"  paid date  {old_date} -> [bold]{payment.paid_date}[/bold] "
+                f"({payment.days_late} days late)"
+            )
+
+
+@payments_app.command("delete")
+def payments_delete(
+    student_id: int = typer.Argument(...),
+    for_month: str | None = typer.Option(None, "--for-month", help=_FOR_MONTH_HELP),
+    cycle: int | None = typer.Option(None, "--cycle", help=_CYCLE_HELP),
+    yes: bool = typer.Option(False, "--yes", help="Skip the confirmation prompt."),
+) -> None:
+    """Delete a recorded payment (irreversible) — e.g. one recorded against the wrong month."""
+    with _session() as session:
+        payments = PaymentService(session)
+        try:
+            cycle_number = _resolve_cycle(payments, student_id, for_month, cycle)
+            payment = payments.get_payment(student_id=student_id, cycle_number=cycle_number)
+        except (DomainError, ValueError) as exc:
+            _abort(_render_error(exc))
+        if not yes:
+            typer.confirm(
+                f"Delete the {payment.amount} payment for cycle {cycle_number} "
+                f"(due {payment.expected_due_date}, paid {payment.paid_date})?",
+                abort=True,
+            )
+        payments.delete_payment(student_id=student_id, cycle_number=cycle_number)
+        console.print(f"Deleted the payment for cycle [bold]{cycle_number}[/bold].")
 
 
 # --------------------------------------------------------------------------- #

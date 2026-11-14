@@ -24,6 +24,18 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Student {student_id} already has a payment for cycle {cycle_number}",
         "fr": "L'élève {student_id} a déjà un paiement pour le cycle {cycle_number}",
     },
+    "error.payment_not_found": {
+        "en": "No payment recorded for student {student_id}, cycle {cycle_number}",
+        "fr": "Aucun paiement enregistré pour l'élève {student_id}, cycle {cycle_number}",
+    },
+    "error.payment_amount_not_positive": {
+        "en": "A payment amount must be more than zero",
+        "fr": "Le montant d'un paiement doit être supérieur à zéro",
+    },
+    "error.payment_exceeds_price": {
+        "en": "{amount} is more than this student's monthly price of {price}",
+        "fr": "{amount} dépasse le tarif mensuel de cet élève ({price})",
+    },
     "error.override_reason_empty": {
         "en": "Override reason must not be empty",
         "fr": "Le motif du changement de date ne doit pas être vide",

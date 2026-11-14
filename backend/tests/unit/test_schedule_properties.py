@@ -16,6 +16,7 @@ from app.services.schedule import (
     add_months,
     cumulative_drift,
     generate_expected_due_dates,
+    next_expected_date,
 )
 
 # Bounded so ``add_months(join, cycle)`` stays comfortably within ``date`` range.
@@ -126,3 +127,20 @@ def test_due_dates_are_strictly_increasing(join: date, overrides: list[date]) ->
     dues = generate_expected_due_dates(join, add_months(join, 120), overrides)
     assert all(a < b for a, b in zip(dues, dues[1:], strict=False))
 
+
+@given(join=_JOIN_DATES, as_of=_AS_OF_DATES, skip=st.frozensets(_CYCLE_NUMBERS, max_size=12))
+def test_next_expected_skips_paid_cycles_and_nothing_else(
+    join: date, as_of: date, skip: frozenset[int]
+) -> None:
+    # The answer is a scheduled due date on or after as_of whose cycle is not already paid, and
+    # no earlier such date exists. With nothing skipped it is exactly the old answer.
+    got = next_expected_date(join, as_of, skip_cycles=skip)
+    dues = generate_expected_due_dates(join, got)  # every cycle up to and including the answer
+    cycle = len(dues) - 1
+    assert dues[cycle] == got
+    assert got >= as_of
+    assert cycle not in skip
+    # Every earlier cycle was either already past or already paid.
+    assert all(due < as_of or c in skip for c, due in enumerate(dues[:cycle]))
+    if not skip:
+        assert got == next_expected_date(join, as_of)

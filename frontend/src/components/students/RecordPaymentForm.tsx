@@ -3,13 +3,23 @@ import { useTranslation } from "react-i18next";
 import { recordPayment } from "../../api/endpoints";
 import { useMutation } from "../../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../../lib/errors";
+import { formatMoney } from "../../lib/money";
 import { Button, DateField, MoneyField, MonthField } from "../ui";
 
-type Props = { studentId: number; onSuccess: () => void; onCancel: () => void };
+type Props = {
+  studentId: number;
+  /** The student's current monthly price; "0.00" when they have none. */
+  monthlyPrice: string;
+  onSuccess: () => void;
+  onCancel: () => void;
+};
 
-export function RecordPaymentForm({ studentId, onSuccess, onCancel }: Props) {
+export function RecordPaymentForm({ studentId, monthlyPrice, onSuccess, onCancel }: Props) {
   const { t } = useTranslation();
   const create = useMutation(recordPayment);
+  // A payment is never more than the monthly price (the backend enforces the same rule). Paying
+  // less is normal; a student with no price has nothing to compare against.
+  const cap = Number(monthlyPrice) > 0 ? Number(monthlyPrice) : null;
 
   const [forMonth, setForMonth] = useState("");
   const [paidDate, setPaidDate] = useState("");
@@ -23,6 +33,8 @@ export function RecordPaymentForm({ studentId, onSuccess, onCancel }: Props) {
     if (!paidDate) next.paid_date = t("payment.validation.paidDateRequired");
     if (amount.trim() === "" || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
       next.amount = t("payment.validation.amountInvalid");
+    } else if (cap !== null && Number(amount) > cap) {
+      next.amount = t("payment.validation.amountAbovePrice", { price: formatMoney(monthlyPrice) });
     }
     return next;
   }
@@ -70,6 +82,7 @@ export function RecordPaymentForm({ studentId, onSuccess, onCancel }: Props) {
         label={t("payment.fields.amount")}
         value={amount}
         onChange={setAmount}
+        hint={cap !== null ? t("payment.hints.amountUpTo", { price: formatMoney(monthlyPrice) }) : undefined}
         error={errors.amount}
         required
       />

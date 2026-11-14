@@ -174,10 +174,19 @@ ardoise students list [--sort-by-drift] [--status active] [--as-of YYYY-MM-DD]
 ardoise students show <id> [--as-of YYYY-MM-DD]        # full ledger + cumulative drift
 ardoise students delete <id> [--yes]                   # cascades to payments/overrides; prompts unless --yes
 ardoise payments record <id> --date YYYY-MM-DD --amount 300 (--for-month YYYY-MM | --cycle N)
+ardoise payments edit <id> (--for-month YYYY-MM | --cycle N) [--amount 200] [--date YYYY-MM-DD]
+ardoise payments delete <id> (--for-month YYYY-MM | --cycle N) [--yes]   # to move one to another month
 ardoise overrides create <id> --new-date YYYY-MM-DD --reason "agreed shift"
 ardoise db reset --yes                                  # dev only; needs ALLOW_DB_RESET=1
 ardoise db seed [--force]                               # dev only; loads deterministic dummy data
 ```
+
+Domain commands need the teacher whose data they touch: `--user <username>` or `ARDOISE_USER`.
+
+**A payment is never more than the student's monthly price** (their agreed price, else their
+pack's). It is the cheap guard against typing the wrong number; paying *less* is normal. A student
+with no price has no cap. The API, the CLI and the web form all enforce it, and `payments edit`
+checks a corrected amount against the same rule.
 
 `ardoise db seed` populates a fixed, realistic dev dataset (6 students — on-time payers, a chronic
 late payer, an unpaid-cycle gap, one anchor override, an inactive student, and one with no phone).
