@@ -195,14 +195,14 @@ MESSAGES: dict[str, dict[str, str]] = {
             "et ne peut pas être déplacée"
         ),
     },
-    # --- Debts ("effacer la dette", not the accountant's "abandon de créance") ---
+    # --- Debts ("ne plus réclamer", not the accountant's "abandon de créance") ---
     "error.writeoff_reason_empty": {
         "en": "A write-off needs a reason",
-        "fr": "Indiquez pourquoi la dette est effacée",
+        "fr": "Indiquez pourquoi vous ne réclamez plus cette somme",
     },
     "error.nothing_to_write_off": {
         "en": "Student {student_id} has no outstanding balance to write off",
-        "fr": "Cet élève n'a aucune dette à effacer",
+        "fr": "Cet élève n'a plus rien à régler",
     },
     "warning.returning_with_debt_one": {
         "en": "This student left owing {amount} for {count} month",
