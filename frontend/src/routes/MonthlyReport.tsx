@@ -1,36 +1,50 @@
-import { useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getMonthlyReport } from "../api/endpoints";
+import { getAnnualReport, getMonthlyReport } from "../api/endpoints";
 import { downloadFile } from "../api/client";
+import type { AnnualReport, MonthlyReport as MonthlyReportData } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
-import { formatDate } from "../lib/dates";
+import { formatDate, formatMonthTitle } from "../lib/dates";
 import { resolveErrorMessage } from "../lib/errors";
-import { DriftBadge } from "../components/DriftBadge";
-import { ReportTabs } from "../components/ReportTabs";
-import {
-  AsyncView,
-  Button,
-  Card,
-  DataTable,
-  PageHeader,
-  Select,
-} from "../components/ui";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
+import { ReportTabs } from "../components/ReportTabs";
+import { AsyncView, Button } from "../components/ui";
+import { BarChart, Figure, Stepper } from "../components/report";
+import { StudentRow, StudentRows } from "../components/StudentRow";
 
-const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+type YearMonth = { year: number; month: number };
 
+const key = ({ year, month }: YearMonth) => `${year}-${String(month).padStart(2, "0")}`;
+const shift = ({ year, month }: YearMonth, by: number): YearMonth => {
+  const index = year * 12 + (month - 1) + by;
+  return { year: Math.floor(index / 12), month: (index % 12) + 1 };
+};
+
+/**
+ * Bilan › Mois: what came in this month and what is still owed, the school year as bars (tap
+ * one to open that month), then each student on one line. Arrows step through months instead of
+ * two dropdowns; nothing after the current month, which has no figures yet.
+ *
+ * "Impayés" carries the date it is counted at. The month's figure is counted at the month's end,
+ * Accueil's at today, and without the date the two looked like they disagreed.
+ */
 export function MonthlyReport() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const now = new Date();
-  const [year, setYear] = useState(now.getFullYear());
-  const [month, setMonth] = useState(now.getMonth() + 1);
+  const current: YearMonth = { year: now.getFullYear(), month: now.getMonth() + 1 };
+  const [selected, setSelected] = useState<YearMonth>(current);
+  const { year, month } = selected;
+  const schoolYear = month >= 9 ? year : year - 1;
 
   // Refreshes after a payment taken from the shared sheet, wherever it was opened.
   const paymentsVersion = usePaymentsVersion();
-  const state = useApi(() => getMonthlyReport(year, month), [year, month, paymentsVersion]);
-
+  const report = useApi(() => getMonthlyReport(year, month), [year, month, paymentsVersion]);
+  // The school year spans two calendar years, which the API reports separately.
+  const annual = useApi(
+    () => Promise.all([getAnnualReport(schoolYear), getAnnualReport(schoolYear + 1)]),
+    [schoolYear, paymentsVersion],
+  );
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function handleDownload() {
@@ -43,130 +57,134 @@ export function MonthlyReport() {
     }
   }
 
-  // Localized month names (Jan…Dec) + a rolling range of recent years — works in every browser.
-  const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-    value: String(i + 1),
-    label: capitalize(
-      new Intl.DateTimeFormat(i18n.language, { month: "long" }).format(new Date(2000, i, 1)),
-    ),
-  }));
-  const yearOptions = Array.from({ length: 7 }, (_, i) => {
-    const y = now.getFullYear() - i;
-    return { value: String(y), label: String(y) };
-  });
-
-  const actions = (
-    <div className="flex flex-col items-end gap-1">
-      <div className="flex items-end gap-2">
-        <Select
-          id="report-month"
-          label={t("report.monthLabel")}
-          value={String(month)}
-          onChange={(v) => setMonth(Number(v))}
-          options={monthOptions}
-        />
-        <Select
-          id="report-year"
-          label={t("report.yearLabel")}
-          value={String(year)}
-          onChange={(v) => setYear(Number(v))}
-          options={yearOptions}
-        />
-        <Button variant="secondary" onClick={handleDownload} className="mb-[1px]">
-          {t("report.downloadPdf")}
-        </Button>
-      </div>
-      {downloadError && <span className="text-xs text-rose-600 dark:text-rose-400">{downloadError}</span>}
-    </div>
-  );
-
   return (
-    <div>
+    <div className="flex flex-col gap-5">
       <ReportTabs />
-      <PageHeader title={t("pages.report")} actions={actions} />
+      <Stepper
+        label={formatMonthTitle(key(selected))}
+        previousLabel={t("reports.previousMonth")}
+        nextLabel={t("reports.nextMonth")}
+        onPrevious={() => setSelected(shift(selected, -1))}
+        onNext={() => setSelected(shift(selected, 1))}
+        canGoNext={key(selected) < key(current)}
+      />
 
-      <AsyncView state={state} onRetry={state.reload}>
-        {(report) => (
+      <AsyncView state={report} onRetry={report.reload}>
+        {(data) => (
           <>
-            <p className="-mt-4 mb-6 text-sm text-slate-400 dark:text-slate-500">
-              {t("report.asOf", { date: formatDate(report.as_of) })}
-            </p>
-
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <StatTile label={t("report.totalCollected")}>{formatMoney(report.total_collected)}</StatTile>
-              <StatTile label={t("report.totalOutstanding")}>{formatMoney(report.total_outstanding)}</StatTile>
-            </div>
-
-            {report.rows.length === 0 ? (
-              <Card>
-                <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">{t("report.empty")}</p>
-              </Card>
-            ) : (
-              <DataTable
-                rows={report.rows}
-                keyOf={(row) => row.student_id}
-                rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
-                columns={[
-                  {
-                    key: "name",
-                    header: t("report.columns.name"),
-                    primary: true,
-                    cell: (row) => (
-                      <Link
-                        to={`/students/${row.student_id}`}
-                        className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                      >
-                        {row.name}
-                      </Link>
-                    ),
-                  },
-                  {
-                    key: "status",
-                    header: t("report.columns.status"),
-                    cell: (row) => (
-                      <span className="text-slate-600 dark:text-slate-300">
-                        {t(`status.${row.status}`)}
-                      </span>
-                    ),
-                  },
-                  {
-                    key: "fee",
-                    header: t("report.columns.fee"),
-                    align: "right",
-                    cell: (row) => formatMoney(row.fee),
-                  },
-                  {
-                    key: "collected",
-                    header: t("report.columns.collected"),
-                    align: "right",
-                    cell: (row) => formatMoney(row.collected),
-                  },
-                  {
-                    key: "drift",
-                    header: t("report.columns.drift"),
-                    cell: (row) => <DriftBadge drift={row.cumulative_drift} />,
-                  },
-                  {
-                    key: "outstanding",
-                    header: t("report.columns.outstanding"),
-                    align: "right",
-                    cell: (row) => formatMoney(row.outstanding),
-                  },
-                ]}
+            <section className="grid grid-cols-2 gap-3">
+              <Figure label={t("report.totalCollected")} value={formatMoney(data.total_collected)} />
+              <Figure
+                label={t("home.outstanding", { date: formatDate(data.as_of) })}
+                value={formatMoney(data.total_outstanding)}
+                alarming={Number(data.total_outstanding) > 0}
               />
+            </section>
+
+            {annual.status === "success" && (
+              <section className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4">
+                <h2 className="font-bold">{t("student.schoolYear", { from: schoolYear, to: schoolYear + 1 })}</h2>
+                <SchoolYearBars
+                  years={annual.data}
+                  startYear={schoolYear}
+                  selected={key(selected)}
+                  latest={key(current)}
+                  onSelect={(ym) => setSelected({ year: Number(ym.slice(0, 4)), month: Number(ym.slice(5, 7)) })}
+                />
+              </section>
             )}
+
+            <PerStudent data={data} />
           </>
         )}
       </AsyncView>
+
+      <Button variant="secondary" onClick={handleDownload} className="sm:self-start">
+        {t("report.downloadPdf")}
+      </Button>
+      {downloadError && <p className="text-sm font-bold text-bad">{downloadError}</p>}
     </div>
   );
 }
 
-function StatTile({ label, children }: { label: string; children: ReactNode }) {
+function SchoolYearBars({
+  years,
+  startYear,
+  selected,
+  latest,
+  onSelect,
+}: {
+  years: [AnnualReport, AnnualReport];
+  startYear: number;
+  selected: string;
+  latest: string;
+  onSelect: (ym: string) => void;
+}) {
+  const { i18n } = useTranslation();
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const month = ((8 + i) % 12) + 1;
+    const year = month >= 9 ? startYear : startYear + 1;
+    const report = month >= 9 ? years[0] : years[1];
+    return { ym: `${year}-${String(month).padStart(2, "0")}`, collected: report.months[month - 1]?.collected ?? "0" };
+  });
+  const letter = (ym: string) =>
+    new Intl.DateTimeFormat(i18n.language, { month: "narrow" }).format(new Date(`${ym}-01T00:00:00`));
   return (
-    <Card>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">{children}</p>
-    </Card>
+    <BarChart
+      bars={months.map((m) => ({
+        key: m.ym,
+        label: letter(m.ym),
+        title: `${formatMonthTitle(m.ym)} · ${formatMoney(m.collected)}`,
+        value: Number(m.collected),
+        selected: m.ym === selected,
+      }))}
+      onSelect={(ym) => {
+        // Months still to come can't be opened: there is nothing in them yet.
+        if (ym <= latest) onSelect(ym);
+      }}
+    />
+  );
+}
+
+/** Each student on one line: what they paid this month, and what they still owe. */
+function PerStudent({ data }: { data: MonthlyReportData }) {
+  const { t } = useTranslation();
+  const rows = [...data.rows].sort(
+    (a, b) => Number(b.outstanding) - Number(a.outstanding) || a.name.localeCompare(b.name),
+  );
+  if (rows.length === 0) {
+    return <p className="rounded-2xl border border-line bg-surface p-4 text-muted">{t("report.empty")}</p>;
+  }
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-bold">{t("reports.byStudent")}</h2>
+      <StudentRows label={t("reports.byStudent")}>
+        {rows.map((row) => (
+          <StudentRow
+            key={row.student_id}
+            to={`/students/${row.student_id}`}
+            name={row.name}
+            facts={[
+              Number(row.collected) > 0
+                ? t("reports.paid", { amount: formatMoney(row.collected) })
+                : t("reports.paidNothing"),
+              row.cumulative_drift > 0 && t("home.lateTotal", { count: row.cumulative_drift }),
+              row.status === "inactive" && t("student.leftTitle"),
+            ]}
+            right={
+              Number(row.outstanding) > 0 ? (
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-bad-soft px-3 py-1 text-sm font-bold text-bad">
+                  {formatMoney(row.outstanding)}
+                </span>
+              ) : (
+                <span className="shrink-0 whitespace-nowrap rounded-full bg-ok-soft px-3 py-1 text-sm font-bold text-ok">
+                  {t("owed.paidUp")}
+                </span>
+              )
+            }
+          />
+        ))}
+      </StudentRows>
+    </section>
   );
 }

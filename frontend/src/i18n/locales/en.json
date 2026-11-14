@@ -58,7 +58,14 @@
     "filterClassAll": "All classes",
     "search": "Search",
     "searchPlaceholder": "Name…",
-    "add": "Add student"
+    "add": "Add student",
+    "filters": {
+      "label": "Show",
+      "all": "All",
+      "owing": "Owe money",
+      "left": "Former"
+    },
+    "addShort": "Student"
   },
   "dashboard": {
     "collectedThisMonth": "Collected this month",
@@ -114,7 +121,7 @@
     "pdfFilename": "ledger-student-{{id}}{{name}}",
     "actions": {
       "recordPayment": "Record payment",
-      "addOverride": "Add override",
+      "addOverride": "Change the payment day",
       "edit": "Edit details"
     },
     "fields": {
@@ -192,7 +199,7 @@
     }
   },
   "override": {
-    "title": "Add override",
+    "title": "Change the payment day",
     "fields": {
       "newDueDate": "New due date",
       "reason": "Reason"
@@ -257,7 +264,7 @@
     "notOffered": "not offered",
     "studentCount_one": "{{count}} student",
     "studentCount_other": "{{count}} students",
-    "gridHint": "One row per offering, one column per level. Click a price to change it.",
+    "gridHint": "Tap a price to change it, or an offer's name to change its subjects.",
     "editPrice": "Price",
     "editCellTitle": "{{offering}} · {{level}}",
     "offered": "Offered at this level",
@@ -272,7 +279,7 @@
     "editOffering": "Edit offering",
     "editOfferingTitle": "Edit {{name}}",
     "appliesToAllLevels": "Name and subjects apply to every level of this offering; only prices differ.",
-    "gridScrollHint": "Scroll sideways to see every level."
+    "editOfferingShort": "Edit"
   },
   "student": {
     "pack": "Pack",
@@ -302,7 +309,24 @@
     "returnDate": "Return date",
     "leaveReason": "Reason",
     "leaveHint": "Months after this date stop being owed. Drift already accrued is kept.",
-    "returnHint": "The join date never moves, so any existing debt and drift come back with them."
+    "returnHint": "The join date never moves, so any existing debt and drift come back with them.",
+    "more": "More actions",
+    "call": "Call {{phone}}",
+    "oldestUnpaid": "Oldest unpaid month: {{month}}.",
+    "payMonth": "Record {{month}}",
+    "nextPayment": "Next payment expected on {{date}}.",
+    "noPriceText": "Nothing is charged to this student until they have a pack or an agreed price.",
+    "leftTitle": "Left",
+    "leftText": "No longer a student since {{date}}.",
+    "schoolYear": "{{from}}–{{to}} school year",
+    "prevYear": "Previous year",
+    "nextYear": "Next year",
+    "details": "Details",
+    "totalLate": "Late in total",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days",
+    "paymentsCount_one": "{{count}} payment",
+    "paymentsCount_other": "{{count}} payments"
   },
   "annual": {
     "year": "Year",
@@ -329,7 +353,8 @@
     "writeOffConfirm": "Write off {{amount}}",
     "returnedWithDebt": "This student left owing money",
     "duplicateWarning": "A former student with this name or number left owing {{amount}}.",
-    "onDashboard": "Left owing"
+    "onDashboard": "Left owing",
+    "leftOnDate": "Left on {{date}}"
   },
   "auth": {
     "title": "Sign in",
@@ -349,7 +374,14 @@
       "month": "Month",
       "year": "Year",
       "leavers": "Left owing"
-    }
+    },
+    "previousMonth": "Previous month",
+    "nextMonth": "Next month",
+    "previousYear": "Previous year",
+    "nextYear": "Next year",
+    "byStudent": "By student",
+    "paid": "Paid {{amount}}",
+    "paidNothing": "Paid nothing"
   },
   "settings": {
     "title": "Settings",
@@ -412,5 +444,32 @@
     "submit": "Record {{amount}}",
     "submitEmpty": "Record",
     "done": "Payment recorded: {{amount}} for {{name}}"
+  },
+  "tiles": {
+    "late_one": "{{count}} d",
+    "late_other": "{{count}} d",
+    "short": {
+      "paid": "paid",
+      "due": "to pay",
+      "away": "away",
+      "upcoming": "to come"
+    },
+    "state": {
+      "paid": "paid",
+      "late": "paid late",
+      "due": "to pay",
+      "away": "away, not billed",
+      "upcoming": "to come",
+      "none": "not enrolled"
+    }
+  },
+  "tile": {
+    "due": "Due",
+    "paidOn": "Paid on",
+    "amount": "Amount",
+    "lateness": "Lateness",
+    "notPaid": "Not paid yet. This month was due on {{date}}.",
+    "away": "The student wasn't enrolled that month: nothing is owed.",
+    "upcoming": "This month isn't due yet."
   }
 }

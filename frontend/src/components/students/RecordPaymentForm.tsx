@@ -20,6 +20,8 @@ function todayIso(): string {
 
 type Props = {
   studentId: number;
+  /** Preselect this month (`YYYY-MM`) instead of the oldest owed, if it can be paid. */
+  initialMonth?: string;
   /** Called with the amount actually sent and the student's name, for the confirmation. */
   onSuccess: (amount: string, studentName: string) => void;
   onCancel: () => void;
@@ -27,7 +29,7 @@ type Props = {
   onChangeStudent?: () => void;
 };
 
-export function RecordPaymentForm({ studentId, onSuccess, onCancel, onChangeStudent }: Props) {
+export function RecordPaymentForm({ studentId, initialMonth, onSuccess, onCancel, onChangeStudent }: Props) {
   const state = useApi(() => Promise.all([getStudent(studentId), getLedger(studentId)]), [studentId]);
   return (
     <AsyncView state={state} onRetry={state.reload}>
@@ -35,6 +37,7 @@ export function RecordPaymentForm({ studentId, onSuccess, onCancel, onChangeStud
         <PaymentFields
           student={student}
           ledger={ledger}
+          initialMonth={initialMonth}
           onSuccess={onSuccess}
           onCancel={onCancel}
           onChangeStudent={onChangeStudent}
@@ -51,6 +54,7 @@ export function RecordPaymentForm({ studentId, onSuccess, onCancel, onChangeStud
 function PaymentFields({
   student,
   ledger,
+  initialMonth,
   onSuccess,
   onCancel,
   onChangeStudent,
@@ -65,7 +69,9 @@ function PaymentFields({
   const price = student.monthly_price;
   const cap = Number(price) > 0 ? Number(price) : null;
 
-  const [forMonth, setForMonth] = useState(months[0]!.month);
+  const [forMonth, setForMonth] = useState(
+    months.some((m) => m.month === initialMonth) ? initialMonth! : months[0]!.month,
+  );
   const [amount, setAmount] = useState(() => defaultAmount(ledger.entries, price));
   const [paidToday, setPaidToday] = useState(true);
   const [otherDate, setOtherDate] = useState("");

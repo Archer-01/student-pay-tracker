@@ -8,6 +8,9 @@
  * those two scales, so remapping them restyles the whole app at once; screens move to the
  * semantic tokens below (`brand`, `ok`, `warn`, `bad`, `off`) as they are rebuilt. A new screen
  * should use the semantic names, not `indigo`.
+ *
+ * The semantic colours are CSS variables, so Tailwind's opacity shorthand (`bg-brand/35`) does
+ * not work on them: it silently produces no colour at all. Add a solid token instead.
  */
 const slateGreen = {
   50: "#eef5f4",
@@ -46,7 +49,7 @@ export default {
       colors: {
         indigo: slateGreen,
         slate: chalk,
-        brand: { DEFAULT: "var(--brand)", soft: "var(--brand-soft)", ink: "var(--brand-ink)" },
+        brand: { DEFAULT: "var(--brand)", soft: "var(--brand-soft)", mid: "var(--brand-mid)", ink: "var(--brand-ink)" },
         ok: { DEFAULT: "var(--ok)", soft: "var(--ok-soft)" },
         warn: { DEFAULT: "var(--warn)", soft: "var(--warn-soft)" },
         bad: { DEFAULT: "var(--bad)", soft: "var(--bad-soft)" },
@@ -56,6 +59,7 @@ export default {
         ink: "var(--ink)",
         muted: "var(--muted)",
         line: "var(--line)",
+        placeholder: "var(--placeholder)",
       },
       fontFamily: {
         sans: ['"Ardoise Digits"', '"Atkinson Hyperlegible"', "system-ui", "-apple-system", '"Segoe UI"', "sans-serif"],

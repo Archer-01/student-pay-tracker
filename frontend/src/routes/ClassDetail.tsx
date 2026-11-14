@@ -7,19 +7,12 @@ import { useApi } from "../lib/useApi";
 import { useMutation } from "../lib/useMutation";
 import { resolveErrorMessage } from "../lib/errors";
 import { classLabel } from "../lib/classes";
-import { formatMoney } from "../lib/money";
 import { slugify } from "../lib/slug";
-import { DriftBadge } from "../components/DriftBadge";
-import { OverdueBadge } from "../components/OverdueBadge";
-import {
-  AsyncView,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  PageHeader,
-  TextField,
-} from "../components/ui";
+import { AsyncView, Button, Modal, TextField } from "../components/ui";
+import { OwedPill } from "../components/people";
+import { StudentRow, StudentRows } from "../components/StudentRow";
+import { ChevronLeftIcon, PlusIcon } from "../components/icons";
+import { useMoneyFacts } from "../lib/useMoneyFacts";
 import { updateClass } from "../api/endpoints";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
 
@@ -68,6 +61,7 @@ function ClassView({
   const [renaming, setRenaming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const remove = useMutation(deleteClass);
+  const moneyFacts = useMoneyFacts();
   const label = classLabel(schoolClass);
 
   async function handleDelete() {
@@ -83,38 +77,32 @@ function ClassView({
     }
   }
 
-  const actions = (
-    <>
-      <Button variant="secondary" onClick={() => setRenaming(true)}>
-        {t("classes.rename")}
-      </Button>
-      <Button
-        variant="secondary"
-        onClick={() =>
-          downloadClassRoster(schoolClass.id, `${slugify(label)}-roster.pdf`, schoolClass.as_of)
-        }
-      >
-        {t("classes.downloadRoster")}
-      </Button>
-      <Button variant="danger" onClick={handleDelete} pending={remove.status === "pending"}>
-        {t("classes.delete")}
-      </Button>
-    </>
-  );
-
   return (
-    <>
-      <Link
-        to="/settings/classes"
-        className="mb-2 inline-block text-sm text-slate-500 hover:underline dark:text-slate-400"
-      >
-        ← {t("classes.backToClasses")}
+    <div className="flex flex-col gap-5">
+      <Link to="/settings/classes" className="-ml-1 flex min-h-11 items-center gap-1 self-start font-bold text-brand">
+        <ChevronLeftIcon className="h-5 w-5" />
+        {t("classes.backToClasses")}
       </Link>
-      <PageHeader title={label} actions={actions} />
+      <header className="flex flex-col gap-1">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{label}</h1>
+        <p className="text-muted">
+          {[
+            t("dashboard.activeStudents", { count: schoolClass.student_count }),
+            schoolClass.cumulative_drift > 0 && t("home.lateTotal", { count: schoolClass.cumulative_drift }),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </header>
 
-      {actionError && (
-        <p className="mb-4 text-sm text-rose-600 dark:text-rose-400">{actionError}</p>
-      )}
+      {/* Pre-fills (and shows) the class on the enrolment form, never silently. */}
+      <Link
+        to={`/students/new?class_id=${schoolClass.id}`}
+        className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 font-bold text-brand-ink hover:opacity-90 sm:self-start"
+      >
+        <PlusIcon className="h-5 w-5" />
+        {t("classes.addStudent")}
+      </Link>
 
       {renaming && (
         <RenameClassModal
@@ -127,91 +115,49 @@ function ClassView({
         />
       )}
 
-      <Card className="mb-6">
-        <div className="flex items-center gap-8">
-          <Stat label={t("classes.students")} value={String(schoolClass.student_count)} />
-          <div>
-            <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t("classes.drift")}
-            </p>
-            <div className="mt-1">
-              <DriftBadge drift={schoolClass.cumulative_drift} />
-            </div>
-          </div>
-          <div className="ml-auto">
-            {/* Pre-fills (and shows) the class on the enrolment form — never silently. */}
-            <Link to={`/students/new?class_id=${schoolClass.id}`}>
-              <Button>{t("classes.addStudent")}</Button>
-            </Link>
-          </div>
-        </div>
-      </Card>
-
-      <DataTable
-        rows={roster}
-        keyOf={(s) => s.id}
-        empty={
-          <Card>
-            <p className="text-sm text-slate-500 dark:text-slate-400">{t("classes.rosterEmpty")}</p>
-          </Card>
-        }
-        rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
-        columns={[
-          {
-            key: "name",
-            header: t("students.columns.name"),
-            primary: true,
-            cell: (s) => (
-              <Link
+      {roster.length === 0 ? (
+        <p className="rounded-2xl border border-line bg-surface p-4 text-muted">{t("classes.rosterEmpty")}</p>
+      ) : (
+        <StudentRows label={label}>
+          {[...roster]
+            .sort((a, b) => a.full_name.localeCompare(b.full_name))
+            .map((s) => (
+              <StudentRow
+                key={s.id}
                 to={`/students/${s.id}`}
-                className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-              >
-                {s.full_name}
-              </Link>
-            ),
-          },
-          {
-            key: "status",
-            header: t("students.columns.status"),
-            cell: (s) => (
-              <span className="capitalize text-slate-600 dark:text-slate-300">
-                {t(`status.${s.status}`)}
-              </span>
-            ),
-          },
-          {
-            key: "price",
-            header: t("students.columns.price"),
-            align: "right",
-            cell: (s) => formatMoney(s.monthly_price),
-          },
-          {
-            key: "overdue",
-            header: t("students.columns.overdue"),
-            cell: (s) => <OverdueBadge monthsOverdue={s.months_overdue} />,
-          },
-          {
-            key: "owed",
-            header: t("students.columns.owed"),
-            align: "right",
-            cell: (s) => formatMoney(s.amount_owed),
-          },
-          {
-            key: "drift",
-            header: t("students.columns.drift"),
-            cell: (s) => <DriftBadge drift={s.cumulative_drift} />,
-          },
-        ]}
-      />
-    </>
-  );
-}
+                name={s.full_name}
+                facts={[
+                  ...moneyFacts({ monthsOverdue: s.months_overdue, drift: s.cumulative_drift }),
+                  s.status === "inactive" && t("student.leftTitle"),
+                ]}
+                right={
+                  <OwedPill monthsOverdue={s.months_overdue} amountOwed={s.amount_owed} monthlyPrice={s.monthly_price} />
+                }
+              />
+            ))}
+        </StudentRows>
+      )}
 
-function Stat({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">{label}</p>
-      <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-100">{value}</p>
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <Button variant="secondary" onClick={() => setRenaming(true)}>
+          {t("classes.rename")}
+        </Button>
+        <Button
+          variant="secondary"
+          onClick={() => downloadClassRoster(schoolClass.id, `${slugify(label)}-roster.pdf`, schoolClass.as_of)}
+        >
+          {t("classes.downloadRoster")}
+        </Button>
+      </div>
+
+      {/* Alone at the bottom, away from the everyday buttons: deleting is rare and needs the
+          class to be empty first. */}
+      <div className="flex flex-col gap-2 border-t border-line pt-5">
+        <Button variant="ghost" onClick={handleDelete} pending={remove.status === "pending"} className="text-bad sm:self-start">
+          {t("classes.delete")}
+        </Button>
+        {actionError && <p className="text-sm font-bold text-bad">{actionError}</p>}
+      </div>
     </div>
   );
 }

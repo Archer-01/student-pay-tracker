@@ -1,8 +1,11 @@
 import { createContext, useContext } from "react";
 
 export type PaymentSheetValue = {
-  /** Open the payment sheet, for one student or (without an id) starting from a student picker. */
-  open: (studentId?: number) => void;
+  /**
+   * Open the payment sheet, for one student or (without an id) starting from a student picker.
+   * `month` (`YYYY-MM`) preselects that month, when it is one the student can pay.
+   */
+  open: (studentId?: number, month?: string) => void;
   /**
    * Bumped after every recorded payment. Screens that show money put it in their `useApi` deps so
    * they refresh by themselves, wherever the sheet was opened from.

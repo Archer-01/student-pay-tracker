@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import userEvent from "@testing-library/user-event";
 import { screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { renderWithProviders } from "../test/render";
@@ -21,6 +22,10 @@ const ledger = { student_id: 5, as_of: "2026-11-14", cumulative_drift: 0, entrie
 const open = { id: 1, student_id: 5, entry_date: "2026-09-01", leave_date: null, leave_reason: null };
 const closed = { ...open, leave_date: "2026-10-15" };
 
+async function openMenu() {
+  await userEvent.click(await screen.findByRole("button", { name: /more actions/i }));
+}
+
 function renderPage() {
   renderWithProviders(
     <PaymentSheetProvider>
@@ -41,6 +46,7 @@ describe("StudentDetail departure button", () => {
     vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
     renderPage();
+    await openMenu();
     expect(await screen.findByRole("button", { name: /mark as left/i })).toBeInTheDocument();
   });
 
@@ -48,6 +54,7 @@ describe("StudentDetail departure button", () => {
     vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ status: "inactive" }) as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([closed] as never);
     renderPage();
+    await openMenu();
     expect(await screen.findByRole("button", { name: /mark as returned/i })).toBeInTheDocument();
   });
 
@@ -57,7 +64,40 @@ describe("StudentDetail departure button", () => {
     vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ status: "inactive" }) as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
     renderPage();
+    await openMenu();
     expect(await screen.findByRole("button", { name: /mark as left/i })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /mark as returned/i })).toBeNull();
+  });
+});
+
+describe("StudentDetail status", () => {
+  it("leads with what is owed, and a button to pay the oldest month", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ months_overdue: 1, amount_owed: "200.00", next_expected_date: "2026-12-01" }) as never,
+    );
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue({
+      ...ledger,
+      entries: [
+        { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
+        { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-09", days_late: 8, amount: "200.00", cumulative_drift: 8, suspended: false },
+        { cycle_number: 2, expected_due_date: "2026-11-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 8, suspended: false },
+      ],
+    } as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText(/owes 1 month · 200 DH/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Record November 2026" })).toBeInTheDocument();
+    // The year as tiles: September paid, October paid late, November owed.
+    expect(screen.getByRole("button", { name: /September 2026 · paid$/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /October 2026 · paid late/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /November 2026 · to pay/ })).toBeInTheDocument();
+  });
+
+  it("says plainly when the student is up to date", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("Up to date")).toBeInTheDocument();
+    expect(screen.getByText(/next payment expected on/i)).toBeInTheDocument();
   });
 });

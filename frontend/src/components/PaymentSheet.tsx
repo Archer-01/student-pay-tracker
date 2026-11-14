@@ -11,7 +11,7 @@ import { Avatar, OwedPill } from "./people";
 import { CheckIcon, SearchIcon } from "./icons";
 import { RecordPaymentForm } from "./students/RecordPaymentForm";
 
-type Sheet = { open: false } | { open: true; studentId?: number; pickedHere: boolean };
+type Sheet = { open: false } | { open: true; studentId?: number; month?: string; pickedHere: boolean };
 
 /**
  * Taking a payment is the app's most frequent job, so it is one sheet reachable from anywhere:
@@ -25,7 +25,8 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
 
   const open = useCallback(
-    (studentId?: number) => setSheet({ open: true, studentId, pickedHere: studentId === undefined }),
+    (studentId?: number, month?: string) =>
+      setSheet({ open: true, studentId, month, pickedHere: studentId === undefined }),
     [],
   );
   const close = useCallback(() => setSheet({ open: false }), []);
@@ -48,6 +49,7 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
           ) : (
             <RecordPaymentForm
               studentId={sheet.studentId}
+              initialMonth={sheet.month}
               onCancel={close}
               onChangeStudent={sheet.pickedHere ? () => setSheet({ open: true, pickedHere: true }) : undefined}
               onSuccess={(amount, name) => {
@@ -92,7 +94,7 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t("pay.searchStudent")}
-          className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-muted/70"
+          className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-placeholder"
         />
       </label>
       <AsyncView state={state} onRetry={state.reload} isEmpty={(rows) => rows.length === 0} emptyMessage={t("students.empty")}>

@@ -2,161 +2,156 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { listClasses, listStudents } from "../api/endpoints";
+import type { StudentListItem } from "../api/types";
 import { useApi } from "../lib/useApi";
-import { formatMoney } from "../lib/money";
-import { classLabel } from "../lib/classes";
-import { DriftBadge } from "../components/DriftBadge";
-import { OverdueBadge } from "../components/OverdueBadge";
-import { AsyncView, Button, DataTable, PageHeader, Select, TextField } from "../components/ui";
+import { useDebounced } from "../lib/useDebounced";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
+import { AsyncView } from "../components/ui";
+import { OwedPill } from "../components/people";
+import { StudentRow, StudentRows } from "../components/StudentRow";
+import { useMoneyFacts } from "../lib/useMoneyFacts";
+import { PlusIcon, SearchIcon } from "../components/icons";
 
-type StatusFilter = "" | "active" | "inactive";
+/** "all" and "owing" are current students; "left" is everyone who has left; a number is a class. */
+type Filter = "all" | "owing" | "left" | number;
 
+/**
+ * Everyone, one line each, alphabetical so a name is where you expect it. A large search box and
+ * a row of chips replace the four crammed filters: "Doivent de l'argent" is one tap, each class
+ * is one tap, and former students sit behind "Anciens" so the default list is the current year.
+ */
 export function StudentsList() {
   const { t } = useTranslation();
-  const [status, setStatus] = useState<StatusFilter>("active");
-  const [classId, setClassId] = useState("");
+  const [filter, setFilter] = useState<Filter>("all");
   const [search, setSearch] = useState("");
+  const q = useDebounced(search.trim(), 250);
+  const moneyFacts = useMoneyFacts();
 
   // Refreshes after a payment taken from the shared sheet, wherever it was opened.
   const paymentsVersion = usePaymentsVersion();
   const state = useApi(
     () =>
       listStudents({
-        status: status || undefined,
-        class_id: classId ? Number(classId) : undefined,
-        q: search.trim() || undefined,
-        sort: "drift_desc",
+        status: filter === "left" ? "inactive" : "active",
+        class_id: typeof filter === "number" ? filter : undefined,
+        q: q || undefined,
       }),
-    [status, classId, search, paymentsVersion],
+    [filter, q, paymentsVersion],
   );
-  // Populates the class filter. A failure here must not blank the page, so the options simply
-  // fall back to "all classes" rather than being surfaced as a page-level error.
+  // Class chips. A failure here must not blank the page; the chips simply don't appear.
   const classes = useApi(() => listClasses(), []);
 
-  const filter = (
-    <div className="flex items-end gap-2">
-      <TextField
-        id="students-search"
-        label={t("students.search")}
-        value={search}
-        onChange={setSearch}
-        placeholder={t("students.searchPlaceholder")}
-      />
-      <Select
-        id="students-class-filter"
-        label={t("classes.filterLevel")}
-        value={classId}
-        onChange={setClassId}
-        options={[
-          { value: "", label: t("students.filterClassAll") },
-          ...(classes.data ?? []).map((c) => ({ value: String(c.id), label: classLabel(c) })),
-        ]}
-      />
-      <Select
-        id="students-status-filter"
-        label={t("students.filterLabel")}
-        value={status}
-        onChange={(value) => setStatus(value as StatusFilter)}
-        options={[
-          { value: "", label: t("students.filterAll") },
-          { value: "active", label: t("status.active") },
-          { value: "inactive", label: t("status.inactive") },
-        ]}
-      />
-      {/* Enrolling is an action, so it lives on the page you're already on rather than in the
-          nav bar next to the destinations. */}
-      <Link to="/students/new">
-        <Button className="mb-[1px] whitespace-nowrap">{t("students.add")}</Button>
-      </Link>
-    </div>
-  );
+  const chips: { value: Filter; label: string }[] = [
+    { value: "all", label: t("students.filters.all") },
+    { value: "owing", label: t("students.filters.owing") },
+    ...(classes.data ?? []).map((c) => ({ value: c.id as Filter, label: `${c.level} ${c.name}` })),
+    { value: "left", label: t("students.filters.left") },
+  ];
 
   return (
-    <div>
-      <PageHeader title={t("pages.students")} actions={filter} />
+    <div className="flex flex-col gap-4 pb-20 sm:pb-0">
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">
+          {t("pages.students")}
+          {state.status === "success" && (
+            <span className="ml-2 text-lg font-bold text-muted">{shown(state.data, filter).length}</span>
+          )}
+        </h1>
+        {/* On a phone this is the floating button below. */}
+        <Link
+          to="/students/new"
+          className="hidden min-h-11 items-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90 sm:flex"
+        >
+          <PlusIcon className="h-5 w-5" />
+          {t("students.add")}
+        </Link>
+      </div>
+
+      <label className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-line bg-surface px-3 focus-within:border-brand">
+        <SearchIcon className="h-5 w-5 shrink-0 text-muted" />
+        <span className="sr-only">{t("students.search")}</span>
+        <input
+          type="search"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder={t("pay.searchStudent")}
+          className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-placeholder"
+        />
+      </label>
+
+      <div
+        role="radiogroup"
+        aria-label={t("students.filters.label")}
+        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+      >
+        {chips.map((chip) => (
+          <button
+            key={String(chip.value)}
+            type="button"
+            role="radio"
+            aria-checked={filter === chip.value}
+            onClick={() => setFilter(chip.value)}
+            className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border-2 px-4 font-bold ${
+              filter === chip.value ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink"
+            }`}
+          >
+            {chip.label}
+          </button>
+        ))}
+      </div>
 
       <AsyncView
         state={state}
         onRetry={state.reload}
-        isEmpty={(rows) => rows.length === 0}
-        emptyMessage={t("students.empty")}
+        isEmpty={(rows) => shown(rows, filter).length === 0}
+        emptyMessage={t(filter === "owing" ? "home.allPaid" : "students.empty")}
       >
         {(rows) => (
-          <DataTable
-            rows={rows}
-            keyOf={(s) => s.id}
-            rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
-            columns={[
-              {
-                key: "name",
-                header: t("students.columns.name"),
-                primary: true,
-                cell: (s) => (
-                  <>
-                    <Link
-                      to={`/students/${s.id}`}
-                      className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                    >
-                      {s.full_name}
-                    </Link>
-                    {s.is_repeating && (
-                      <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 text-xs font-normal text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                        {t("student.repeatingShort")}
-                      </span>
-                    )}
-                  </>
-                ),
-              },
-              {
-                key: "status",
-                header: t("students.columns.status"),
-                cell: (s) => (
-                  <span className="capitalize text-slate-600 dark:text-slate-300">
-                    {t(`status.${s.status}`)}
-                  </span>
-                ),
-              },
-              {
-                key: "class",
-                header: t("students.columns.class"),
-                cell: (s) =>
-                  s.school_class ? (
-                    <Link to={`/settings/classes/${s.school_class.id}`} className="hover:underline">
-                      {classLabel(s.school_class)}
-                    </Link>
-                  ) : (
-                    <span className="text-slate-400 dark:text-slate-500">
-                      {t("classes.unassigned")}
-                    </span>
-                  ),
-              },
-              {
-                key: "price",
-                header: t("students.columns.price"),
-                align: "right",
-                cell: (s) => formatMoney(s.monthly_price),
-              },
-              {
-                key: "overdue",
-                header: t("students.columns.overdue"),
-                cell: (s) => <OverdueBadge monthsOverdue={s.months_overdue} />,
-              },
-              {
-                key: "owed",
-                header: t("students.columns.owed"),
-                align: "right",
-                cell: (s) => formatMoney(s.amount_owed),
-              },
-              {
-                key: "drift",
-                header: t("students.columns.drift"),
-                cell: (s) => <DriftBadge drift={s.cumulative_drift} />,
-              },
-            ]}
-          />
+          <StudentRows label={t("pages.students")}>
+            {shown(rows, filter).map((s) => (
+              <StudentRow
+                key={s.id}
+                to={`/students/${s.id}`}
+                name={s.full_name}
+                facts={[
+                  ...moneyFacts({ monthsOverdue: s.months_overdue, drift: s.cumulative_drift }),
+                  typeof filter !== "number" &&
+                    (s.school_class ? `${s.school_class.level} ${s.school_class.name}` : t("classes.unassigned")),
+                  s.is_repeating && t("student.repeatingShort"),
+                ]}
+                right={
+                  <OwedPill
+                    monthsOverdue={s.months_overdue}
+                    amountOwed={s.amount_owed}
+                    monthlyPrice={s.monthly_price}
+                  />
+                }
+              />
+            ))}
+          </StudentRows>
         )}
       </AsyncView>
+
+      <Link
+        to="/students/new"
+        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 font-bold text-brand-ink shadow-lg sm:hidden"
+      >
+        <PlusIcon className="h-5 w-5" />
+        {t("students.addShort")}
+      </Link>
     </div>
   );
+}
+
+/**
+ * The rows a filter shows, in the order it shows them: who owes most first for "owing",
+ * alphabetical otherwise. `Number` only compares amounts; nothing is computed from them.
+ */
+function shown(rows: StudentListItem[], filter: Filter): StudentListItem[] {
+  if (filter === "owing") {
+    return rows
+      .filter((s) => s.months_overdue > 0)
+      .sort((a, b) => Number(b.amount_owed) - Number(a.amount_owed) || a.full_name.localeCompare(b.full_name));
+  }
+  return [...rows].sort((a, b) => a.full_name.localeCompare(b.full_name));
 }

@@ -9,15 +9,9 @@ import { resolveErrorMessage } from "../lib/errors";
 import { formatMoney } from "../lib/money";
 import { ReportTabs } from "../components/ReportTabs";
 import { formatDate } from "../lib/dates";
-import {
-  AsyncView,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  PageHeader,
-  TextField,
-} from "../components/ui";
+import { AsyncView, Button, Modal, TextField } from "../components/ui";
+import { Figure } from "../components/report";
+import { Avatar } from "../components/people";
 
 /**
  * Students who left owing money.
@@ -31,9 +25,8 @@ export function LeaversWithDebt() {
   const state = useApi(() => listLeaversWithDebt(), []);
 
   return (
-    <div>
+    <div className="flex flex-col gap-5">
       <ReportTabs />
-      <PageHeader title={t("pages.debts")} />
 
       {writingOff && (
         <WriteOffModal
@@ -54,78 +47,43 @@ export function LeaversWithDebt() {
       >
         {(data) => (
           <>
-            <Card className="mb-6">
-              <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {t("debts.totalOwed")}
-              </p>
-              <p className="mt-1 text-2xl font-semibold text-slate-900 dark:text-slate-100">
-                {formatMoney(data.total_owed)}
-              </p>
-            </Card>
-
-            <DataTable
-              rows={data.leavers}
-              keyOf={(s) => s.student.id}
-              columns={[
-                {
-                  key: "name",
-                  header: t("students.columns.name"),
-                  primary: true,
-                  cell: (s) => (
-                    <Link
-                      to={`/students/${s.student.id}`}
-                      className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                    >
-                      {s.student.full_name}
-                    </Link>
-                  ),
-                },
-                {
-                  key: "phone",
-                  header: t("detail.fields.phone"),
-                  cell: (s) => (
-                    <span className="text-slate-600 dark:text-slate-300">
-                      {s.student.phone ?? "—"}
+            <Figure label={t("debts.totalOwed")} value={formatMoney(data.total_owed)} alarming />
+            <ul
+              aria-label={t("pages.debts")}
+              className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+            >
+              {data.leavers.map((s) => (
+                <li key={s.student.id}>
+                  <Link
+                    to={`/students/${s.student.id}`}
+                    className="flex min-h-16 items-center gap-3 px-4 pb-2 pt-3 hover:bg-ground"
+                  >
+                    <Avatar name={s.student.full_name} />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-bold">{s.student.full_name}</span>
+                      <span className="block truncate text-sm text-muted">
+                        {[
+                          s.left_on && t("debts.leftOnDate", { date: formatDate(s.left_on) }),
+                          t("owed.monthsUnpaid", { count: s.months_owed }),
+                          s.student.phone,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </span>
                     </span>
-                  ),
-                },
-                {
-                  key: "left",
-                  header: t("debts.leftOn"),
-                  cell: (s) => (
-                    <span className="text-slate-600 dark:text-slate-300">
-                      {s.left_on ? formatDate(s.left_on) : "—"}
-                    </span>
-                  ),
-                },
-                {
-                  key: "months",
-                  header: t("debts.months"),
-                  align: "right",
-                  cell: (s) => s.months_owed,
-                },
-                {
-                  key: "owed",
-                  header: t("debts.owed"),
-                  align: "right",
-                  cell: (s) => (
-                    <span className="font-medium text-rose-700 dark:text-rose-400">
+                    <span className="shrink-0 whitespace-nowrap rounded-full bg-bad-soft px-3 py-1 text-sm font-bold text-bad">
                       {formatMoney(s.amount_owed)}
                     </span>
-                  ),
-                },
-                {
-                  key: "action",
-                  header: " ",
-                  align: "right",
-                  cell: (s) => (
-                    <Button variant="ghost" onClick={() => setWritingOff(s)}>
+                  </Link>
+                  {/* Kept below the row and quiet: forgiving a debt is rare and permanent. */}
+                  <div className="flex justify-end px-2 pb-2">
+                    <Button variant="ghost" onClick={() => setWritingOff(s)} className="text-sm">
                       {t("debts.writeOff")}
                     </Button>
-                  ),
-                },
-              ]}
-            />
+                  </div>
+                </li>
+              ))}
+            </ul>
           </>
         )}
       </AsyncView>
@@ -170,7 +128,7 @@ function WriteOffModal({
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Said plainly: writing off is bookkeeping, not income. The alternative — recording a
             payment that never happened — would quietly inflate the revenue reports. */}
-        <p className="text-xs text-slate-500 dark:text-slate-400">{t("debts.writeOffHint")}</p>
+        <p className="text-muted">{t("debts.writeOffHint")}</p>
         <TextField
           id="writeoff-reason"
           label={t("debts.writeOffReason")}
@@ -179,8 +137,8 @@ function WriteOffModal({
           error={error ?? undefined}
           required
         />
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="secondary" onClick={onClose}>
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button type="button" variant="ghost" onClick={onClose}>
             {t("common.cancel")}
           </Button>
           <Button type="submit" variant="danger" pending={writeOff.status === "pending"}>

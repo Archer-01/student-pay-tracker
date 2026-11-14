@@ -111,4 +111,12 @@ describe("RecordPaymentForm", () => {
     await userEvent.click(screen.getByRole("button", { name: /record 450/i }));
     await waitFor(() => expect(endpoints.recordPayment).toHaveBeenCalled());
   });
+
+  it("starts on the month it was opened for, when that month can be paid", async () => {
+    renderWithProviders(
+      <RecordPaymentForm studentId={13} initialMonth="2026-11" onSuccess={onSuccess} onCancel={vi.fn()} />,
+    );
+    await amountField();
+    expect(screen.getByRole("radio", { name: /November 2026/i })).toBeChecked();
+  });
 });

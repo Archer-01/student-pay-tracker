@@ -10,7 +10,8 @@ import { classLabel } from "../lib/classes";
 import { formatMoney } from "../lib/money";
 import { NameFields } from "../components/students/NameFields";
 import { PricingFields } from "../components/students/PricingFields";
-import { Button, Card, DateField, PageHeader, Select, TextField } from "../components/ui";
+import { Button, Card, DateField, Select, TextField } from "../components/ui";
+import { ChevronLeftIcon } from "../components/icons";
 
 export function EnrollStudent() {
   const { t } = useTranslation();
@@ -26,7 +27,8 @@ export function EnrollStudent() {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [isRepeating, setIsRepeating] = useState(false);
-  const [joinDate, setJoinDate] = useState("");
+  // Usually the day the student turns up; still editable for back-filling an earlier start.
+  const [joinDate, setJoinDate] = useState(todayIso);
 
   const [phone, setPhone] = useState("");
   const [classId, setClassId] = useState(presetClassId);
@@ -98,9 +100,13 @@ export function EnrollStudent() {
   }
 
   return (
-    <div>
-      <PageHeader title={t("pages.enroll")} />
-      <Card className="max-w-md">
+    <div className="flex flex-col gap-4">
+      <Link to="/students" className="-ml-1 flex min-h-11 items-center gap-1 self-start font-bold text-brand">
+        <ChevronLeftIcon className="h-5 w-5" />
+        {t("nav.students")}
+      </Link>
+      <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("pages.enroll")}</h1>
+      <Card className="max-w-lg">
         <form onSubmit={handleSubmit} className="space-y-4">
           <NameFields
             firstName={firstName}
@@ -179,4 +185,11 @@ export function EnrollStudent() {
       </Card>
     </div>
   );
+}
+
+/** Today as `YYYY-MM-DD` in the teacher's own timezone, the format a date input takes. */
+function todayIso(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }

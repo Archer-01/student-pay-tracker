@@ -5,12 +5,8 @@ import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { LeaversWithDebt } from "./LeaversWithDebt";
 
-/**
- * `DataTable` renders a table and a card list, and CSS shows one or the other. jsdom applies no
- * CSS, so both are in the DOM and a bare `getByRole` finds two of everything. Scope to the table
- * to assert against a single presentation.
- */
-const table = () => within(screen.getByRole("table"));
+/** The list of former students who owe; one row each. */
+const table = () => within(screen.getByRole("list", { name: /left owing/i }));
 
 const leaver = {
   student: {
@@ -35,8 +31,10 @@ beforeEach(() => {
 describe("LeaversWithDebt", () => {
   it("lists who left owing what", async () => {
     renderWithProviders(<LeaversWithDebt />);
-    await screen.findAllByRole("link", { name: "Fatima Zahra" });
-    expect(table().getByRole("link", { name: "Fatima Zahra" })).toBeInTheDocument();
+    await screen.findAllByRole("link", { name: /Fatima Zahra/ });
+    const row = table().getByRole("link", { name: /Fatima Zahra/ });
+    expect(row).toHaveAttribute("href", "/students/5");
+    expect(row).toHaveTextContent("1 month unpaid");
     expect(table().getAllByText("170 DH").length).toBeGreaterThan(0);
   });
 

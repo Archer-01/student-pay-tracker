@@ -7,49 +7,31 @@ import { useApi } from "../lib/useApi";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { CLASS_LEVELS } from "../lib/classes";
-import { DriftBadge } from "../components/DriftBadge";
-import {
-  AsyncView,
-  Button,
-  DataTable,
-  Modal,
-  PageHeader,
-  Select,
-  TextField,
-} from "../components/ui";
+import { AsyncView, Button, Modal, Select, TextField } from "../components/ui";
+import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
 
-type LevelFilter = "" | ClassLevel;
-
+/**
+ * Réglages › Classes: one line per class with its size and lateness. Set up at the start of the
+ * year and rarely touched after, which is why it lives under Réglages rather than in the bar.
+ */
 export function ClassesList() {
   const { t } = useTranslation();
-  const [level, setLevel] = useState<LevelFilter>("");
   const [creating, setCreating] = useState(false);
-
-  const state = useApi(() => listClasses({ level: level || undefined }), [level]);
-
-  // items-end + mb-[1px]: the Select renders a label above its input, so a bare Button would
-  // centre against the whole stack and float above the input. Same pattern as MonthlyReport.
-  const actions = (
-    <div className="flex items-end gap-2">
-      <Select
-        id="classes-level-filter"
-        label={t("classes.filterLevel")}
-        value={level}
-        onChange={(value) => setLevel(value as LevelFilter)}
-        options={[
-          { value: "", label: t("classes.filterAll") },
-          ...CLASS_LEVELS.map((l) => ({ value: l, label: l })),
-        ]}
-      />
-      <Button onClick={() => setCreating(true)} className="mb-[1px] whitespace-nowrap">
-        {t("classes.create")}
-      </Button>
-    </div>
-  );
+  const state = useApi(() => listClasses(), []);
 
   return (
-    <div>
-      <PageHeader title={t("pages.classes")} actions={actions} />
+    <div className="flex flex-col gap-4">
+      <Link to="/settings" className="-ml-1 flex min-h-11 items-center gap-1 self-start font-bold text-brand">
+        <ChevronLeftIcon className="h-5 w-5" />
+        {t("nav.settings")}
+      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("pages.classes")}</h1>
+        <Button onClick={() => setCreating(true)}>
+          <PlusIcon className="h-5 w-5" />
+          {t("classes.create")}
+        </Button>
+      </div>
 
       {creating && (
         <CreateClassModal
@@ -68,43 +50,32 @@ export function ClassesList() {
         emptyMessage={t("classes.empty")}
       >
         {(rows) => (
-          <DataTable
-            rows={rows}
-            keyOf={(c) => c.id}
-            rowClassName={() => "hover:bg-slate-50 dark:hover:bg-slate-800/50"}
-            columns={[
-              {
-                key: "name",
-                header: t("classes.name"),
-                primary: true,
-                cell: (c) => (
-                  <Link
-                    to={`/settings/classes/${c.id}`}
-                    className="font-medium text-slate-900 hover:underline dark:text-slate-100"
-                  >
-                    {c.level} — {c.name}
-                  </Link>
-                ),
-              },
-              {
-                key: "level",
-                header: t("classes.level"),
-                wideOnly: true,
-                cell: (c) => <span className="text-slate-600 dark:text-slate-300">{c.level}</span>,
-              },
-              {
-                key: "students",
-                header: t("classes.students"),
-                align: "right",
-                cell: (c) => c.student_count,
-              },
-              {
-                key: "drift",
-                header: t("classes.drift"),
-                cell: (c) => <DriftBadge drift={c.cumulative_drift} />,
-              },
-            ]}
-          />
+          <ul
+            aria-label={t("pages.classes")}
+            className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+          >
+            {rows.map((c) => (
+              <li key={c.id}>
+                <Link to={`/settings/classes/${c.id}`} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
+                  <span className="flex h-10 min-w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft px-2 text-sm font-bold text-brand">
+                    {c.level}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-bold">{c.name}</span>
+                    <span className="block truncate text-sm text-muted">
+                      {[
+                        t("dashboard.activeStudents", { count: c.student_count }),
+                        c.cumulative_drift > 0 && t("home.lateTotal", { count: c.cumulative_drift }),
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <ChevronRightIcon className="h-5 w-5 text-muted" />
+                </Link>
+              </li>
+            ))}
+          </ul>
         )}
       </AsyncView>
     </div>

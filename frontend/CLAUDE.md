@@ -135,25 +135,23 @@ i18n copy for full control. Prefer `detail` unless a specific error needs custom
 The teacher uses this on a phone between classes, so the unprefixed styles are the phone layout
 and `sm:` upward adds what a wider screen can afford. Concretely:
 
-- **`DataTable` is how lists are built.** It takes column definitions and renders a table from
-  `sm` up and stacked cards below, from the *same* definitions — a hand-written mobile layout is
-  the kind that quietly stops being updated. Mark the identifying column `primary` (it becomes the
-  card's heading) and anything that only earns its width in a table `wideOnly`. Both presentations
-  sit in the DOM and CSS shows one, so tests must scope with `within(screen.getByRole("table"))`
-  or they will find two of everything.
+- **Lists of students are `StudentRow`s** (`src/components/StudentRow.tsx`): initials, name, one
+  grey line of facts, and something on the right (usually an `OwedPill`). Accueil, Élèves, a class
+  roster and Bilan's per-student list all use it, so a teacher learns to read one row. Put the
+  amount in the pill and everything else in the grey line (`useMoneyFacts` gives the usual months
+  unpaid and lateness), or names get cut off on a phone.
 - **Navigation is a bottom bar on a phone and a side menu from `lg` up**, four items either way.
   The old top bar was 602px wide on a 390px screen and hid two of its six items. Anything rare
   (classes, prices, language, appearance, sign-out) goes under Réglages, not into the bar.
 - **Pages pad their bottom** for the tab bar; `Layout`'s `<main>` already does. Something fixed to
   the bottom of the screen (a toast, a floating button) sits above it, safe-area inset included.
 - **Dialogs are bottom sheets on a phone** and centred panels from `sm` up (`Modal`).
-- **`PageHeader` stacks** its title and actions below `sm`.
-- **Lists are one line per person** on the rebuilt screens: initials, name, one grey line of facts
-  (months unpaid, lateness, class), and an `OwedPill` (`src/components/people.tsx`) on the right.
-  Put the amount in the pill and everything else in the grey line, or names get cut off.
-- **The packs grid stays a grid.** It is a six-level matrix whose entire purpose is comparison
-  across a row; folding it into cards would destroy that, so it scrolls with the offering column
-  pinned via `sticky left-0`.
+- **Rare actions go one level down**: a student's edit, departure, payment-day change and PDF sit
+  behind "⋯"; classes and prices under Réglages. A page leads with what is done every week.
+- **Arrows, not dropdowns**, for stepping through months and years (`Stepper` in
+  `src/components/report.tsx`, with `Figure` and a plain-element `BarChart`).
+- **The price grid is a grid from `sm` up** and one card per offering on a phone, listing its
+  six levels top to bottom: the comparison within an offering survives, the sideways scroll doesn't.
 
 Anything with a fixed pixel width needs a `hidden sm:…` escape or it will push real content off a
 375px screen.
@@ -196,6 +194,18 @@ The sheet opens filled in (`src/lib/paymentDefaults.ts`, with its own tests):
 
 Money stays a string throughout: `Number()` only compares, and the value sent is always one of
 the original strings (a French "199,5" is turned into "199.5" by a string edit).
+
+## The student page
+
+The school year is twelve tiles, September to August (`src/lib/schoolYear.ts`, with its own tests):
+paid, paid late, owed, away (not owed), not yet due, or nothing expected (before joining, after
+leaving). The ledger already holds every month that has come due plus any paid in advance, so a
+month without an entry is either upcoming or not expected; whether the student is still enrolled
+decides which. Tapping an owed tile opens the payment sheet on that month.
+
+The departure/return action follows the **enrolment periods**, not `status`: a student set to
+inactive by hand still has an open period, and only "Marquer comme parti" fixes that. The edit form
+has no status field for the same reason.
 
 ## Dialogs
 

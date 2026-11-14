@@ -58,7 +58,14 @@
     "filterClassAll": "Toutes les classes",
     "search": "Rechercher",
     "searchPlaceholder": "Nom…",
-    "add": "Ajouter un élève"
+    "add": "Ajouter un élève",
+    "filters": {
+      "label": "Afficher",
+      "all": "Tous",
+      "owing": "Doivent de l'argent",
+      "left": "Anciens"
+    },
+    "addShort": "Élève"
   },
   "dashboard": {
     "collectedThisMonth": "Encaissé ce mois-ci",
@@ -114,7 +121,7 @@
     "pdfFilename": "historique-eleve-{{id}}{{name}}",
     "actions": {
       "recordPayment": "Enregistrer un paiement",
-      "addOverride": "Décaler l'échéance",
+      "addOverride": "Changer le jour de paiement",
       "edit": "Modifier la fiche"
     },
     "fields": {
@@ -192,7 +199,7 @@
     }
   },
   "override": {
-    "title": "Décaler l'échéance",
+    "title": "Changer le jour de paiement",
     "fields": {
       "newDueDate": "Nouvelle date d'échéance",
       "reason": "Motif"
@@ -257,7 +264,7 @@
     "notOffered": "non proposé",
     "studentCount_one": "{{count}} élève",
     "studentCount_other": "{{count}} élèves",
-    "gridHint": "Une ligne par offre, une colonne par niveau. Appuyez sur un tarif pour le modifier.",
+    "gridHint": "Appuyez sur un tarif pour le modifier, ou sur le nom d'une offre pour changer ses matières.",
     "editPrice": "Tarif",
     "editCellTitle": "{{offering}} · {{level}}",
     "offered": "Proposé à ce niveau",
@@ -272,7 +279,7 @@
     "editOffering": "Modifier l'offre",
     "editOfferingTitle": "Modifier {{name}}",
     "appliesToAllLevels": "Le nom et les matières valent pour tous les niveaux de cette offre ; seuls les tarifs diffèrent.",
-    "gridScrollHint": "Faites défiler pour voir tous les niveaux."
+    "editOfferingShort": "Modifier"
   },
   "student": {
     "pack": "Pack",
@@ -302,7 +309,24 @@
     "returnDate": "Date de retour",
     "leaveReason": "Motif",
     "leaveHint": "Les mois qui suivent cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
-    "returnHint": "La date d'inscription ne change pas : les impayés et le retard éventuels sont conservés."
+    "returnHint": "La date d'inscription ne change pas : les impayés et le retard éventuels sont conservés.",
+    "more": "Plus d'actions",
+    "call": "Appeler le {{phone}}",
+    "oldestUnpaid": "Le plus ancien mois impayé : {{month}}.",
+    "payMonth": "Encaisser {{month}}",
+    "nextPayment": "Prochain paiement attendu le {{date}}.",
+    "noPriceText": "Rien n'est facturé à cet élève tant qu'il n'a ni pack ni tarif convenu.",
+    "leftTitle": "Parti",
+    "leftText": "Ne fait plus partie des élèves depuis le {{date}}.",
+    "schoolYear": "Année {{from}}–{{to}}",
+    "prevYear": "Année précédente",
+    "nextYear": "Année suivante",
+    "details": "Détails",
+    "totalLate": "Retard au total",
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "paymentsCount_one": "{{count}} paiement",
+    "paymentsCount_other": "{{count}} paiements"
   },
   "annual": {
     "year": "Année",
@@ -329,7 +353,8 @@
     "writeOffConfirm": "Effacer {{amount}}",
     "returnedWithDebt": "Cet élève est parti sans régler ses impayés",
     "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti sans régler {{amount}}.",
-    "onDashboard": "Partis sans régler"
+    "onDashboard": "Partis sans régler",
+    "leftOnDate": "Parti le {{date}}"
   },
   "auth": {
     "title": "Connexion",
@@ -349,7 +374,14 @@
       "month": "Mois",
       "year": "Année",
       "leavers": "Partis sans régler"
-    }
+    },
+    "previousMonth": "Mois précédent",
+    "nextMonth": "Mois suivant",
+    "previousYear": "Année précédente",
+    "nextYear": "Année suivante",
+    "byStudent": "Par élève",
+    "paid": "A payé {{amount}}",
+    "paidNothing": "Rien payé"
   },
   "settings": {
     "title": "Réglages",
@@ -412,5 +444,32 @@
     "submit": "Encaisser {{amount}}",
     "submitEmpty": "Encaisser",
     "done": "Paiement enregistré : {{amount}} pour {{name}}"
+  },
+  "tiles": {
+    "late_one": "{{count}} j",
+    "late_other": "{{count}} j",
+    "short": {
+      "paid": "payé",
+      "due": "à payer",
+      "away": "absent",
+      "upcoming": "à venir"
+    },
+    "state": {
+      "paid": "payé",
+      "late": "payé en retard",
+      "due": "à payer",
+      "away": "absent, non facturé",
+      "upcoming": "à venir",
+      "none": "pas inscrit"
+    }
+  },
+  "tile": {
+    "due": "Échéance",
+    "paidOn": "Payé le",
+    "amount": "Montant",
+    "lateness": "Retard",
+    "notPaid": "Pas encore payé. Ce mois était dû le {{date}}.",
+    "away": "L'élève n'était pas inscrit ce mois-là : rien n'est dû.",
+    "upcoming": "Ce mois n'est pas encore arrivé à échéance."
   }
 }

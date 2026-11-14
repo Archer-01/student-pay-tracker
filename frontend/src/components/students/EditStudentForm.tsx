@@ -16,7 +16,6 @@ type Props = {
     lastName: string | null;
     isRepeating: boolean;
     phone: string | null;
-    status: "active" | "inactive";
     classId: number | null;
     packId: number | null;
     customPrice: string | null;
@@ -26,6 +25,11 @@ type Props = {
   onCancel: () => void;
 };
 
+/**
+ * Who the student is and what they pay. Deliberately no "Statut" field: setting a student
+ * inactive here recorded no departure date, so billing carried on for someone marked as gone.
+ * Departures and returns go through "Marquer comme parti" / "Réinscrire", which record the date.
+ */
 export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Props) {
   const { t } = useTranslation();
   const update = useMutation(updateStudent);
@@ -35,7 +39,6 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
   const [isRepeating, setIsRepeating] = useState(initial.isRepeating);
   const [phone, setPhone] = useState(initial.phone ?? "");
 
-  const [status, setStatus] = useState<"active" | "inactive">(initial.status);
   const [classId, setClassId] = useState(initial.classId === null ? "" : String(initial.classId));
   const [packId, setPackId] = useState(initial.packId === null ? "" : String(initial.packId));
   const [customPrice, setCustomPrice] = useState(initial.customPrice ?? "");
@@ -73,7 +76,6 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         last_name: lastName.trim() || null,
         is_repeating: isRepeating,
         phone: phone.trim() || null,
-        status,
         class_id: classId ? Number(classId) : null,
         pack_id: packId ? Number(packId) : null,
         // An explicit null clears the arrangement and returns them to the pack price.
@@ -103,17 +105,6 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         value={phone}
         onChange={setPhone}
         error={errors.phone}
-      />
-      <Select
-        id="edit-status"
-        label={t("edit.fields.status")}
-        value={status}
-        onChange={(value) => setStatus(value as "active" | "inactive")}
-        options={[
-          { value: "active", label: t("status.active") },
-          { value: "inactive", label: t("status.inactive") },
-        ]}
-        error={errors.status}
       />
       <Select
         id="edit-class"

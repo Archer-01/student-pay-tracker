@@ -9,7 +9,9 @@ import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { formatMoney } from "../lib/money";
 import { formatDate, formatMonthTitle } from "../lib/dates";
 import { AsyncView, Button } from "../components/ui";
-import { Avatar, OwedPill } from "../components/people";
+import { OwedPill } from "../components/people";
+import { StudentRow, StudentRows } from "../components/StudentRow";
+import { useMoneyFacts } from "../lib/useMoneyFacts";
 import { CheckIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
 
 /**
@@ -22,6 +24,7 @@ import { CheckIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
 export function Dashboard() {
   const { t } = useTranslation();
   const payments = usePaymentSheet();
+  const moneyFacts = useMoneyFacts();
   // Read without `useAuth` so the screen renders in isolation (tests); signed out never gets here.
   const user = useContext(AuthContext)?.user;
   const state = useApi(() => getDashboardSummary({ limit: 100 }), [payments.version]);
@@ -56,7 +59,7 @@ export function Dashboard() {
 
           <section className="flex flex-col gap-3">
             <div className="flex items-baseline justify-between">
-              <h2 id="chase-heading" className="text-lg font-bold">
+              <h2 className="text-lg font-bold">
                 {t("home.chase")}
               </h2>
               {data.top_debtors.length > 0 && (
@@ -69,38 +72,22 @@ export function Dashboard() {
                 {t("home.allPaid")}
               </p>
             ) : (
-              <ul
-                aria-labelledby="chase-heading"
-                className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
-              >
+              <StudentRows label={t("home.chase")}>
                 {data.top_debtors.map((d) => (
-                  <li key={d.student_id}>
-                    <Link
-                      to={`/students/${d.student_id}`}
-                      className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground"
-                    >
-                      <Avatar name={d.name} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-bold">{d.name}</span>
-                        <span className="block truncate text-sm text-muted">
-                          {[
-                            t("owed.monthsUnpaid", { count: d.months_overdue }),
-                            d.cumulative_drift > 0 ? t("home.lateTotal", { count: d.cumulative_drift }) : null,
-                            d.class_label,
-                          ]
-                            .filter(Boolean)
-                            .join(" · ")}
-                        </span>
-                      </span>
-                      <OwedPill
-                        monthsOverdue={d.months_overdue}
-                        amountOwed={d.amount_owed}
-                        monthlyPrice={d.monthly_price}
-                      />
-                    </Link>
-                  </li>
+                  <StudentRow
+                    key={d.student_id}
+                    to={`/students/${d.student_id}`}
+                    name={d.name}
+                    facts={[
+                      ...moneyFacts({ monthsOverdue: d.months_overdue, drift: d.cumulative_drift }),
+                      d.class_label,
+                    ]}
+                    right={
+                      <OwedPill monthsOverdue={d.months_overdue} amountOwed={d.amount_owed} monthlyPrice={d.monthly_price} />
+                    }
+                  />
                 ))}
-              </ul>
+              </StudentRows>
             )}
           </section>
 

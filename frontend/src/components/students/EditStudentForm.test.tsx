@@ -10,7 +10,6 @@ const initial = {
   lastName: "Benali",
   isRepeating: false,
   phone: "+212600112233",
-  status: "active" as const,
   classId: null,
   packId: null,
   customPrice: "90",
@@ -106,5 +105,14 @@ describe("EditStudentForm", () => {
     expect(screen.getByLabelText(/why/i)).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText(/agreed price/i));
     await waitFor(() => expect(screen.queryByLabelText(/why/i)).not.toBeInTheDocument());
+  });
+
+  it("never sends a status: departures go through 'Mark as left', which records the date", async () => {
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    expect(screen.queryByLabelText(/status/i)).toBeNull();
+    const body = await save();
+    expect(body).not.toHaveProperty("status");
   });
 });

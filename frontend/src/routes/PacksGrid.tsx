@@ -13,12 +13,15 @@ import {
   Card,
   Modal,
   MoneyField,
-  PageHeader,
   TextField,
 } from "../components/ui";
+import { Link } from "react-router-dom";
+import { ChevronLeftIcon, PlusIcon } from "../components/icons";
 
 /**
- * The price list, rendered as a matrix: one row per offering, one column per level.
+ * The price list. From `sm` up it is a matrix, one row per offering and one column per level;
+ * on a phone each offering is a card listing its levels top to bottom, which keeps the comparison
+ * within an offering without the sideways scrolling the six-column grid needed there.
  *
  * Deliberately not one form per pack — with four offerings across six levels that is 24 screens
  * for a single round of price changes, and the subject lists of an offering's level-variants
@@ -34,11 +37,18 @@ export function PacksGrid() {
   const state = useApi(() => getPackGrid(), []);
 
   return (
-    <div>
-      <PageHeader
-        title={t("pages.packs")}
-        actions={<Button onClick={() => setCreating(true)}>{t("packs.newOffering")}</Button>}
-      />
+    <div className="flex flex-col gap-4">
+      <Link to="/settings" className="-ml-1 flex min-h-11 items-center gap-1 self-start font-bold text-brand">
+        <ChevronLeftIcon className="h-5 w-5" />
+        {t("nav.settings")}
+      </Link>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("settings.prices")}</h1>
+        <Button onClick={() => setCreating(true)}>
+          <PlusIcon className="h-5 w-5" />
+          {t("packs.newOffering")}
+        </Button>
+      </div>
 
       {creating && (
         <NewOfferingModal
@@ -79,14 +89,57 @@ export function PacksGrid() {
       >
         {(grid) => (
           <>
-            <p className="mb-3 text-sm text-slate-500 dark:text-slate-400">
-              {t("packs.gridHint")}
-              {/* The matrix is genuinely wide — six levels — so on a phone it scrolls sideways
-                  with the offering column pinned, rather than being folded into cards that would
-                  lose the comparison the grid exists to make. */}
-              <span className="ml-1 sm:hidden">{t("packs.gridScrollHint")}</span>
-            </p>
-            <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+            <p className="text-muted">{t("packs.gridHint")}</p>
+
+            <div className="flex flex-col gap-3 sm:hidden">
+              {grid.rows.map((row) => (
+                <section key={row.name} className="overflow-hidden rounded-2xl border border-line bg-surface">
+                  <button
+                    type="button"
+                    onClick={() => setEditingOffering(row)}
+                    className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left hover:bg-ground"
+                  >
+                    <span className="min-w-0">
+                      <span className="block font-bold">{row.name}</span>
+                      <span className="block truncate text-sm text-muted">{row.subjects.join(", ")}</span>
+                    </span>
+                    <span className="shrink-0 text-sm font-bold text-brand">{t("packs.editOfferingShort")}</span>
+                  </button>
+                  <ul className="divide-y divide-line border-t border-line">
+                    {row.cells.map((cell) => (
+                      <li key={cell.level}>
+                        {cell.pack_id === null || cell.price === null ? (
+                          <div className="flex min-h-12 items-center justify-between gap-3 px-4 text-muted">
+                            <span className="font-bold">{cell.level}</span>
+                            <span className="text-sm">{t("packs.notOffered")}</span>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => setEditing({ row, cell })}
+                            className="flex min-h-12 w-full items-center justify-between gap-3 px-4 text-left hover:bg-ground"
+                          >
+                            <span className="font-bold">{cell.level}</span>
+                            <span className="text-right">
+                              <span className={`block font-bold ${cell.is_active ? "" : "text-muted line-through"}`}>
+                                {formatMoney(cell.price)}
+                              </span>
+                              {cell.student_count > 0 && (
+                                <span className="block text-xs text-muted">
+                                  {t("packs.studentCount", { count: cell.student_count })}
+                                </span>
+                              )}
+                            </span>
+                          </button>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto rounded-2xl border border-line bg-surface sm:block">
               <table className="w-full border-collapse text-sm">
                 <thead className="bg-slate-50 dark:bg-slate-800/60">
                   <tr>

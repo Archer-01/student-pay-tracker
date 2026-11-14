@@ -3,36 +3,31 @@ import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getLedger, getStudent, listPeriods } from "../api/endpoints";
 import { downloadFile } from "../api/client";
+import type { EnrollmentPeriod, LedgerOut, StudentDetailOut } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
-import { formatDate } from "../lib/dates";
+import { formatDate, formatMonthTitle } from "../lib/dates";
 import { classLabel } from "../lib/classes";
 import { slugify } from "../lib/slug";
 import { resolveErrorMessage } from "../lib/errors";
-import { DriftBadge } from "../components/DriftBadge";
-import { OverdueBadge } from "../components/OverdueBadge";
+import { payableMonths } from "../lib/paymentDefaults";
+import { monthTiles, schoolYearStart, schoolYears, type MonthTile } from "../lib/schoolYear";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
-import type { LedgerEntry } from "../api/types";
-import {
-  AsyncView,
-  Button,
-  Card,
-  DataTable,
-  Modal,
-  PageHeader,
-  Table,
-  TBody,
-  Td,
-  Th,
-  THead,
-  Tr,
-} from "../components/ui";
+import { AsyncView, Button, Modal } from "../components/ui";
+import { Avatar } from "../components/people";
+import { ChevronLeftIcon, ChevronRightIcon, MoreIcon, PhoneIcon } from "../components/icons";
 
-type OpenModal = null | "override" | "edit" | "leave" | "return";
+type OpenModal = null | "more" | "override" | "edit" | "leave" | "return" | { tile: MonthTile };
 
+/**
+ * One student, read top to bottom the way the teacher asks about them: who is this, are they up
+ * to date (and the button that fixes it if not), how did the year go month by month, and the
+ * details. Rare actions (editing, a departure, moving the payment day, the PDF) are one level
+ * down, behind "⋯", so the page leads with what is done every week.
+ */
 export function StudentDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
@@ -44,8 +39,6 @@ export function StudentDetail() {
     // `payments.version` refreshes the page after a payment taken from the shared sheet.
     [studentId, payments.version],
   );
-
-  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [openModal, setOpenModal] = useState<OpenModal>(null);
 
   const close = () => setOpenModal(null);
@@ -54,317 +47,505 @@ export function StudentDetail() {
     state.reload();
   };
 
-  async function handleDownload(name: string) {
-    setDownloadError(null);
-    try {
-      const slug = slugify(name);
-      const stem = t("detail.pdfFilename", { id: studentId, name: slug ? `-${slug}` : "" });
-      await downloadFile(`/students/${studentId}/ledger.pdf`, `${stem}.pdf`);
-    } catch (err) {
-      setDownloadError(resolveErrorMessage(err, t));
-    }
-  }
-
   return (
-    <div>
-      <Link
-        to="/students"
-        className="mb-4 inline-block text-sm text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
-      >
-        ← {t("detail.back")}
-      </Link>
+    <div className="flex flex-col gap-5">
+      <div className="flex items-center justify-between">
+        <Link to="/students" className="-ml-1 flex min-h-11 items-center gap-1 font-bold text-brand">
+          <ChevronLeftIcon className="h-5 w-5" />
+          {t("nav.students")}
+        </Link>
+        <button
+          type="button"
+          onClick={() => setOpenModal("more")}
+          aria-label={t("student.more")}
+          className="flex h-11 w-11 items-center justify-center rounded-full border border-line bg-surface text-ink hover:bg-ground"
+        >
+          <MoreIcon className="h-5 w-5" />
+        </button>
+      </div>
 
       <AsyncView state={state} onRetry={state.reload}>
-        {([detail, ledger, periods]) => (
-          <>
-            <PageHeader
-              title={detail.full_name}
-              actions={
-                <div className="flex flex-col items-end gap-1">
-                  <div className="flex flex-wrap justify-end gap-2">
-                    <Button onClick={() => payments.open(studentId)}>{t("detail.actions.recordPayment")}</Button>
-                    <Button variant="secondary" onClick={() => setOpenModal("override")}>
-                      {t("detail.actions.addOverride")}
-                    </Button>
-                    <Button
-                      variant="secondary"
-                      onClick={() => setOpenModal(isEnrolled(periods) ? "leave" : "return")}
-                    >
-                      {t(isEnrolled(periods) ? "student.markLeft" : "student.markReturned")}
-                    </Button>
-                    <Button variant="secondary" onClick={() => setOpenModal("edit")}>
-                      {t("detail.actions.edit")}
-                    </Button>
-                    <Button variant="ghost" onClick={() => handleDownload(detail.full_name)}>
-                      {t("detail.downloadPdf")}
-                    </Button>
-                  </div>
-                  {downloadError && (
-                    <span className="text-xs text-rose-600 dark:text-rose-400">{downloadError}</span>
-                  )}
+        {([detail, ledger, periods]) => {
+          const enrolled = isEnrolled(periods);
+          return (
+            <>
+              <header className="flex items-center gap-4">
+                <Avatar name={detail.full_name} size="lg" />
+                <div className="min-w-0 flex-1">
+                  <h1 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
+                    {detail.full_name}
+                  </h1>
+                  <p className="text-muted">
+                    {[
+                      detail.school_class ? classLabel(detail.school_class) : t("classes.unassigned"),
+                      detail.pack?.name,
+                      detail.is_repeating ? t("student.repeatingShort") : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
                 </div>
-              }
-            />
+              </header>
 
-            {openModal === "override" && (
-              <Modal title={t("override.title")} onClose={close}>
-                <CreateOverrideForm studentId={studentId} onSuccess={handleSaved} onCancel={close} />
-              </Modal>
-            )}
-            {(openModal === "leave" || openModal === "return") && (
-              <Modal
-                title={t(openModal === "leave" ? "student.leaveTitle" : "student.returnTitle")}
-                onClose={close}
-              >
-                <AttendanceForm
-                  studentId={studentId}
-                  mode={openModal}
-                  onSuccess={handleSaved}
-                  onCancel={close}
+              {detail.phone && (
+                <a
+                  href={`tel:${detail.phone.replace(/\s/g, "")}`}
+                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface font-bold text-brand hover:bg-brand-soft sm:self-start sm:px-5"
+                >
+                  <PhoneIcon className="h-5 w-5" />
+                  {t("student.call", { phone: detail.phone })}
+                </a>
+              )}
+
+              <StatusCard
+                detail={detail}
+                ledger={ledger}
+                periods={periods}
+                enrolled={enrolled}
+                onPay={(month) => payments.open(studentId, month)}
+                onEdit={() => setOpenModal("edit")}
+              />
+
+              <YearTiles
+                detail={detail}
+                ledger={ledger}
+                enrolled={enrolled}
+                onTile={(tile) => setOpenModal({ tile })}
+              />
+
+              <Facts detail={detail} />
+
+              {/* Only worth showing once there has been an absence: a single open period since
+                  the join date says nothing the facts above don't. */}
+              {periods.length > 1 && <Periods periods={periods} />}
+
+              {openModal === "more" && (
+                <MoreActions
+                  detail={detail}
+                  enrolled={enrolled}
+                  onClose={close}
+                  onPick={(next) => setOpenModal(next)}
                 />
-              </Modal>
-            )}
-            {openModal === "edit" && (
-              <Modal title={t("edit.title")} onClose={close}>
-                <EditStudentForm
-                  studentId={studentId}
-                  initial={{
-                    firstName: detail.first_name,
-                    lastName: detail.last_name,
-                    isRepeating: detail.is_repeating,
-                    phone: detail.phone,
-                    status: detail.status,
-                    classId: detail.class_id,
-                    packId: detail.pack_id,
-                    customPrice: detail.custom_price,
-                    priceNote: detail.price_note,
+              )}
+              {typeof openModal === "object" && openModal !== null && (
+                <TileDetails
+                  tile={openModal.tile}
+                  payable={payableMonths(ledger.entries, detail.next_expected_date).some(
+                    (m) => m.month === openModal.tile.month,
+                  )}
+                  onClose={close}
+                  onPay={() => {
+                    close();
+                    payments.open(studentId, openModal.tile.month);
                   }}
-                  onSuccess={handleSaved}
-                  onCancel={close}
                 />
-              </Modal>
-            )}
-
-            {/* Two groups rather than fourteen tiles in a row: who they are and what they're
-                signed up for, then the money. The split is how the teacher actually reads the
-                page — the second block is the one they open it for. */}
-            <Card className="mb-4">
-              <SectionLabel>{t("detail.sections.enrolment")}</SectionLabel>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-                <Stat label={t("detail.fields.status")}>{t(`status.${detail.status}`)}</Stat>
-                <Stat label={t("detail.fields.class")}>
-                  {detail.school_class ? (
-                    <Link to={`/settings/classes/${detail.school_class.id}`} className="hover:underline">
-                      {classLabel(detail.school_class)}
-                    </Link>
-                  ) : (
-                    <span className="font-normal text-slate-400 dark:text-slate-500">
-                      {t("classes.unassigned")}
-                    </span>
-                  )}
-                </Stat>
-                <Stat label={t("student.pack")}>
-                  {detail.pack ? (
-                    <>
-                      {detail.pack.name} · {detail.pack.level}
-                      {/* The pack's level disagreeing with the class is allowed but worth
-                          seeing — usually a mis-click, occasionally deliberate. */}
-                      {detail.school_class &&
-                        detail.school_class.level !== detail.pack.level && (
-                          <span
-                            className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-xs font-normal text-amber-700 dark:bg-amber-950 dark:text-amber-400"
-                            title={t("student.levelMismatch", {
-                              packLevel: detail.pack.level,
-                              classLevel: detail.school_class.level,
-                            })}
-                          >
-                            {detail.school_class.level} ≠ {detail.pack.level}
-                          </span>
-                        )}
-                    </>
-                  ) : (
-                    /* No pack means no price, so they are billed nothing — the dashboard flags
-                       this too, but it should be obvious on the student's own page. */
-                    <span className="font-normal text-amber-700 dark:text-amber-400">
-                      {t("student.noPack")}
-                    </span>
-                  )}
-                </Stat>
-                <Stat label={t("detail.fields.monthlyPrice")}>
-                  {formatMoney(detail.monthly_price)}
-                  {/* An agreed price is shown against the pack's, so the exception is visible. */}
-                  {detail.custom_price !== null && detail.pack && (
-                    <span className="ml-1 text-xs font-normal text-amber-700 dark:text-amber-400">
-                      {t("student.insteadOf", { price: formatMoney(detail.pack.price) })}
-                      {detail.price_note ? ` · ${detail.price_note}` : ""}
-                    </span>
-                  )}
-                </Stat>
-                <Stat label={t("detail.fields.joinDate")}>{formatDate(detail.join_date)}</Stat>
-                {/* Shown unconditionally: an empty phone is information too, and a grid that
-                    changes shape per student is harder to scan. */}
-                <Stat label={t("detail.fields.phone")}>
-                  {detail.phone ?? <span className="font-normal text-slate-400">—</span>}
-                </Stat>
-                <Stat label={t("detail.fields.repeating")}>
-                  {detail.is_repeating ? t("common.yes") : t("common.no")}
-                </Stat>
-              </dl>
-            </Card>
-
-            <Card className="mb-6">
-              <SectionLabel>{t("detail.sections.money")}</SectionLabel>
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-4 sm:grid-cols-4">
-                <Stat label={t("detail.fields.amountOwed")}>
-                  {formatMoney(detail.amount_owed)}
-                </Stat>
-                <Stat label={t("detail.fields.overdue")}>
-                  <OverdueBadge monthsOverdue={detail.months_overdue} />
-                </Stat>
-                <Stat label={t("detail.fields.drift")}>
-                  <DriftBadge drift={detail.cumulative_drift} />
-                </Stat>
-                <Stat label={t("detail.fields.nextExpected")}>
-                  {formatDate(detail.next_expected_date)}
-                </Stat>
-                <Stat label={t("detail.fields.totalPaid")}>{formatMoney(detail.total_paid)}</Stat>
-                <Stat label={t("detail.fields.paymentsCount")}>{detail.payments_count}</Stat>
-                <Stat label={t("detail.fields.firstPayment")}>
-                  {detail.first_payment_date ? formatDate(detail.first_payment_date) : "—"}
-                </Stat>
-              </dl>
-            </Card>
-
-            {/* Only worth a section once there's an actual absence — a single open period
-                since the join date is already shown as "Student since". */}
-            {periods.length > 1 && (
-              <>
-                <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                  {t("student.attendance")}
-                </h2>
-                <div className="mb-6">
-                  <Table>
-                    <THead>
-                      <Tr>
-                        <Th>{t("student.from")}</Th>
-                        <Th>{t("student.until")}</Th>
-                        <Th>{t("student.reason")}</Th>
-                      </Tr>
-                    </THead>
-                    <TBody>
-                      {periods.map((p) => (
-                        <Tr key={p.id}>
-                          <Td>{formatDate(p.entry_date)}</Td>
-                          <Td>
-                            {p.leave_date ? (
-                              formatDate(p.leave_date)
-                            ) : (
-                              <span className="text-emerald-700 dark:text-emerald-400">
-                                {t("student.stillHere")}
-                              </span>
-                            )}
-                          </Td>
-                          <Td className="text-slate-400 dark:text-slate-500">
-                            {p.leave_reason ?? "—"}
-                          </Td>
-                        </Tr>
-                      ))}
-                    </TBody>
-                  </Table>
-                </div>
-              </>
-            )}
-
-            <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {t("ledger.title")}
-            </h2>
-            <DataTable
-              rows={ledger.entries}
-              keyOf={(entry) => entry.cycle_number}
-              rowClassName={(entry) =>
-                // An away month is styled distinctly from an unpaid one: it is not a debt, and
-                // colouring them alike is the mistake worth avoiding here.
-                entry.suspended
-                  ? "bg-slate-50 italic text-slate-400 dark:bg-slate-800/40 dark:text-slate-500"
-                  : entry.paid_date === null
-                    ? "text-slate-400 dark:text-slate-500"
-                    : ""
-              }
-              columns={[
-                {
-                  key: "due",
-                  header: t("ledger.columns.due"),
-                  primary: true,
-                  cell: (entry) => (
-                    <>
-                      {formatDate(entry.expected_due_date)}
-                      <span className="ml-2 text-xs font-normal text-slate-400">
-                        #{entry.cycle_number}
-                      </span>
-                    </>
-                  ),
-                },
-                {
-                  key: "cycle",
-                  header: t("ledger.columns.cycle"),
-                  // Folded into the due-date heading on a phone, where a bare index earns nothing.
-                  wideOnly: true,
-                  cell: (entry) => entry.cycle_number,
-                },
-                {
-                  key: "paid",
-                  header: t("ledger.columns.paid"),
-                  cell: (entry) => (entry.paid_date ? formatDate(entry.paid_date) : "—"),
-                },
-                {
-                  key: "status",
-                  header: t("ledger.columns.status"),
-                  cell: (entry) => ledgerStatus(entry, t),
-                },
-                {
-                  key: "amount",
-                  header: t("ledger.columns.amount"),
-                  align: "right",
-                  cell: (entry) => (entry.amount !== null ? formatMoney(entry.amount) : "—"),
-                },
-                {
-                  key: "drift",
-                  header: t("ledger.columns.drift"),
-                  align: "right",
-                  wideOnly: true,
-                  cell: (entry) => entry.cumulative_drift,
-                },
-              ]}
-            />
-          </>
-        )}
+              )}
+              {openModal === "override" && (
+                <Modal title={t("override.title")} onClose={close}>
+                  <CreateOverrideForm studentId={studentId} onSuccess={handleSaved} onCancel={close} />
+                </Modal>
+              )}
+              {(openModal === "leave" || openModal === "return") && (
+                <Modal
+                  title={t(openModal === "leave" ? "student.leaveTitle" : "student.returnTitle")}
+                  onClose={close}
+                >
+                  <AttendanceForm studentId={studentId} mode={openModal} onSuccess={handleSaved} onCancel={close} />
+                </Modal>
+              )}
+              {openModal === "edit" && (
+                <Modal title={t("edit.title")} onClose={close}>
+                  <EditStudentForm
+                    studentId={studentId}
+                    initial={{
+                      firstName: detail.first_name,
+                      lastName: detail.last_name,
+                      isRepeating: detail.is_repeating,
+                      phone: detail.phone,
+                      classId: detail.class_id,
+                      packId: detail.pack_id,
+                      customPrice: detail.custom_price,
+                      priceNote: detail.price_note,
+                    }}
+                    onSuccess={handleSaved}
+                    onCancel={close}
+                  />
+                </Modal>
+              )}
+            </>
+          );
+        }}
       </AsyncView>
     </div>
   );
 }
 
-function ledgerStatus(entry: LedgerEntry, t: ReturnType<typeof useTranslation>["t"]): string {
-  // "Away" takes precedence over "Unpaid": a month the student wasn't enrolled for is not a debt.
-  if (entry.suspended) return t("ledger.status.away");
-  if (entry.paid_date === null) return t("ledger.status.unpaid");
-  if (entry.days_late !== null && entry.days_late > 0) return t("drift.late", { count: entry.days_late });
-  return t("ledger.status.onTime");
-}
+/**
+ * Where the student stands, as one sentence and the button that acts on it. Owing money comes
+ * first, even for someone who has left: that is the case the teacher must not miss.
+ */
+function StatusCard({
+  detail,
+  ledger,
+  periods,
+  enrolled,
+  onPay,
+  onEdit,
+}: {
+  detail: StudentDetailOut;
+  ledger: LedgerOut;
+  periods: EnrollmentPeriod[];
+  enrolled: boolean;
+  onPay: (month?: string) => void;
+  onEdit: () => void;
+}) {
+  const { t } = useTranslation();
+  const months = payableMonths(ledger.entries, detail.next_expected_date);
 
-function SectionLabel({ children }: { children: ReactNode }) {
+  if (detail.months_overdue > 0) {
+    const oldest = months.find((m) => m.overdue)?.month ?? months[0]!.month;
+    const tone = detail.months_overdue === 1 ? "bg-warn-soft text-warn" : "bg-bad-soft text-bad";
+    return (
+      <Panel className={tone}>
+        <p className="font-display text-2xl font-extrabold tracking-tight">
+          {t("pay.owes", { count: detail.months_overdue, amount: formatMoney(detail.amount_owed) })}
+        </p>
+        <p className="text-ink">{t("student.oldestUnpaid", { month: formatMonthTitle(oldest) })}</p>
+        <Button onClick={() => onPay(oldest)} className="min-h-12 text-lg sm:self-start">
+          {t("student.payMonth", { month: formatMonthTitle(oldest) })}
+        </Button>
+      </Panel>
+    );
+  }
+  if (Number(detail.monthly_price) <= 0) {
+    return (
+      <Panel className="bg-off-soft text-off">
+        <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.noPrice")}</p>
+        <p className="text-ink">{t("student.noPriceText")}</p>
+        <Button variant="secondary" onClick={onEdit} className="sm:self-start">
+          {t("home.choosePack")}
+        </Button>
+      </Panel>
+    );
+  }
+  if (!enrolled) {
+    const lastLeave = periods
+      .map((p) => p.leave_date)
+      .filter((d): d is string => d !== null)
+      .sort()
+      .at(-1);
+    return (
+      <Panel className="bg-off-soft text-off">
+        <p className="font-display text-2xl font-extrabold tracking-tight">{t("student.leftTitle")}</p>
+        {lastLeave && <p className="text-ink">{t("student.leftText", { date: formatDate(lastLeave) })}</p>}
+      </Panel>
+    );
+  }
   return (
-    <h2 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
-      {children}
-    </h2>
+    <Panel className="bg-ok-soft text-ok">
+      <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.paidUp")}</p>
+      <p className="text-ink">{t("student.nextPayment", { date: formatDate(detail.next_expected_date) })}</p>
+      <Button variant="secondary" onClick={() => onPay()} className="sm:self-start">
+        {t("home.pay")}
+      </Button>
+    </Panel>
   );
 }
 
-function Stat({ label, children }: { label: string; children: ReactNode }) {
+function Panel({ className, children }: { className: string; children: ReactNode }) {
+  return <section className={`flex flex-col gap-3 rounded-2xl p-4 sm:p-5 ${className}`}>{children}</section>;
+}
+
+const tileStyles: Record<MonthTile["state"], string> = {
+  paid: "border-transparent bg-ok-soft text-ok",
+  late: "border-warn bg-ok-soft text-ok",
+  due: "border-bad bg-bad-soft text-bad",
+  away: "border-dashed border-off bg-off-soft text-off",
+  upcoming: "border-line bg-surface text-muted",
+  none: "border-transparent bg-transparent text-placeholder",
+};
+
+/** The school year as twelve tiles, with arrows to earlier (or prepaid later) years. */
+function YearTiles({
+  detail,
+  ledger,
+  enrolled,
+  onTile,
+}: {
+  detail: StudentDetailOut;
+  ledger: LedgerOut;
+  enrolled: boolean;
+  onTile: (tile: MonthTile) => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const years = schoolYears(ledger.entries, detail.join_date, ledger.as_of);
+  const [year, setYear] = useState(() => {
+    const current = schoolYearStart(ledger.as_of);
+    return years.includes(current) ? current : years[years.length - 1]!;
+  });
+  const tiles = monthTiles(ledger.entries, year, {
+    joinDate: detail.join_date,
+    today: ledger.as_of,
+    enrolled,
+  });
+  const index = years.indexOf(year);
+  const shortMonth = (month: string) =>
+    new Intl.DateTimeFormat(i18n.language, { month: "short" })
+      .format(new Date(`${month}-01T00:00:00`))
+      .replace(".", "");
+
   return (
-    <div>
-      <dt className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">{label}</dt>
-      <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{children}</dd>
+    <section className="flex flex-col gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-lg font-bold">{t("student.schoolYear", { from: year, to: year + 1 })}</h2>
+        {years.length > 1 && (
+          <div className="flex gap-2">
+            <YearArrow label={t("student.prevYear")} disabled={index === 0} onClick={() => setYear(years[index - 1]!)}>
+              <ChevronLeftIcon className="h-5 w-5" />
+            </YearArrow>
+            <YearArrow
+              label={t("student.nextYear")}
+              disabled={index === years.length - 1}
+              onClick={() => setYear(years[index + 1]!)}
+            >
+              <ChevronRightIcon className="h-5 w-5" />
+            </YearArrow>
+          </div>
+        )}
+      </div>
+      <ol className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+        {tiles.map((tile) => (
+          <li key={tile.month}>
+            <button
+              type="button"
+              disabled={tile.state === "none"}
+              onClick={() => onTile(tile)}
+              aria-label={`${formatMonthTitle(tile.month)} · ${t(`tiles.state.${tile.state}`)}`}
+              className={`flex min-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1 py-2 text-sm font-bold disabled:cursor-default ${tileStyles[tile.state]}`}
+            >
+              <span className="capitalize">{shortMonth(tile.month)}</span>
+              <span className="text-xs">
+                {tile.state === "late"
+                  ? t("tiles.late", { count: tile.entry?.days_late ?? 0 })
+                  : tile.state === "none"
+                    ? " "
+                    : t(`tiles.short.${tile.state}`)}
+              </span>
+            </button>
+          </li>
+        ))}
+      </ol>
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
+        {(["paid", "late", "due", "away"] as const).map((state) => (
+          <li key={state} className="flex items-center gap-1.5">
+            <span aria-hidden="true" className={`h-3 w-3 rounded border-2 ${tileStyles[state]}`} />
+            {t(`tiles.state.${state}`)}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function YearArrow({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="flex h-11 w-11 items-center justify-center rounded-xl border border-line bg-surface text-brand disabled:opacity-40"
+    >
+      {children}
+    </button>
+  );
+}
+
+function TileDetails({
+  tile,
+  payable,
+  onClose,
+  onPay,
+}: {
+  tile: MonthTile;
+  payable: boolean;
+  onClose: () => void;
+  onPay: () => void;
+}) {
+  const { t } = useTranslation();
+  const e = tile.entry;
+  return (
+    <Modal title={formatMonthTitle(tile.month)} onClose={onClose}>
+      <div className="flex flex-col gap-4">
+        {e?.paid_date ? (
+          <dl className="divide-y divide-line rounded-2xl border border-line">
+            <Row label={t("tile.due")}>{formatDate(e.expected_due_date)}</Row>
+            <Row label={t("tile.paidOn")}>{formatDate(e.paid_date)}</Row>
+            <Row label={t("tile.amount")}>{e.amount ? formatMoney(e.amount) : "—"}</Row>
+            <Row label={t("tile.lateness")}>
+              {(e.days_late ?? 0) > 0 ? t("drift.late", { count: e.days_late ?? 0 }) : t("ledger.status.onTime")}
+            </Row>
+          </dl>
+        ) : (
+          <p>
+            {tile.state === "away"
+              ? t("tile.away")
+              : tile.state === "due" && e
+                ? t("tile.notPaid", { date: formatDate(e.expected_due_date) })
+                : t("tile.upcoming")}
+          </p>
+        )}
+        {payable && (
+          <Button onClick={onPay} className="min-h-12 text-lg">
+            {t("student.payMonth", { month: formatMonthTitle(tile.month) })}
+          </Button>
+        )}
+      </div>
+    </Modal>
+  );
+}
+
+function Facts({ detail }: { detail: StudentDetailOut }) {
+  const { t } = useTranslation();
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-bold">{t("student.details")}</h2>
+      <dl className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+        <Row label={t("student.totalLate")}>
+          {detail.cumulative_drift > 0 ? t("student.days", { count: detail.cumulative_drift }) : t("drift.onTrack")}
+        </Row>
+        <Row label={t("detail.fields.monthlyPrice")}>
+          {formatMoney(detail.monthly_price)}
+          {/* An agreed price is shown against the pack's, so the exception is visible. */}
+          {detail.custom_price !== null && detail.pack && (
+            <span className="block text-sm font-normal text-muted">
+              {t("student.insteadOf", { price: formatMoney(detail.pack.price) })}
+              {detail.price_note ? ` · ${detail.price_note}` : ""}
+            </span>
+          )}
+        </Row>
+        <Row label={t("student.pack")}>
+          {detail.pack ? `${detail.pack.name} · ${detail.pack.level}` : t("student.noPack")}
+          {detail.pack && detail.school_class && detail.school_class.level !== detail.pack.level && (
+            <span className="block text-sm font-normal text-warn">
+              {t("student.levelMismatch", { packLevel: detail.pack.level, classLevel: detail.school_class.level })}
+            </span>
+          )}
+        </Row>
+        <Row label={t("detail.fields.class")}>
+          {detail.school_class ? (
+            <Link to={`/settings/classes/${detail.school_class.id}`} className="text-brand underline">
+              {classLabel(detail.school_class)}
+            </Link>
+          ) : (
+            t("classes.unassigned")
+          )}
+        </Row>
+        <Row label={t("detail.fields.phone")}>{detail.phone ?? "—"}</Row>
+        <Row label={t("detail.fields.joinDate")}>{formatDate(detail.join_date)}</Row>
+        <Row label={t("detail.fields.totalPaid")}>
+          {formatMoney(detail.total_paid)}
+          <span className="block text-sm font-normal text-muted">
+            {t("student.paymentsCount", { count: detail.payments_count })}
+          </span>
+        </Row>
+      </dl>
+    </section>
+  );
+}
+
+function Row({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 px-4 py-3">
+      <dt className="text-muted">{label}</dt>
+      <dd className="text-right font-bold">{children}</dd>
     </div>
+  );
+}
+
+function Periods({ periods }: { periods: EnrollmentPeriod[] }) {
+  const { t } = useTranslation();
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-bold">{t("student.attendance")}</h2>
+      <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+        {periods.map((p) => (
+          <li key={p.id} className="flex flex-col gap-0.5 px-4 py-3">
+            <span className="font-bold">
+              {formatDate(p.entry_date)} → {p.leave_date ? formatDate(p.leave_date) : t("student.stillHere")}
+            </span>
+            {p.leave_reason && <span className="text-sm text-muted">{p.leave_reason}</span>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Things done a few times a year, kept off the page itself. */
+function MoreActions({
+  detail,
+  enrolled,
+  onClose,
+  onPick,
+}: {
+  detail: StudentDetailOut;
+  enrolled: boolean;
+  onClose: () => void;
+  onPick: (modal: "edit" | "leave" | "return" | "override") => void;
+}) {
+  const { t } = useTranslation();
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  async function handleDownload() {
+    setDownloadError(null);
+    try {
+      const slug = slugify(detail.full_name);
+      const stem = t("detail.pdfFilename", { id: detail.id, name: slug ? `-${slug}` : "" });
+      await downloadFile(`/students/${detail.id}/ledger.pdf`, `${stem}.pdf`);
+    } catch (err) {
+      setDownloadError(resolveErrorMessage(err, t));
+    }
+  }
+
+  const items: { label: string; onClick: () => void }[] = [
+    { label: t("detail.actions.edit"), onClick: () => onPick("edit") },
+    // Follows the enrolment, not `status`: see `isEnrolled`.
+    {
+      label: t(enrolled ? "student.markLeft" : "student.markReturned"),
+      onClick: () => onPick(enrolled ? "leave" : "return"),
+    },
+    { label: t("detail.actions.addOverride"), onClick: () => onPick("override") },
+    { label: t("detail.downloadPdf"), onClick: () => void handleDownload() },
+  ];
+  return (
+    <Modal title={detail.full_name} onClose={onClose}>
+      <ul className="-mx-2 flex flex-col">
+        {items.map((item) => (
+          <li key={item.label}>
+            <button
+              type="button"
+              onClick={item.onClick}
+              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-3 text-left font-bold hover:bg-ground"
+            >
+              {item.label}
+              <ChevronRightIcon className="h-5 w-5 text-muted" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      {downloadError && <p className="mt-2 text-sm font-bold text-bad">{downloadError}</p>}
+    </Modal>
   );
 }
 
