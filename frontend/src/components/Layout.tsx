@@ -44,7 +44,7 @@ function Shell() {
     // No full-height rule: `body` already paints the background, and `min-h-screen` (100vh) is
     // taller than a phone's visible area while the address bar shows, adding a scroll for nothing.
     <div className="lg:pl-64">
-      <aside className="hidden border-r border-line bg-surface px-4 py-6 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
+      <aside className="hidden border-r border-line bg-surface px-4 pb-6 pt-[calc(1.5rem+env(safe-area-inset-top))] lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
         <span className="flex items-center gap-2.5 px-3 font-display text-2xl font-extrabold tracking-tight text-brand">
           <Logo />
           {t("app.title")}
@@ -83,7 +83,7 @@ function Shell() {
       </aside>
 
       {/* Bottom padding clears the tab bar on a phone, safe-area inset included. */}
-      <main className="mx-auto max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-10">
+      <main className="mx-auto max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-[calc(2.5rem+env(safe-area-inset-top))]">
         <Outlet />
       </main>
 

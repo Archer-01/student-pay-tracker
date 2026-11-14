@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { ThemeContext, THEME_STORAGE_KEY, type ThemePreference } from "./themeContext";
 
+/** The page's background in each theme (`--ground`), which the phone's status bar takes on. */
+const STATUS_BAR = { light: "#f3f6f5", dark: "#111615" } as const;
+
 /** Storage can be missing or throw (private mode, Node in tests); the preference just won't stick. */
 function readPreference(): ThemePreference {
   try {
@@ -34,6 +37,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       const dark = preference === "dark" || (preference === "system" && media.matches);
       document.documentElement.classList.toggle("dark", dark);
       document.documentElement.style.colorScheme = dark ? "dark" : "light";
+      // Installed as an app there is no browser chrome, so the status bar is the page's top edge:
+      // it follows the theme actually showing, including an explicit choice in Réglages.
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute("content", dark ? STATUS_BAR.dark : STATUS_BAR.light);
     };
     apply();
     writePreference(preference);

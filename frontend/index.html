@@ -6,7 +6,13 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#1f4e4a" />
+    <!-- The status bar matches the page, light or dark; lib/theme.tsx keeps it in step. -->
+    <meta name="theme-color" content="#f3f6f5" />
+    <!-- Installed from the home screen, Ardoise opens as an app: no address bar, no tabs. -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Ardoise" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <title>Ardoise</title>
     <script>
       // Apply the saved/system theme before first paint to avoid a flash of the wrong theme.
@@ -15,6 +21,7 @@
         var t = localStorage.getItem("ardoise.theme");
         if (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)) {
           document.documentElement.classList.add("dark");
+          document.querySelector('meta[name="theme-color"]').setAttribute("content", "#111615");
         }
       } catch (e) {}
     </script>

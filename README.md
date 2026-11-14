@@ -41,6 +41,18 @@ cd backend && uv sync && uv run alembic upgrade head && uv run uvicorn app.main:
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
 
+## Installing it on a phone
+
+Ardoise installs from the browser like an app: it then opens from its home-screen icon without the
+address bar or tabs.
+
+- **iPhone (Safari):** open the site, tap Share, then "Sur l'écran d'accueil" / "Add to Home Screen".
+- **Android (Chrome):** open the site, then the ⋮ menu → "Installer l'application" / "Install app"
+  (Chrome may also offer it on its own).
+
+The installed app has its own sign-in on iPhone, separate from Safari. Updates arrive with each
+deploy; there is no offline cache to go stale.
+
 ## Constraints (do not change)
 
 SQLite, **single instance / single writer**, one uvicorn worker. Migrations run on startup

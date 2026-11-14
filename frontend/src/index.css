@@ -75,6 +75,8 @@
    (text, spacing, tap targets) grows with it. */
 html {
   font-size: 106.25%;
+  /* Painted behind an overscroll bounce too, so pulling past the top never flashes white. */
+  background: var(--ground);
 }
 
 body {

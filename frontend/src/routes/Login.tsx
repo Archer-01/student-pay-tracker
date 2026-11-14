@@ -53,7 +53,7 @@ export function Login() {
   return (
     // `dvh`, not `vh`/`min-h-screen`: on a phone 100vh is the height with the address bar
     // hidden, so while it shows the page is taller than the screen and scrolls for nothing.
-    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-10">
+    <div className="flex min-h-dvh flex-col items-center justify-center px-4 pb-[calc(2.5rem+env(safe-area-inset-bottom))] pt-[calc(2.5rem+env(safe-area-inset-top))]">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
           {/* The page's heading: the card itself has no title, since "Se connecter" on the

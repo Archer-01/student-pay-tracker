@@ -159,6 +159,26 @@ and `sm:` upward adds what a wider screen can afford. Concretely:
 Anything with a fixed pixel width needs a `hidden sm:…` escape or it will push real content off a
 375px screen.
 
+## Installed as an app
+
+`public/site.webmanifest` declares `display: standalone`: added to a phone's home screen, Ardoise
+opens with no address bar or tabs. That changes a few things to keep in mind:
+
+- **The page runs to the top of the screen.** Anything at an edge pads by
+  `env(safe-area-inset-*)`, as `Layout`'s `<main>` and side menu (top), the tab bar (bottom) and
+  the login page already do; `viewport-fit=cover` in `index.html` is what makes those insets real.
+- **The status bar is the page's top edge**, so its colour (`<meta name="theme-color">`) follows
+  the theme actually showing: `lib/theme.tsx` sets it, and the pre-paint script in `index.html`
+  sets it before React loads.
+- **There is no browser back or reload button.** Every page needs its own way back (the "‹"
+  links), and screens refresh themselves after a change rather than relying on a reload.
+- **No service worker, on purpose.** An offline cache can keep an installed app on an old version
+  after a deploy, and the app needs the network for its data anyway.
+- **Icons:** `favicon.svg`, `apple-touch-icon.png` (180px, square: iOS rounds it), `icon-192.png`,
+  `icon-512.png`, and `icon-maskable-512.png`, whose slate sits inside the central safe circle
+  with the wood running to the edges, so any launcher shape crops cleanly. Same drawing as
+  `components/Logo.tsx`; change them together. `src/installable.test.ts` checks the manifest.
+
 ## Look and feel
 
 The design tokens live in `src/index.css` (CSS variables, light and `.dark`) and are exposed to
