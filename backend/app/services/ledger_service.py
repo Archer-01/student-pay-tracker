@@ -94,8 +94,10 @@ class LedgerService:
 
         payments_by_cycle = {p.cycle_number: p for p in self.payments.list_for_student(student_id)}
         unpaid = {c for c in range(len(live_dues)) if c not in payments_by_cycle}
-        # A paid cycle counts once its *recorded* (frozen) due date has arrived.
-        paid = {c for c, p in payments_by_cycle.items() if p.expected_due_date <= as_of}
+        # Every payment is listed, including one made in advance for a cycle not yet due: hiding
+        # it left the history a row short of the payment count. Only *drift* waits for the due
+        # date (see ``cumulative_drift``).
+        paid = set(payments_by_cycle)
 
         attending = self._attending_on(student_id)
         entries: list[LedgerEntry] = []
@@ -103,7 +105,8 @@ class LedgerService:
         for cycle in sorted(unpaid | paid):
             payment = payments_by_cycle.get(cycle)
             if payment is not None:
-                running += max(0, payment.days_late)
+                if payment.expected_due_date <= as_of:
+                    running += max(0, payment.days_late)
                 entries.append(
                     LedgerEntry(
                         cycle_number=cycle,
@@ -153,10 +156,16 @@ class LedgerService:
         ]
 
     def next_expected_date(self, student_id: int, as_of: date) -> date:
-        """The next scheduled due date on or after ``as_of`` (override-aware)."""
+        """The next due date on or after ``as_of`` that isn't already paid (override-aware).
+
+        A cycle paid in advance is not "expected" any more, so it is skipped by cycle number —
+        not by date, since a payment's frozen due date can differ from the live one once an
+        override moves the schedule.
+        """
         join_date = self._require_student_join(student_id)
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
-        return next_expected_date(join_date, as_of, override_dates)
+        paid = {p.cycle_number for p in self.payments.list_for_student(student_id)}
+        return next_expected_date(join_date, as_of, override_dates, skip_cycles=paid)
 
     def student_summary(self, student_id: int, as_of: date) -> StudentSummary:
         """Compact per-student summary for the detail endpoint."""

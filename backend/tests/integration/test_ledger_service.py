@@ -129,3 +129,33 @@ def test_first_payment_date_is_derived(db_session: Session) -> None:
     summary = LedgerService(db_session).student_summary(student.id, date(2023, 6, 30))
     # The earliest payment, not the first one recorded.
     assert summary.first_payment_date == date(2023, 3, 20)
+
+
+def test_a_cycle_paid_in_advance_shows_in_the_ledger(db_session: Session) -> None:
+    # Joined Oct 26; October paid Nov 3 (8 late), November (due Nov 26) paid ahead on Nov 10.
+    # Viewed on Nov 14 the student has two payments, and the ledger must list both — hiding the
+    # prepaid one until it falls due made the history disagree with the payment count.
+    sid = _enroll(db_session, join_date=date(2026, 10, 26))
+    payments = PaymentService(db_session)
+    payments.record_payment(
+        student_id=sid, cycle_number=0, paid_date=date(2026, 11, 3), amount=_FEE
+    )
+    payments.record_payment(
+        student_id=sid, cycle_number=1, paid_date=date(2026, 11, 10), amount=_FEE
+    )
+
+    ledger = LedgerService(db_session)
+    as_of = date(2026, 11, 14)
+    entries = ledger.get_ledger(sid, as_of=as_of)
+
+    assert [(e.cycle_number, e.paid_date) for e in entries] == [
+        (0, date(2026, 11, 3)),
+        (1, date(2026, 11, 10)),
+    ]
+    # Paying early adds nothing, so drift is still the 8 days October was late.
+    assert entries[-1].cumulative_drift == 8
+    summary = ledger.student_summary(sid, as_of=as_of)
+    assert summary.payments_count == 2
+    assert summary.months_overdue == 0
+    # November is already paid, so the next payment expected is December's.
+    assert summary.next_expected_date == date(2026, 12, 26)

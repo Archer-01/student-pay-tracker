@@ -25,7 +25,7 @@ Uses :class:`datetime.date` (never ``datetime``) so DST and timezones cannot aff
 
 import itertools
 from calendar import monthrange
-from collections.abc import Iterator, Sequence
+from collections.abc import Collection, Iterator, Sequence
 from dataclasses import dataclass
 from datetime import date
 
@@ -174,10 +174,20 @@ def cumulative_drift(join_date: date, payments: list[Payment], as_of: date) -> i
     return total
 
 
-def next_expected_date(join_date: date, as_of: date, overrides: Sequence[date] = ()) -> date:
+def next_expected_date(
+    join_date: date,
+    as_of: date,
+    overrides: Sequence[date] = (),
+    skip_cycles: Collection[int] = (),
+) -> date:
     """The next scheduled due date on or after ``as_of`` (override-aware).
 
     Returns the first generated due date ``>= as_of`` (the ">=" convention: a payment due
-    today is the next one expected).
+    today is the next one expected), passing over any cycle number in ``skip_cycles`` — the
+    cycles already paid in advance.
     """
-    return next(due for due in _iter_due_dates(join_date, overrides) if due >= as_of)
+    return next(
+        due
+        for cycle, due in enumerate(_iter_due_dates(join_date, overrides))
+        if due >= as_of and cycle not in skip_cycles
+    )
