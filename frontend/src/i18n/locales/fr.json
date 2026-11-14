@@ -8,30 +8,30 @@
     "report": "Rapport mensuel",
     "classes": "Classes",
     "packs": "Packs",
-    "annual": "Année",
+    "annual": "Bilan annuel",
     "debts": "Impayés"
   },
   "pages": {
     "dashboard": "Tableau de bord",
     "students": "Élèves",
-    "studentDetail": "Fiche de l'élève",
+    "studentDetail": "Fiche élève",
     "enroll": "Inscrire un élève",
     "report": "Rapport mensuel",
     "classes": "Classes",
     "classDetail": "Classe",
     "packs": "Packs",
-    "annual": "Revenus annuels",
-    "debts": "Partis en devant"
+    "annual": "Bilan annuel",
+    "debts": "Anciens élèves avec impayés"
   },
   "drift": {
-    "onTrack": "À jour",
-    "late_one": "{{count}} jour de retard",
-    "late_other": "{{count}} jours de retard"
+    "onTrack": "À l'heure",
+    "late_one": "{{count}} jour de retard",
+    "late_other": "{{count}} jours de retard"
   },
   "overdue": {
-    "paidUp": "Réglé",
-    "monthsBehind_one": "{{count}} mois de retard",
-    "monthsBehind_other": "{{count}} mois de retard"
+    "paidUp": "À jour",
+    "monthsBehind_one": "{{count}} mois impayé",
+    "monthsBehind_other": "{{count}} mois impayés"
   },
   "status": {
     "active": "Actif",
@@ -45,7 +45,7 @@
       "overdue": "Impayés",
       "class": "Classe",
       "price": "Tarif",
-      "owed": "Dû"
+      "owed": "Reste dû"
     },
     "filterLabel": "Statut",
     "filterAll": "Tous",
@@ -57,20 +57,20 @@
   },
   "dashboard": {
     "collectedThisMonth": "Encaissé ce mois-ci",
-    "totalOutstanding": "Total impayé",
+    "totalOutstanding": "Total des impayés",
     "asOf": "Au {{date}}",
-    "empty": "Personne ne doit d'argent.",
+    "empty": "Aucun impayé.",
     "whoToChase": "À relancer",
-    "rankedByOwed": "Les plus gros montants d'abord",
+    "rankedByOwed": "Les plus gros montants en premier",
     "attention": "À vérifier",
-    "activeStudents_one": "{{count}} élève",
-    "activeStudents_other": "{{count}} élèves",
-    "monthsBehind_one": "{{count}} mois de retard",
-    "monthsBehind_other": "{{count}} mois de retard",
-    "unbilled_one": "{{count}} élève n'a aucun pack et n'est donc pas facturé :",
-    "unbilled_other": "{{count}} élèves n'ont aucun pack et ne sont donc pas facturés :",
-    "missingLeaveDate_one": "{{count}} élève est marqué parti sans date de départ ; sa facturation continue :",
-    "missingLeaveDate_other": "{{count}} élèves sont marqués partis sans date de départ ; leur facturation continue :"
+    "activeStudents_one": "{{count}} élève",
+    "activeStudents_other": "{{count}} élèves",
+    "monthsBehind_one": "{{count}} mois impayé",
+    "monthsBehind_other": "{{count}} mois impayés",
+    "unbilled_one": "{{count}} élève n'a pas de pack et n'est donc pas facturé :",
+    "unbilled_other": "{{count}} élèves n'ont pas de pack et ne sont donc pas facturés :",
+    "missingLeaveDate_one": "{{count}} élève est indiqué comme parti sans date de départ, et reste donc facturé :",
+    "missingLeaveDate_other": "{{count}} élèves sont indiqués comme partis sans date de départ, et restent donc facturés :"
   },
   "report": {
     "monthLabel": "Mois",
@@ -79,15 +79,15 @@
     "pdfFilename": "rapport-mensuel-{{year}}-{{month}}",
     "asOf": "Au {{date}}",
     "totalCollected": "Total encaissé",
-    "totalOutstanding": "Total impayé",
-    "empty": "Aucun élève pour ce mois.",
+    "totalOutstanding": "Total des impayés",
+    "empty": "Aucun élève ce mois-ci.",
     "columns": {
       "name": "Nom",
       "status": "Statut",
-      "fee": "Frais",
+      "fee": "Tarif",
       "collected": "Encaissé",
       "drift": "Retard",
-      "outstanding": "Impayé"
+      "outstanding": "Reste dû"
     }
   },
   "enroll": {
@@ -96,7 +96,7 @@
       "phone": "Téléphone (facultatif)",
       "class": "Classe"
     },
-    "joinDateHint": "Elle fixe les cycles de facturation et ne peut plus être modifiée ensuite.",
+    "joinDateHint": "Point de départ des échéances mensuelles : elle ne pourra plus être modifiée.",
     "submit": "Inscrire l'élève",
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
@@ -109,7 +109,7 @@
     "pdfFilename": "historique-eleve-{{id}}{{name}}",
     "actions": {
       "recordPayment": "Enregistrer un paiement",
-      "addOverride": "Ajouter un ajustement",
+      "addOverride": "Décaler l'échéance",
       "edit": "Modifier la fiche"
     },
     "fields": {
@@ -129,23 +129,23 @@
     },
     "sections": {
       "enrolment": "Inscription",
-      "money": "Argent"
+      "money": "Finances"
     }
   },
   "ledger": {
-    "title": "Historique",
+    "title": "Historique des paiements",
     "columns": {
-      "cycle": "Cycle",
+      "cycle": "N°",
       "due": "Échéance",
-      "paid": "Date de paiement",
+      "paid": "Payé le",
       "status": "Statut",
       "amount": "Montant",
-      "drift": "Retard"
+      "drift": "Retard cumulé"
     },
     "status": {
       "unpaid": "Impayé",
-      "onTime": "À temps",
-      "away": "Absent"
+      "onTime": "À l'heure",
+      "away": "Non facturé"
     }
   },
   "language": {
@@ -160,39 +160,41 @@
   "common": {
     "loading": "Chargement…",
     "error": "Une erreur est survenue",
-    "empty": "Rien à afficher pour le moment",
+    "empty": "Rien à afficher pour l'instant",
     "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
     "yes": "Oui",
-    "no": "Non"
+    "no": "Non",
+    "close": "Fermer"
   },
   "payment": {
     "title": "Enregistrer un paiement",
     "fields": {
-      "forMonth": "Mois concerné",
+      "forMonth": "Mois réglé",
       "paidDate": "Date de paiement",
       "amount": "Montant"
     },
     "validation": {
-      "monthRequired": "Choisissez le mois réglé par ce paiement.",
+      "monthRequired": "Choisissez le mois que règle ce paiement.",
       "paidDateRequired": "La date de paiement est obligatoire.",
       "amountInvalid": "Saisissez un montant supérieur à 0.",
-      "amountAbovePrice": "C'est plus que le tarif mensuel de cet élève ({{price}})."
+      "amountAbovePrice": "C'est plus que le tarif mensuel de cet élève ({{price}}).",
+      "paidDateFuture": "La date de paiement ne peut pas être dans le futur."
     },
     "hints": {
-      "amountUpTo": "Jusqu'à {{price}}, le tarif mensuel de cet élève."
+      "amountUpTo": "Au maximum {{price}}, le tarif mensuel de cet élève."
     }
   },
   "override": {
-    "title": "Ajouter un ajustement",
+    "title": "Décaler l'échéance",
     "fields": {
-      "newDueDate": "Nouvelle échéance",
+      "newDueDate": "Nouvelle date d'échéance",
       "reason": "Motif"
     },
     "validation": {
-      "newDueDateRequired": "La nouvelle échéance est obligatoire.",
-      "reasonRequired": "Un motif est obligatoire."
+      "newDueDateRequired": "La nouvelle date d'échéance est obligatoire.",
+      "reasonRequired": "Le motif est obligatoire."
     }
   },
   "edit": {
@@ -215,23 +217,23 @@
     "generic": "Une erreur est survenue. Veuillez réessayer."
   },
   "classes": {
-    "empty": "Aucune classe pour le moment. Créez-en une pour regrouper les élèves.",
+    "empty": "Aucune classe pour l'instant. Créez-en une pour regrouper vos élèves.",
     "create": "Nouvelle classe",
     "createTitle": "Créer une classe",
     "level": "Niveau",
     "name": "Nom",
-    "namePlaceholder": "ex. Groupe A",
+    "namePlaceholder": "ex. : Groupe A",
     "students": "Élèves",
-    "drift": "Retard total",
+    "drift": "Retard cumulé",
     "filterLevel": "Niveau",
     "filterAll": "Tous les niveaux",
     "addStudent": "Ajouter un élève",
-    "rosterEmpty": "Aucun élève dans cette classe.",
+    "rosterEmpty": "Aucun élève dans cette classe pour l'instant.",
     "downloadRoster": "Télécharger la liste (PDF)",
     "rename": "Renommer",
     "renameTitle": "Renommer la classe",
     "delete": "Supprimer la classe",
-    "deleteConfirm": "Supprimer cette classe ? Elle ne doit contenir aucun élève.",
+    "deleteConfirm": "Supprimer cette classe ? Elle doit d'abord être vide.",
     "unassigned": "Sans classe",
     "validation": {
       "nameRequired": "Le nom est obligatoire"
@@ -240,51 +242,53 @@
     "none": "Aucune classe"
   },
   "packs": {
-    "empty": "Aucun pack pour le moment. Créez une offre pour définir les tarifs.",
+    "empty": "Aucun pack pour l'instant. Créez une offre pour définir vos tarifs.",
     "newOffering": "Nouvelle offre",
     "newOfferingTitle": "Nouvelle offre",
     "offering": "Offre",
     "subjects": "Matières",
-    "subjectsHint": "Séparées par des virgules, ex. Maths, Physique",
-    "pricesHint": "Laissez un niveau vide si vous ne le proposez pas.",
+    "subjectsHint": "Séparées par des virgules, ex. : Maths, Physique",
+    "pricesHint": "Laissez vide un niveau où vous ne proposez pas cette offre.",
     "notOffered": "non proposé",
-    "students": "élèves",
-    "gridHint": "Une ligne par offre, une colonne par niveau. Cliquez sur un tarif pour le modifier.",
+    "studentCount_one": "{{count}} élève",
+    "studentCount_other": "{{count}} élèves",
+    "gridHint": "Une ligne par offre, une colonne par niveau. Appuyez sur un tarif pour le modifier.",
     "editPrice": "Tarif",
     "editCellTitle": "{{offering}} · {{level}}",
     "offered": "Proposé à ce niveau",
     "validation": {
       "nameRequired": "Le nom est obligatoire",
-      "subjectsRequired": "Au moins une matière est requise",
-      "pricesRequired": "Définissez un tarif pour au moins un niveau"
+      "subjectsRequired": "Indiquez au moins une matière",
+      "pricesRequired": "Indiquez un tarif pour au moins un niveau"
     },
     "save": "Enregistrer",
-    "affects": "Modifie immédiatement le tarif de {{count}} élève(s), y compris pour les mois impayés.",
+    "affects_one": "Modifie immédiatement le tarif de {{count}} élève, y compris pour ses mois impayés.",
+    "affects_other": "Modifie immédiatement le tarif de {{count}} élèves, y compris pour leurs mois impayés.",
     "editOffering": "Modifier l'offre",
     "editOfferingTitle": "Modifier {{name}}",
-    "appliesToAllLevels": "Le nom et les matières s'appliquent à tous les niveaux de cette offre ; seuls les tarifs diffèrent.",
+    "appliesToAllLevels": "Le nom et les matières valent pour tous les niveaux de cette offre ; seuls les tarifs changent.",
     "gridScrollHint": "Faites défiler pour voir tous les niveaux."
   },
   "student": {
     "pack": "Pack",
-    "noPack": "Aucun pack",
-    "packPriceHint": "Tarif du pack : {{price}}",
+    "noPack": "Pas encore de pack",
+    "packPriceHint": "Tarif du pack : {{price}}",
     "customPrice": "Tarif convenu",
-    "customPriceHint": "Laissez vide pour appliquer le tarif du pack. À remplir uniquement si cet élève paie autre chose.",
+    "customPriceHint": "Laissez vide pour appliquer le tarif du pack. À remplir seulement si cet élève paie un autre montant.",
     "priceNote": "Motif",
-    "priceNoteHint": "ex. remise fratrie, situation difficile",
+    "priceNoteHint": "ex. : remise fratrie, situation difficile",
     "insteadOf": "au lieu de {{price}}",
     "firstName": "Prénom",
     "lastName": "Nom",
-    "lastNameHint": "Laissez vide si aucun nom de famille n'est connu",
+    "lastNameHint": "Laissez vide si le nom de famille n'est pas connu",
     "repeating": "Redoublant",
     "repeatingShort": "Redoublant",
-    "levelMismatch": "Ce pack concerne {{packLevel}} mais la classe est {{classLevel}}.",
-    "attendance": "Présence",
+    "levelMismatch": "Ce pack est prévu pour le niveau {{packLevel}}, mais la classe est en {{classLevel}}.",
+    "attendance": "Périodes d'inscription",
     "from": "Du",
     "until": "Au",
     "reason": "Motif",
-    "stillHere": "Toujours présent",
+    "stillHere": "Toujours inscrit",
     "markLeft": "Enregistrer un départ",
     "markReturned": "Enregistrer un retour",
     "leaveTitle": "Enregistrer un départ",
@@ -292,8 +296,8 @@
     "leaveDate": "Date de départ",
     "returnDate": "Date de retour",
     "leaveReason": "Motif",
-    "leaveHint": "Les mois suivant cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
-    "returnHint": "La date d'inscription ne bouge pas : la dette et le retard éventuels reviennent avec l'élève."
+    "leaveHint": "Les mois qui suivent cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
+    "returnHint": "La date d'inscription ne change pas : les éventuels impayés et retards reviennent avec l'élève."
   },
   "annual": {
     "year": "Année",
@@ -302,29 +306,29 @@
     "month": "Mois",
     "total": "Total encaissé",
     "average": "Moyenne mensuelle",
-    "averageHint": "Moyenne sur les mois ayant rapporté, pas sur douze",
+    "averageHint": "Calculée sur les mois avec des encaissements, pas sur douze",
     "best": "Meilleur mois",
     "downloadPdf": "Télécharger le PDF",
     "empty": "Aucun paiement enregistré cette année."
   },
   "debts": {
-    "empty": "Personne n'est parti en devant de l'argent.",
+    "empty": "Aucun ancien élève n'a laissé d'impayés.",
     "totalOwed": "Total dû",
     "leftOn": "Parti le",
     "months": "Mois",
     "owed": "Dû",
-    "writeOff": "Abandonner la créance",
-    "writeOffTitle": "Abandonner le solde de {{name}}",
+    "writeOff": "Effacer la dette",
+    "writeOffTitle": "Effacer la dette de {{name}}",
     "writeOffReason": "Motif",
-    "writeOffHint": "Enregistré définitivement. Ce n'est pas un paiement — cela ne compte jamais comme recette.",
-    "writeOffConfirm": "Abandonner {{amount}}",
-    "returnedWithDebt": "Cet élève est parti en devant de l'argent",
-    "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti en devant {{amount}}.",
-    "onDashboard": "Partis en devant"
+    "writeOffHint": "Enregistré définitivement. Ce n'est pas un paiement : ce montant n'est jamais compté dans les recettes.",
+    "writeOffConfirm": "Effacer {{amount}}",
+    "returnedWithDebt": "Cet élève est parti sans régler ses impayés",
+    "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti sans régler {{amount}}.",
+    "onDashboard": "Partis sans régler"
   },
   "auth": {
     "title": "Connexion",
-    "subtitle": "Ardoise est privé. Connectez-vous pour continuer.",
+    "subtitle": "Accès réservé. Connectez-vous pour continuer.",
     "username": "Nom d'utilisateur",
     "password": "Mot de passe",
     "submit": "Se connecter",

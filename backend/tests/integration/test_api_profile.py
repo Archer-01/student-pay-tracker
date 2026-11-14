@@ -181,6 +181,12 @@ async def test_ledger_pdf_is_localized(client: AsyncClient, db_session: Session)
     assert "premier paiement" in text
     # Accents survive the Helvetica/latin-1 round trip: "Impayé" in the status column.
     assert "impay\\351" in text
+    # French values render as plain text, not missing glyphs: a decimal comma, and "jours"
+    # pluralised. reportlab lays the catalogue's no-break space out as an ordinary space (it
+    # cannot stop a table cell wrapping there), so the text reads "5 jours de retard".
+    assert "5 jours de retard" in text
+    assert "150,00" in text
+    assert "05/04/2023" in text  # dates read day first
 
 
 async def test_ledger_pdf_of_a_student_with_no_cycles_says_so(client: AsyncClient) -> None:

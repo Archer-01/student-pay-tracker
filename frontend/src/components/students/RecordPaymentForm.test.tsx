@@ -9,9 +9,9 @@ beforeEach(() => {
   vi.spyOn(endpoints, "recordPayment").mockResolvedValue({} as never);
 });
 
-async function fill(amount: string) {
+async function fill(amount: string, paidDate = "2026-10-10") {
   await userEvent.type(screen.getByLabelText(/for month/i), "2026-10");
-  await userEvent.type(screen.getByLabelText(/paid date/i), "2026-10-10");
+  await userEvent.type(screen.getByLabelText(/paid date/i), paidDate);
   await userEvent.type(screen.getByLabelText(/amount/i), amount);
   await userEvent.click(screen.getByRole("button", { name: /save/i }));
 }
@@ -52,5 +52,12 @@ describe("RecordPaymentForm", () => {
     expect(screen.queryByText(/up to/i)).toBeNull();
     await fill("450");
     await waitFor(() => expect(endpoints.recordPayment).toHaveBeenCalled());
+  });
+
+  it("refuses a paid date in the future before the server can answer in English", async () => {
+    renderForm("200.00");
+    await fill("200", "2999-01-01");
+    expect(await screen.findByText(/can't be in the future/i)).toBeInTheDocument();
+    expect(endpoints.recordPayment).not.toHaveBeenCalled();
   });
 });

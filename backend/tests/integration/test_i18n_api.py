@@ -38,7 +38,7 @@ async def test_error_french_via_accept_language(client: AsyncClient) -> None:
     resp = await client.get("/api/v1/students/999", headers={"Accept-Language": "fr-FR,fr;q=0.9"})
     assert resp.status_code == 404
     body = resp.json()
-    assert body["detail"] == "Aucun élève avec l'identifiant 999"
+    assert body["detail"] == "Élève introuvable (n°\u00a0999)"
     assert body["code"] == "student_not_found"
 
 
@@ -46,7 +46,7 @@ async def test_error_french_via_lang_query_overrides_header(client: AsyncClient)
     resp = await client.get(
         "/api/v1/students/999", params={"lang": "fr"}, headers={"Accept-Language": "en"}
     )
-    assert resp.json()["detail"] == "Aucun élève avec l'identifiant 999"
+    assert resp.json()["detail"] == "Élève introuvable (n°\u00a0999)"
 
 
 async def test_domain_error_localized(client: AsyncClient, db_session: Session) -> None:

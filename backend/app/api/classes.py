@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf, slugify_name
-from app.core.i18n import translate
+from app.core.i18n import format_money, translate
 from app.models import ClassLevel, SchoolClass
 from app.schemas.school_class import (
     ClassCreate,
@@ -112,10 +112,10 @@ def _roster_export(rows: RosterRows, locale: str) -> tuple[list[str], list[list[
             row.student.full_name,
             row.student.phone or "",
             translate(f"status.{row.student.status.value}", locale),
-            f"{row.monthly_price:.2f}",
+            format_money(row.monthly_price, locale),
             str(row.cumulative_drift),
             str(row.months_overdue),
-            f"{row.amount_owed:.2f}",
+            format_money(row.amount_owed, locale),
         ]
         for row in rows
     ]
@@ -136,12 +136,10 @@ def _roster_stats(rows: RosterRows, locale: str) -> list[Stat]:
     return [
         Stat(translate("pdf.stat.students", locale), str(len(rows))),
         Stat(translate("csv.roster.months_overdue", locale), str(behind)),
-        Stat(translate("pdf.stat.outstanding", locale), f"{owed:.2f}"),
+        Stat(translate("pdf.stat.outstanding", locale), format_money(owed, locale)),
         Stat(
             translate("pdf.stat.drift", locale),
-            translate(
-                "pdf.value.days", locale, days=sum(row.cumulative_drift for row in rows)
-            ),
+            translate("pdf.value.days", locale, count=sum(row.cumulative_drift for row in rows)),
         ),
     ]
 
@@ -165,8 +163,6 @@ async def get_roster_pdf(
         header=header,
         rows=rows,
         filename=_roster_filename(school_class),
-        footer=translate(
-            "pdf.footer", locale, generated=date.today().isoformat(), as_of=as_of_date.isoformat()
-        ),
+        footer=translate("pdf.footer", locale, generated=date.today(), as_of=as_of_date),
         empty_message=translate("pdf.roster.empty", locale),
     )

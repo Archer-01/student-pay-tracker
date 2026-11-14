@@ -1,5 +1,6 @@
 import { useCallback, useState } from "react";
 import { ApiError } from "../api/client";
+import i18n from "../i18n";
 
 type MutationState<T> =
   | { status: "idle"; data?: undefined; error?: undefined }
@@ -23,7 +24,7 @@ export function useMutation<TArgs extends unknown[], TResult>(fn: (...args: TArg
         setState({ status: "success", data });
         return data;
       } catch (err) {
-        const message = err instanceof ApiError ? err.message : "Something went wrong";
+        const message = err instanceof ApiError ? err.message : i18n.t("common.error");
         setState({ status: "error", error: message });
         throw err;
       }

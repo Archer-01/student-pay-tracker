@@ -187,7 +187,7 @@ async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: S
         "/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"}
     )
     text = pdf_text(resp.content)
-    assert "revenus annuels" in text
+    assert "bilan annuel" in text
     assert "janvier" in text
     assert "meilleur mois" in text
 

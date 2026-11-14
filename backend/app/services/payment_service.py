@@ -71,11 +71,12 @@ class PaymentService:
         student = self._require_student(student_id)
         self._check_amount(student, amount)
 
-        if self.payments.get_by_student_cycle(student_id, cycle_number) is not None:
-            raise DuplicatePaymentError(student_id, cycle_number)
-
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
         expected = expected_due_date_for_cycle(student.join_date, cycle_number, override_dates)
+
+        existing = self.payments.get_by_student_cycle(student_id, cycle_number)
+        if existing is not None:
+            raise DuplicatePaymentError(student_id, cycle_number, existing.expected_due_date)
 
         payment = Payment(
             student_id=student_id,

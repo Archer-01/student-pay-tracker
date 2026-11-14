@@ -6,6 +6,13 @@ import { fieldErrors, resolveErrorMessage } from "../../lib/errors";
 import { formatMoney } from "../../lib/money";
 import { Button, DateField, MoneyField, MonthField } from "../ui";
 
+/** Today as `YYYY-MM-DD` in the teacher's own timezone, comparable with a date input's value. */
+function todayIso(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
 type Props = {
   studentId: number;
   /** The student's current monthly price; "0.00" when they have none. */
@@ -31,6 +38,8 @@ export function RecordPaymentForm({ studentId, monthlyPrice, onSuccess, onCancel
     const next: Record<string, string> = {};
     if (!forMonth) next.for_month = t("payment.validation.monthRequired");
     if (!paidDate) next.paid_date = t("payment.validation.paidDateRequired");
+    // The server refuses this too, but with an English validation message.
+    else if (paidDate > todayIso()) next.paid_date = t("payment.validation.paidDateFuture");
     if (amount.trim() === "" || Number.isNaN(Number(amount)) || Number(amount) <= 0) {
       next.amount = t("payment.validation.amountInvalid");
     } else if (cap !== null && Number(amount) > cap) {

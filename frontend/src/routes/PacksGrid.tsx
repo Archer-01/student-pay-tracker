@@ -171,7 +171,7 @@ function PriceCell({ cell, onEdit }: { cell: PackGridCell; onEdit: () => void })
       {/* The blast radius of a price change, visible before you click. */}
       {cell.student_count > 0 && (
         <span className="block text-xs text-slate-400 dark:text-slate-500">
-          {cell.student_count} {t("packs.students")}
+          {t("packs.studentCount", { count: cell.student_count })}
         </span>
       )}
     </button>

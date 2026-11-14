@@ -79,7 +79,12 @@ components (`t("nav.students")`); the app owns all its UI copy. Two i18n surface
   modules (`client.ts`, `money.ts`) read the active locale from the imported `i18n` singleton.
 
 Drift text uses count-based plurals (`drift.late_one` / `drift.late_other`) — let i18next pick the form
-per locale rather than hand-formatting. `formatMoney` formats with the active locale (so fr renders
+per locale rather than hand-formatting. Never compose a count with a word (`{n} {t("students")}` reads "1 élèves");
+give it a `_one`/`_other` pair. French text follows French typography — a no-break space (U+00A0)
+before `: ; ? !` and inside `« »` — and `src/i18n/catalogues.test.ts` fails on a plain space there,
+or on a key present in only one catalogue. Don't pass `defaultValue` to `t()`: it hides a missing
+key from that test and from the setup's missing-key check, which is how an English "Close" once
+shipped in the French UI. `formatMoney` formats with the active locale (so fr renders
 `300,00`), but the value stays a string end to end.
 
 ## Domain rules the UI must respect

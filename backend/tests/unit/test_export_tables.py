@@ -60,16 +60,18 @@ def test_ledger_export_english() -> None:
 def test_ledger_export_french() -> None:
     header, rows = _ledger_export(_entries(), "fr")
     assert header == [
-        "Cycle",
-        "Date d'échéance",
-        "Date de paiement",
+        "N°",
+        "Échéance",
+        "Payé le",
         "Jours de retard",
         "Montant",
         "Retard cumulé",
         "Statut",
     ]
-    assert rows[0][-1] == "Impayé"
-    assert rows[1][-1] == "En retard de 5 jours"
+    assert rows[0] == ["0", "05/03/2023", "", "", "", "0", "Impayé"]
+    # Day-first dates and a decimal comma, as the teacher writes them.
+    late = "5\u00a0jours de retard"
+    assert rows[1] == ["1", "05/04/2023", "10/04/2023", "5", "300,00", "5", late]
 
 
 @pytest.mark.parametrize(
@@ -139,15 +141,16 @@ def test_monthly_export_english() -> None:
 def test_monthly_export_french() -> None:
     header, rows = _monthly_export(_report(name="Youssef"), "fr")
     assert header == [
-        "Identifiant élève",
+        "N° élève",
         "Nom",
         "Statut",
         "Tarif",
         "Encaissé",
         "Retard cumulé",
-        "Solde dû",
+        "Reste dû",
     ]
     assert rows[0][2] == "Actif"  # status localized
+    assert rows[0][3:] == ["300,00", "300,00", "0", "0,00"]
 
 
 def test_monthly_export_preserves_non_ascii_name() -> None:
@@ -195,7 +198,7 @@ def _roster_rows() -> list[RosterRow]:
 
 def test_roster_export_header_is_localized() -> None:
     assert _roster_export([], "en")[0][0] == "Student ID"
-    assert _roster_export([], "fr")[0][0] == "Identifiant élève"
+    assert _roster_export([], "fr")[0][0] == "N° élève"
 
 
 def test_roster_export_rows() -> None:

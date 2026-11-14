@@ -66,7 +66,7 @@ export function AttendanceForm({ studentId, mode, onSuccess, onCancel }: Props) 
           {debtWarning}
         </p>
         <div className="flex justify-end">
-          <Button onClick={onSuccess}>{t("common.close", { defaultValue: "Close" })}</Button>
+          <Button onClick={onSuccess}>{t("common.close")}</Button>
         </div>
       </div>
     );

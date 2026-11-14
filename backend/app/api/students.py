@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf, slugify_name
-from app.core.i18n import translate
+from app.core.i18n import format_date, format_money, translate
 from app.models import Student, StudentStatus
 from app.schemas.enrollment import (
     LeaveRequest,
@@ -134,12 +134,12 @@ def _ledger_row_status(entry: LedgerEntry, locale: str) -> str:
     if entry.paid_date is None:
         return translate("csv.ledger.status.unpaid", locale)
     if entry.days_late is not None and entry.days_late > 0:
-        return translate("csv.ledger.status.days_late", locale, days=entry.days_late)
+        return translate("csv.ledger.status.days_late", locale, count=entry.days_late)
     return translate("csv.ledger.status.on_time", locale)
 
 
 def _fmt_date(value: date | None, locale: str) -> str:
-    return value.isoformat() if value else translate("pdf.value.none", locale)
+    return format_date(value, locale) if value else translate("pdf.value.none", locale)
 
 
 def _class_label(student: Student, locale: str) -> str:
@@ -190,13 +190,13 @@ def _ledger_facts(
 
 def _ledger_stats(summary: StudentSummary, monthly_price: Decimal, locale: str) -> list[Stat]:
     return [
-        Stat(translate("pdf.stat.monthly_price", locale), f"{monthly_price:.2f}"),
-        Stat(translate("pdf.stat.total_paid", locale), f"{summary.total_paid:.2f}"),
+        Stat(translate("pdf.stat.monthly_price", locale), format_money(monthly_price, locale)),
+        Stat(translate("pdf.stat.total_paid", locale), format_money(summary.total_paid, locale)),
         Stat(translate("pdf.stat.months_overdue", locale), str(summary.months_overdue)),
-        Stat(translate("pdf.stat.amount_owed", locale), f"{summary.amount_owed:.2f}"),
+        Stat(translate("pdf.stat.amount_owed", locale), format_money(summary.amount_owed, locale)),
         Stat(
             translate("pdf.stat.drift", locale),
-            translate("pdf.value.days", locale, days=summary.cumulative_drift),
+            translate("pdf.value.days", locale, count=summary.cumulative_drift),
         ),
     ]
 
@@ -225,10 +225,10 @@ def _ledger_export(entries: list[LedgerEntry], locale: str) -> tuple[list[str], 
     rows = [
         [
             str(e.cycle_number),
-            e.expected_due_date.isoformat(),
-            e.paid_date.isoformat() if e.paid_date else "",
+            format_date(e.expected_due_date, locale),
+            format_date(e.paid_date, locale) if e.paid_date else "",
             str(e.days_late) if e.days_late is not None else "",
-            f"{e.amount:.2f}" if e.amount is not None else "",
+            format_money(e.amount, locale) if e.amount is not None else "",
             str(e.cumulative_drift),
             _ledger_row_status(e, locale),
         ]
@@ -259,9 +259,7 @@ async def get_ledger_pdf(
         header=header,
         rows=rows,
         filename=_ledger_filename(student),
-        footer=translate(
-            "pdf.footer", locale, generated=date.today().isoformat(), as_of=as_of_date.isoformat()
-        ),
+        footer=translate("pdf.footer", locale, generated=date.today(), as_of=as_of_date),
         empty_message=translate("pdf.ledger.empty", locale),
     )
 
@@ -379,8 +377,8 @@ async def record_return(
         translate(
             "warning.returning_with_debt",
             locale,
-            amount=f"{owed.amount_owed:.2f}",
-            months=owed.months_owed,
+            amount=owed.amount_owed,
+            count=owed.months_owed,
         )
         if owed.left_with_debt
         else None

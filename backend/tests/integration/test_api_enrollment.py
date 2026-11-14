@@ -181,4 +181,6 @@ async def test_error_detail_is_localized(client: AsyncClient, db_session: Sessio
         json={"entry_date": "2023-10-01"},
         headers={"Accept-Language": "fr"},
     )
-    assert "déjà présent" in resp.json()["detail"]
+    assert resp.json()["detail"] == (
+        "Cet élève est déjà inscrit\u00a0; enregistrez d'abord son départ"
+    )

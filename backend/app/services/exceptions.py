@@ -5,6 +5,8 @@ pre-rendered sentence. The presentation edges (API handler, CLI) translate ``err
 ``app.core.i18n`` — so the service layer knows nothing about English/French.
 """
 
+from datetime import date
+
 
 class DomainError(Exception):
     """Base class: a stable ``code`` and template ``params`` for later localization."""
@@ -35,8 +37,14 @@ class InvalidStudentError(DomainError):
 
 
 class DuplicatePaymentError(DomainError):
-    def __init__(self, student_id: int, cycle_number: int) -> None:
-        super().__init__("duplicate_payment", student_id=student_id, cycle_number=cycle_number)
+    def __init__(self, student_id: int, cycle_number: int, due_date: date) -> None:
+        # The due date is what the message shows: a cycle index means nothing to the teacher.
+        super().__init__(
+            "duplicate_payment",
+            student_id=student_id,
+            cycle_number=cycle_number,
+            due_date=due_date,
+        )
 
 
 class PaymentNotFoundError(DomainError):

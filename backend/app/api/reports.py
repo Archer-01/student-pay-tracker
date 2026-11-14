@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db, get_locale
 from app.api.pdf_export import Stat, render_report_pdf
-from app.core.i18n import translate
+from app.core.i18n import format_money, translate
 from app.schemas.reports import AnnualReportOut, MonthlyReportOut
 from app.services.reports_service import AnnualReport, MonthlyReport, ReportsService
 
@@ -36,10 +36,10 @@ def _monthly_export(report: MonthlyReport, locale: str) -> tuple[list[str], list
             str(row.student_id),
             row.name,
             translate(f"status.{row.status.value}", locale),
-            f"{row.fee:.2f}",
-            f"{row.collected:.2f}",
+            format_money(row.fee, locale),
+            format_money(row.collected, locale),
             str(row.cumulative_drift),
-            f"{row.outstanding:.2f}",
+            format_money(row.outstanding, locale),
         ]
         for row in report.rows
     ]
@@ -68,8 +68,14 @@ async def monthly_report_pdf(
         title=translate("pdf.monthly.title", locale, year=year, month=month),
         stats=[
             Stat(translate("pdf.stat.students", locale), str(len(report.rows))),
-            Stat(translate("pdf.stat.collected", locale), f"{report.total_collected:.2f}"),
-            Stat(translate("pdf.stat.outstanding", locale), f"{report.total_outstanding:.2f}"),
+            Stat(
+                translate("pdf.stat.collected", locale),
+                format_money(report.total_collected, locale),
+            ),
+            Stat(
+                translate("pdf.stat.outstanding", locale),
+                format_money(report.total_outstanding, locale),
+            ),
             Stat(translate("csv.roster.months_overdue", locale), str(behind)),
         ],
         header=header,
@@ -78,8 +84,8 @@ async def monthly_report_pdf(
         footer=translate(
             "pdf.footer",
             locale,
-            generated=date.today().isoformat(),
-            as_of=report.as_of.isoformat(),
+            generated=date.today(),
+            as_of=report.as_of,
         ),
         empty_message=translate("pdf.monthly.empty", locale),
     )
@@ -94,7 +100,7 @@ def _annual_export(report: AnnualReport, locale: str) -> tuple[list[str], list[l
     rows = [
         [
             translate(f"month.{row.month}", locale),
-            f"{row.collected:.2f}",
+            format_money(row.collected, locale),
             str(row.payments_count),
         ]
         for row in report.months
@@ -109,9 +115,12 @@ def _annual_stats(report: AnnualReport, locale: str) -> list[Stat]:
     # September would otherwise look like it took a third of what it did.
     average = report.total_collected / len(earning) if earning else Decimal("0")
     return [
-        Stat(translate("pdf.stat.collected", locale), f"{report.total_collected:.2f}"),
+        Stat(
+            translate("pdf.stat.collected", locale),
+            format_money(report.total_collected, locale),
+        ),
         Stat(translate("csv.annual.payments", locale), str(report.payments_count)),
-        Stat(translate("pdf.stat.monthly_average", locale), f"{average:.2f}"),
+        Stat(translate("pdf.stat.monthly_average", locale), format_money(average, locale)),
         Stat(
             translate("pdf.stat.best_month", locale),
             translate(f"month.{best.month}", locale)
@@ -145,8 +154,8 @@ async def annual_report_pdf(
         footer=translate(
             "pdf.footer",
             locale,
-            generated=date.today().isoformat(),
-            as_of=date(year, 12, 31).isoformat(),
+            generated=date.today(),
+            as_of=date(year, 12, 31),
         ),
         empty_message=translate("pdf.annual.empty", locale),
     )

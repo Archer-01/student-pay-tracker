@@ -114,7 +114,10 @@ async def test_the_return_warning_is_localized(
         json={"entry_date": "2023-10-01"},
         headers={"Accept-Language": "fr"},
     )
-    assert "est parti en devant" in resp.json()["debt_warning"]
+    # The amount in French notation, held together by no-break spaces.
+    assert resp.json()["debt_warning"] == (
+        "Cet élève est parti sans régler 1\u00a0200,00 (4\u00a0mois)"
+    )
 
 
 async def test_matches_by_phone(client: AsyncClient, db_session: Session) -> None:

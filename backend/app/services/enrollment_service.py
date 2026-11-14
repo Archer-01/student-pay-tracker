@@ -72,8 +72,8 @@ class EnrollmentService:
         if leave_date < period.entry_date:
             raise InvalidPeriodError(
                 "leave_before_entry",
-                leave_date=leave_date.isoformat(),
-                entry_date=period.entry_date.isoformat(),
+                leave_date=leave_date,
+                entry_date=period.entry_date,
             )
         period.leave_date = leave_date
         period.leave_reason = reason
@@ -93,8 +93,8 @@ class EnrollmentService:
         if last_leave is not None and entry_date < last_leave:
             raise InvalidPeriodError(
                 "return_before_leave",
-                entry_date=entry_date.isoformat(),
-                leave_date=last_leave.isoformat(),
+                entry_date=entry_date,
+                leave_date=last_leave,
             )
         period = self.periods.create(
             EnrollmentPeriod(student_id=student_id, entry_date=entry_date)
@@ -133,8 +133,8 @@ class EnrollmentService:
         if new_leave is not None and new_leave < new_entry:
             raise InvalidPeriodError(
                 "leave_before_entry",
-                leave_date=new_leave.isoformat(),
-                entry_date=new_entry.isoformat(),
+                leave_date=new_leave,
+                entry_date=new_entry,
             )
         self._check_timeline(
             sorted(

@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { ApiError } from "../api/client";
+import i18n from "../i18n";
 
 export type AsyncState<T> =
   | { status: "loading"; data?: undefined; error?: undefined }
@@ -20,7 +21,7 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[]): AsyncStat
       })
       .catch((err) => {
         if (cancelled) return;
-        const message = err instanceof ApiError ? err.message : "Something went wrong";
+        const message = err instanceof ApiError ? err.message : i18n.t("common.error");
         setState({ status: "error", error: message });
       });
     return () => {

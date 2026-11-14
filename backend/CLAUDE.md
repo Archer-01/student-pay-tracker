@@ -73,6 +73,19 @@ exceptions carry a stable `code` + params (never a formatted sentence), and the 
 endpoints translate. Every new user-facing string gets both `en` and `fr` in the catalog (a test
 enforces completeness). The `ardoise` CLI renders in English — it's the dev/admin tool.
 
+Three conventions keep the French readable, and `tests/unit/test_i18n.py` enforces the first two:
+
+- **French typography.** A no-break space (`\u00a0`, written as the escape so it stays visible)
+  before `: ; ? !` and inside `« »`. U+00A0, never the narrower U+202F: the PDFs draw with
+  Helvetica in WinAnsi encoding, which has no glyph for it. (reportlab still lays U+00A0 out as an
+  ordinary space, so it protects the web app and API messages more than the PDFs.)
+- **Plurals come in pairs**, `<key>_one` / `<key>_other`, chosen by a `count` param — French counts
+  0 as singular. Call `translate` with the bare key.
+- **Pass values, not strings.** `translate` formats `date` and `Decimal` params for the locale
+  (`26/10/2026`, `1 234,50` in French; English output is unchanged), and PDFs use `format_date` /
+  `format_money`. A service that calls `.isoformat()` or `f"{x:.2f}"` into an error param bakes in
+  English notation.
+
 Build order matters and is intentional — each layer depends on the previous being correct:
 
 1. **`services/schedule.py`** — pure functions, no DB/async: `generate_expected_due_dates`, `days_late`, `cumulative_drift`, `next_expected_date`. Calendar-month arithmetic must handle month-end edge cases correctly (e.g. Jan 31 + 1 month = Feb 28/29, not Mar 3). This is the highest-value, highest-risk code in the repo.

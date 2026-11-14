@@ -165,7 +165,8 @@
     "cancel": "Cancel",
     "save": "Save",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "close": "Close"
   },
   "payment": {
     "title": "Record payment",
@@ -178,7 +179,8 @@
       "monthRequired": "Choose the month this payment settles.",
       "paidDateRequired": "Paid date is required.",
       "amountInvalid": "Enter an amount greater than 0.",
-      "amountAbovePrice": "That's more than this student's monthly price of {{price}}."
+      "amountAbovePrice": "That's more than this student's monthly price of {{price}}.",
+      "paidDateFuture": "The paid date can't be in the future."
     },
     "hints": {
       "amountUpTo": "Up to {{price}}, this student's monthly price."
@@ -248,7 +250,8 @@
     "subjectsHint": "Comma-separated, e.g. Maths, Physique",
     "pricesHint": "Leave a level blank if you do not offer it there.",
     "notOffered": "not offered",
-    "students": "students",
+    "studentCount_one": "{{count}} student",
+    "studentCount_other": "{{count}} students",
     "gridHint": "One row per offering, one column per level. Click a price to change it.",
     "editPrice": "Price",
     "editCellTitle": "{{offering}} · {{level}}",
@@ -259,7 +262,8 @@
       "pricesRequired": "Set a price for at least one level"
     },
     "save": "Save",
-    "affects": "Changes the price for {{count}} student(s) right away, including months they have not paid yet.",
+    "affects_one": "Changes the price for {{count}} student right away, including months they have not paid yet.",
+    "affects_other": "Changes the price for {{count}} students right away, including months they have not paid yet.",
     "editOffering": "Edit offering",
     "editOfferingTitle": "Edit {{name}}",
     "appliesToAllLevels": "Name and subjects apply to every level of this offering; only prices differ.",
