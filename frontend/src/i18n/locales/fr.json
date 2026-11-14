@@ -311,7 +311,7 @@
     "leaveHint": "Les mois qui suivent cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
     "returnHint": "La date d'inscription ne change pas : les impayés et le retard éventuels sont conservés.",
     "more": "Plus d'actions",
-    "call": "Appeler le {{phone}}",
+    "call": "Appeler",
     "oldestUnpaid": "Le plus ancien mois impayé : {{month}}.",
     "payMonth": "Encaisser {{month}}",
     "nextPayment": "Prochain paiement attendu le {{date}}.",
@@ -326,7 +326,10 @@
     "days_one": "{{count}} jour",
     "days_other": "{{count}} jours",
     "paymentsCount_one": "{{count}} paiement",
-    "paymentsCount_other": "{{count}} paiements"
+    "paymentsCount_other": "{{count}} paiements",
+    "callNumber": "Appeler le {{phone}}",
+    "whatsapp": "WhatsApp",
+    "whatsappNumber": "Écrire sur WhatsApp au {{phone}}"
   },
   "annual": {
     "year": "Année",

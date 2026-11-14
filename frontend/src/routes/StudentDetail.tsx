@@ -19,7 +19,8 @@ import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
 import { AsyncView, Button, Modal } from "../components/ui";
 import { Avatar } from "../components/people";
-import { ChevronLeftIcon, ChevronRightIcon, MoreIcon, PhoneIcon } from "../components/icons";
+import { ChevronLeftIcon, ChevronRightIcon, MoreIcon, PhoneIcon, WhatsAppIcon } from "../components/icons";
+import { whatsappLink } from "../lib/phone";
 
 type OpenModal = null | "more" | "override" | "edit" | "leave" | "return" | { tile: MonthTile };
 
@@ -88,15 +89,7 @@ export function StudentDetail() {
                 </div>
               </header>
 
-              {detail.phone && (
-                <a
-                  href={`tel:${detail.phone.replace(/\s/g, "")}`}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface font-bold text-brand hover:bg-brand-soft sm:self-start sm:px-5"
-                >
-                  <PhoneIcon className="h-5 w-5" />
-                  {t("student.call", { phone: detail.phone })}
-                </a>
-              )}
+              {detail.phone && <ContactButtons phone={detail.phone} />}
 
               <StatusCard
                 detail={detail}
@@ -250,6 +243,39 @@ function StatusCard({
         {t("home.pay")}
       </Button>
     </Panel>
+  );
+}
+
+/**
+ * Call, or open a WhatsApp chat with the number, side by side. The WhatsApp button opens the app
+ * on the teacher's phone (WhatsApp Web on a computer) with the chat ready; she writes and sends
+ * the message herself. It's left out when the stored number can't be turned into one WhatsApp
+ * accepts (see `whatsappNumber`).
+ */
+function ContactButtons({ phone }: { phone: string }) {
+  const { t } = useTranslation();
+  const whatsapp = whatsappLink(phone);
+  const button =
+    "flex min-h-12 items-center justify-center gap-2 rounded-xl border border-line bg-surface px-5 font-bold text-brand transition active:scale-[0.97] hover:bg-brand-soft";
+  return (
+    <div className={`grid gap-2 sm:flex ${whatsapp ? "grid-cols-2" : "grid-cols-1"}`}>
+      <a href={`tel:${phone.replace(/\s/g, "")}`} aria-label={t("student.callNumber", { phone })} className={button}>
+        <PhoneIcon className="h-5 w-5" />
+        {t("student.call")}
+      </a>
+      {whatsapp && (
+        <a
+          href={whatsapp}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={t("student.whatsappNumber", { phone })}
+          className={button}
+        >
+          <WhatsAppIcon className="h-5 w-5" />
+          {t("student.whatsapp")}
+        </a>
+      )}
+    </div>
   );
 }
 

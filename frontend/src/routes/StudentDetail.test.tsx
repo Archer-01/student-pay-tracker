@@ -101,3 +101,23 @@ describe("StudentDetail status", () => {
     expect(screen.getByText(/next payment expected on/i)).toBeInTheDocument();
   });
 });
+
+describe("StudentDetail contact buttons", () => {
+  it("offers a call and a WhatsApp chat, with the number in international form", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ phone: "06 12 34 56 78" }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByRole("link", { name: "Call 06 12 34 56 78" })).toHaveAttribute("href", "tel:0612345678");
+    const whatsapp = screen.getByRole("link", { name: "Message 06 12 34 56 78 on WhatsApp" });
+    expect(whatsapp).toHaveAttribute("href", "https://wa.me/212612345678");
+    expect(whatsapp).toHaveAttribute("target", "_blank");
+  });
+
+  it("leaves WhatsApp out when the number can't be read, and shows nothing without a number", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ phone: "123" }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByRole("link", { name: /^Call/ })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /WhatsApp/ })).toBeNull();
+  });
+});

@@ -311,7 +311,7 @@
     "leaveHint": "Months after this date stop being owed. Drift already accrued is kept.",
     "returnHint": "The join date never moves, so any existing debt and drift come back with them.",
     "more": "More actions",
-    "call": "Call {{phone}}",
+    "call": "Call",
     "oldestUnpaid": "Oldest unpaid month: {{month}}.",
     "payMonth": "Record {{month}}",
     "nextPayment": "Next payment expected on {{date}}.",
@@ -326,7 +326,10 @@
     "days_one": "{{count}} day",
     "days_other": "{{count}} days",
     "paymentsCount_one": "{{count}} payment",
-    "paymentsCount_other": "{{count}} payments"
+    "paymentsCount_other": "{{count}} payments",
+    "callNumber": "Call {{phone}}",
+    "whatsapp": "WhatsApp",
+    "whatsappNumber": "Message {{phone}} on WhatsApp"
   },
   "annual": {
     "year": "Year",

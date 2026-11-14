@@ -83,6 +83,14 @@ export const PhoneIcon = (p: IconProps) => (
   </Icon>
 );
 
+/** A speech bubble with a handset: the shape people recognise as WhatsApp, without its logo. */
+export const WhatsAppIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.8z" />
+    <path d="M9.5 8.8c0 3 2.7 5.7 5.7 5.7l1.1-1.4-1.9-.9-.8.8a4 4 0 0 1-2.6-2.6l.8-.8-.9-1.9z" />
+  </Icon>
+);
+
 export const MoreIcon = (p: IconProps) => (
   <Icon {...p}>
     <circle cx="5" cy="12" r="1.2" fill="currentColor" />
