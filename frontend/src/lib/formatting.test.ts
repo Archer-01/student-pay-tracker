@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import i18n from "../i18n";
-import { formatDate, formatMonth } from "./dates";
+import { formatDate, formatMonth, formatMonthShort } from "./dates";
 import { formatMoney } from "./money";
 import { slugify } from "./slug";
 import { CLASS_LEVELS, classLabel } from "./classes";
@@ -56,6 +56,27 @@ describe("formatMonth", () => {
 
   it("returns the input unchanged when it cannot be parsed", () => {
     expect(formatMonth("nope")).toBe("nope");
+  });
+});
+
+describe("formatMonthShort", () => {
+  // A chart's axis label: one letter left "J J" and "M M" for the teacher to tell apart.
+  const schoolYear = ["09", "10", "11", "12", "01", "02", "03", "04", "05", "06", "07", "08"];
+
+  it("tells every month apart, in French", async () => {
+    await i18n.changeLanguage("fr");
+    const labels = schoolYear.map((m) => formatMonthShort(`2026-${m}`));
+    expect(labels).toEqual(["Sept", "Oct", "Nov", "Déc", "Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août"]);
+  });
+
+  it("tells every month apart, in English", async () => {
+    await i18n.changeLanguage("en");
+    const labels = schoolYear.map((m) => formatMonthShort(`2026-${m}`));
+    expect(labels).toEqual(["Sep", "Oct", "Nov", "Dec", "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"]);
+  });
+
+  it("returns the input unchanged when it cannot be parsed", () => {
+    expect(formatMonthShort("nope")).toBe("nope");
   });
 });
 

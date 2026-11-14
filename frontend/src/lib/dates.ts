@@ -19,3 +19,15 @@ export function formatMonthTitle(ym: string): string {
   const text = formatMonth(ym);
   return text.charAt(0).toLocaleUpperCase(i18n.language) + text.slice(1);
 }
+
+/**
+ * "2026-07" → "Juil" / "Jul": a chart's month label. Short enough for twelve under a phone-wide
+ * chart, long enough that June and July (or March and May) don't both read "J" (or "M").
+ * The locale's own abbreviation, minus its full stop.
+ */
+export function formatMonthShort(ym: string): string {
+  const d = new Date(`${ym}-01T00:00:00`);
+  if (Number.isNaN(d.getTime())) return ym;
+  const text = new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(d).replace(/\.$/, "");
+  return text.charAt(0).toLocaleUpperCase(i18n.language) + text.slice(1);
+}

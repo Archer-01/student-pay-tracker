@@ -82,7 +82,7 @@ export function BarChart({ bars, onSelect }: { bars: Bar[]; onSelect?: (key: str
   const peak = Math.max(...bars.map((b) => b.value), 0);
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex h-32 items-end gap-1.5">
+      <div className="flex h-32 items-end gap-1 sm:gap-1.5">
         {bars.map((bar) => {
           const height = peak > 0 ? Math.max((bar.value / peak) * 100, bar.value > 0 ? 4 : 2) : 2;
           const fill = (
@@ -110,9 +110,15 @@ export function BarChart({ bars, onSelect }: { bars: Bar[]; onSelect?: (key: str
           );
         })}
       </div>
-      <div aria-hidden="true" className="flex gap-1.5 text-center text-xs font-bold text-muted">
+      {/* Twelve "Sept"s and "Janv"s only fit a phone at 11px and a tighter gap; `min-w-0` keeps
+          each label to its bar's width, so a long one spills into the gap rather than shifting
+          the columns out from under the bars. */}
+      <div
+        aria-hidden="true"
+        className="flex gap-1 whitespace-nowrap text-center text-[11px] text-muted sm:gap-1.5 sm:text-xs sm:font-bold"
+      >
         {bars.map((bar) => (
-          <span key={bar.key} className={`flex-1 ${bar.selected ? "text-brand" : ""}`}>
+          <span key={bar.key} className={`min-w-0 flex-1 ${bar.selected ? "font-bold text-brand" : ""}`}>
             {bar.label}
           </span>
         ))}

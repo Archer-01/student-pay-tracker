@@ -4,6 +4,7 @@ import { getAnnualReport } from "../api/endpoints";
 import { downloadFile } from "../api/client";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
+import { formatMonthShort } from "../lib/dates";
 import { resolveErrorMessage } from "../lib/errors";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
 import { ReportTabs } from "../components/ReportTabs";
@@ -23,8 +24,8 @@ export function AnnualReport() {
   const state = useApi(() => getAnnualReport(year), [year, paymentsVersion]);
 
   // Month names come from the browser's locale data rather than a hand-kept list.
-  const monthName = (month: number, style: "long" | "narrow" = "long") =>
-    new Intl.DateTimeFormat(i18n.language, { month: style }).format(new Date(2000, month - 1, 1));
+  const monthName = (month: number) =>
+    new Intl.DateTimeFormat(i18n.language, { month: "long" }).format(new Date(2000, month - 1, 1));
   const capitalized = (month: number) => {
     const name = monthName(month);
     return name.charAt(0).toLocaleUpperCase(i18n.language) + name.slice(1);
@@ -85,7 +86,7 @@ export function AnnualReport() {
                     <BarChart
                       bars={report.months.map((m) => ({
                         key: String(m.month),
-                        label: monthName(m.month, "narrow"),
+                        label: formatMonthShort(`${year}-${String(m.month).padStart(2, "0")}`),
                         title: `${capitalized(m.month)} · ${formatMoney(m.collected)}`,
                         value: Number(m.collected),
                         selected: best?.month === m.month,

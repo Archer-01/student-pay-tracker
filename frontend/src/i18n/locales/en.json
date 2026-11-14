@@ -3,16 +3,10 @@
     "title": "Ardoise"
   },
   "nav": {
-    "dashboard": "Dashboard",
     "students": "Students",
-    "report": "Monthly report",
-    "classes": "Classes",
-    "packs": "Packs",
-    "annual": "Year",
-    "debts": "Owed",
     "label": "Main navigation",
     "home": "Home",
-    "reports": "Money",
+    "reports": "Reports",
     "settings": "Settings",
     "pay": "Record payment"
   },

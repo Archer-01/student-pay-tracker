@@ -3,13 +3,7 @@
     "title": "Ardoise"
   },
   "nav": {
-    "dashboard": "Tableau de bord",
     "students": "Élèves",
-    "report": "Rapport mensuel",
-    "classes": "Classes",
-    "packs": "Packs",
-    "annual": "Bilan annuel",
-    "debts": "Impayés",
     "label": "Navigation principale",
     "home": "Accueil",
     "reports": "Bilan",

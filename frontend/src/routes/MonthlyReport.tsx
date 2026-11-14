@@ -5,7 +5,7 @@ import { downloadFile } from "../api/client";
 import type { AnnualReport, MonthlyReport as MonthlyReportData } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
-import { formatDate, formatMonthTitle } from "../lib/dates";
+import { formatDate, formatMonthShort, formatMonthTitle } from "../lib/dates";
 import { resolveErrorMessage } from "../lib/errors";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
 import { ReportTabs } from "../components/ReportTabs";
@@ -123,20 +123,17 @@ function SchoolYearBars({
   latest: string;
   onSelect: (ym: string) => void;
 }) {
-  const { i18n } = useTranslation();
   const months = Array.from({ length: 12 }, (_, i) => {
     const month = ((8 + i) % 12) + 1;
     const year = month >= 9 ? startYear : startYear + 1;
     const report = month >= 9 ? years[0] : years[1];
     return { ym: `${year}-${String(month).padStart(2, "0")}`, collected: report.months[month - 1]?.collected ?? "0" };
   });
-  const letter = (ym: string) =>
-    new Intl.DateTimeFormat(i18n.language, { month: "narrow" }).format(new Date(`${ym}-01T00:00:00`));
   return (
     <BarChart
       bars={months.map((m) => ({
         key: m.ym,
-        label: letter(m.ym),
+        label: formatMonthShort(m.ym),
         title: `${formatMonthTitle(m.ym)} · ${formatMoney(m.collected)}`,
         value: Number(m.collected),
         selected: m.ym === selected,
