@@ -55,19 +55,17 @@ export function Login() {
     <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
-          <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-            {t("app.title")}
-          </span>
+          {/* The page's heading: the card itself has no title, since "Se connecter" on the
+              button already says what it is for. */}
+          <h1 className="font-display text-2xl font-extrabold tracking-tight text-brand">{t("app.title")}</h1>
           <span className="flex items-center gap-2">
             <LanguageSwitcher />
           </span>
         </div>
 
         <Card>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-            <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-              {t("auth.title")}
-            </h1>
+          {/* Named for screen readers, which announce a form by its label. */}
+          <form onSubmit={handleSubmit} aria-label={t("auth.title")} className="flex flex-col gap-4" noValidate>
 
             {sessionExpired && !formError && (
               <p
