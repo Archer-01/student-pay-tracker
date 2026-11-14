@@ -99,4 +99,20 @@ describe("PacksList", () => {
     expect(screen.getByText(/at least one subject/i)).toBeInTheDocument();
     expect(endpoints.createPack).not.toHaveBeenCalled();
   });
+
+  it("filters by level, offering only the levels that have packs", async () => {
+    renderWithProviders(<PacksList />);
+    await screen.findByText("Enaja7");
+    const chips = screen.getAllByRole("radio").map((r) => r.textContent);
+    expect(chips).toEqual(["All", "3AC", "TC", "1BAC"]); // school order; no 1AC, 2AC or 2BAC packs
+    expect(screen.getByRole("radio", { name: "All" })).toBeChecked();
+
+    await userEvent.click(screen.getByRole("radio", { name: "TC" }));
+    const rows = list().getAllByRole("button");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toHaveTextContent("Pack TC Scientifique");
+
+    await userEvent.click(screen.getByRole("radio", { name: "All" }));
+    expect(list().getAllByRole("button")).toHaveLength(3);
+  });
 });

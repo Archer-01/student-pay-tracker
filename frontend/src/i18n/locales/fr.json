@@ -279,7 +279,8 @@
     "restore": "Remettre ce pack en vente",
     "retireHint": "Il n'est plus proposé aux nouveaux élèves ; ceux qui l'ont le gardent.",
     "delete": "Supprimer ce pack",
-    "retired": "retiré"
+    "retired": "retiré",
+    "filterLabel": "Filtrer par niveau"
   },
   "student": {
     "pack": "Pack",

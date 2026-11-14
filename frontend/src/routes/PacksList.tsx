@@ -19,6 +19,7 @@ export function PacksList() {
   const { t } = useTranslation();
   const state = useApi(() => listPacks(), []);
   const [editing, setEditing] = useState<PackDetail | "new" | null>(null);
+  const [level, setLevel] = useState<ClassLevel | null>(null);
 
   const done = () => {
     setEditing(null);
@@ -49,42 +50,71 @@ export function PacksList() {
         isEmpty={(rows) => rows.length === 0}
         emptyMessage={t("packs.empty")}
       >
-        {(rows) => (
-          <ul
-            aria-label={t("packs.title")}
-            className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
-          >
-            {bySchoolLevel(rows).map((p) => (
-              <li key={p.id}>
-                <button
-                  type="button"
-                  onClick={() => setEditing(p)}
-                  className={`flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ground active:bg-line ${
-                    p.is_active ? "" : "text-muted"
-                  }`}
-                >
-                  <span className="flex h-10 min-w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft px-2 text-sm font-bold text-brand">
-                    {p.level}
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate font-bold">{p.name}</span>
-                    <span className="block truncate text-sm text-muted">
-                      {[p.subjects.join(", "), !p.is_active && t("packs.retired")].filter(Boolean).join(" · ")}
-                    </span>
-                  </span>
-                  <span className="shrink-0 text-right">
-                    <span className={`block font-bold tabular-nums ${p.is_active ? "" : "line-through"}`}>
-                      {formatMoney(p.price)}
-                    </span>
-                    <span className="block text-sm text-muted">
-                      {t("packs.studentCount", { count: p.student_count })}
-                    </span>
-                  </span>
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
+        {(rows) => {
+          // Only levels that have a pack get a chip, in school order, so no chip leads nowhere.
+          // A level whose last pack was just deleted falls back to "all".
+          const levels = CLASS_LEVELS.filter((l) => rows.some((p) => p.level === l));
+          const selected = level !== null && levels.includes(level) ? level : null;
+          const shown = bySchoolLevel(selected ? rows.filter((p) => p.level === selected) : rows);
+          return (
+            <>
+              <div
+                role="radiogroup"
+                aria-label={t("packs.filterLabel")}
+                className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+              >
+                {[null, ...levels].map((l) => (
+                  <button
+                    key={l ?? "all"}
+                    type="button"
+                    role="radio"
+                    aria-checked={selected === l}
+                    onClick={() => setLevel(l)}
+                    className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border-2 px-4 font-bold ${
+                      selected === l ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink"
+                    }`}
+                  >
+                    {l ?? t("students.filters.all")}
+                  </button>
+                ))}
+              </div>
+              <ul
+                aria-label={t("packs.title")}
+                className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+              >
+                {shown.map((p) => (
+                  <li key={p.id}>
+                    <button
+                      type="button"
+                      onClick={() => setEditing(p)}
+                      className={`flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ground active:bg-line ${
+                        p.is_active ? "" : "text-muted"
+                      }`}
+                    >
+                      <span className="flex h-10 min-w-12 shrink-0 items-center justify-center rounded-xl bg-brand-soft px-2 text-sm font-bold text-brand">
+                        {p.level}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-bold">{p.name}</span>
+                        <span className="block truncate text-sm text-muted">
+                          {[p.subjects.join(", "), !p.is_active && t("packs.retired")].filter(Boolean).join(" · ")}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-right">
+                        <span className={`block font-bold tabular-nums ${p.is_active ? "" : "line-through"}`}>
+                          {formatMoney(p.price)}
+                        </span>
+                        <span className="block text-sm text-muted">
+                          {t("packs.studentCount", { count: p.student_count })}
+                        </span>
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </>
+          );
+        }}
       </AsyncView>
     </div>
   );

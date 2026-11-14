@@ -279,7 +279,8 @@
     "restore": "Offer this pack again",
     "retireHint": "New students can no longer get it; those who have it keep it.",
     "delete": "Delete this pack",
-    "retired": "retired"
+    "retired": "retired",
+    "filterLabel": "Filter by level"
   },
   "student": {
     "pack": "Pack",
