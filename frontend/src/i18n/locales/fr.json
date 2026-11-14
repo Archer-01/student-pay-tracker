@@ -358,7 +358,6 @@
   },
   "auth": {
     "title": "Connexion",
-    "subtitle": "Accès réservé. Connectez-vous pour continuer.",
     "username": "Nom d'utilisateur",
     "password": "Mot de passe",
     "submit": "Se connecter",

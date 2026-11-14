@@ -358,7 +358,6 @@
   },
   "auth": {
     "title": "Sign in",
-    "subtitle": "Ardoise is private. Sign in to continue.",
     "username": "Username",
     "password": "Password",
     "submit": "Sign in",

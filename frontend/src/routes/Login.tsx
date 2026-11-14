@@ -50,7 +50,9 @@ export function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center px-4 py-10">
+    // `dvh`, not `vh`/`min-h-screen`: on a phone 100vh is the height with the address bar
+    // hidden, so while it shows the page is taller than the screen and scrolls for nothing.
+    <div className="flex min-h-dvh flex-col items-center justify-center px-4 py-10">
       <div className="w-full max-w-sm">
         <div className="mb-6 flex items-center justify-between">
           <span className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -63,14 +65,9 @@ export function Login() {
 
         <Card>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-            <div>
-              <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
-                {t("auth.title")}
-              </h1>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                {t("auth.subtitle")}
-              </p>
-            </div>
+            <h1 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+              {t("auth.title")}
+            </h1>
 
             {sessionExpired && !formError && (
               <p

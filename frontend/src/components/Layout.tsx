@@ -40,7 +40,9 @@ function Shell() {
   const payments = usePaymentSheet();
 
   return (
-    <div className="min-h-screen lg:pl-64">
+    // No full-height rule: `body` already paints the background, and `min-h-screen` (100vh) is
+    // taller than a phone's visible area while the address bar shows, adding a scroll for nothing.
+    <div className="lg:pl-64">
       <aside className="hidden border-r border-line bg-surface px-4 py-6 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
         <span className="px-3 font-display text-2xl font-extrabold tracking-tight text-brand">
           {t("app.title")}
