@@ -110,12 +110,10 @@ async def test_ledger_pdf_unknown_student_404(client: AsyncClient) -> None:
 
 
 async def test_ledger_pdf_includes_name_and_phone(
-    client: AsyncClient, db_session: Session, monkeypatch
+    client: AsyncClient, db_session: Session
 ) -> None:
-    # Disable PDF compression so the rendered text is visible in the raw bytes.
-    import reportlab.rl_config as rl_config
+    from tests.integration.test_api_profile import pdf_text
 
-    monkeypatch.setattr(rl_config, "pageCompression", 0)
     student = StudentService(db_session).enroll(
         first_name="Amina",
         phone="+212600112233",
@@ -124,23 +122,23 @@ async def test_ledger_pdf_includes_name_and_phone(
     )
     resp = await client.get(f"/api/v1/students/{student.id}/ledger.pdf")
     assert resp.status_code == 200
-    assert b"Amina" in resp.content
-    assert b"+212600112233" in resp.content
+    assert "amina no pack · +212600112233" in pdf_text(resp.content)
 
 
 async def test_ledger_pdf_without_phone_shows_name_only(
-    client: AsyncClient, db_session: Session, monkeypatch
+    client: AsyncClient, db_session: Session
 ) -> None:
-    import reportlab.rl_config as rl_config
+    from tests.integration.test_api_profile import pdf_text
 
-    monkeypatch.setattr(rl_config, "pageCompression", 0)
     student = StudentService(db_session).enroll(
         first_name="Bilal", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
     )
     resp = await client.get(f"/api/v1/students/{student.id}/ledger.pdf")
     assert resp.status_code == 200
-    assert b"Bilal" in resp.content
-    assert b"Phone" not in resp.content  # no phone label when none provided
+    text = pdf_text(resp.content)
+    # No phone, and no separator left dangling where it would have been.
+    assert "bilal no pack " in text
+    assert "· ·" not in text and "no pack ·" not in text
 
 
 async def test_invalid_month_is_422(client: AsyncClient) -> None:
@@ -174,8 +172,8 @@ async def test_annual_report_pdf(client: AsyncClient, db_session: Session) -> No
     assert resp.headers["content-type"] == "application/pdf"
     assert "annual-2023.pdf" in resp.headers["content-disposition"]
     text = pdf_text(resp.content)
-    assert "annual revenue" in text and "2023" in text
-    assert "collected" in text and "best month" in text
+    assert "annual report 2023" in text
+    assert "total collected" in text and "best month" in text
     assert "january" in text and "december" in text
 
 
@@ -187,7 +185,7 @@ async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: S
         "/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"}
     )
     text = pdf_text(resp.content)
-    assert "bilan annuel" in text
+    assert "bilan de l'année 2023" in text
     assert "janvier" in text
     assert "meilleur mois" in text
 

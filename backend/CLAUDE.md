@@ -76,15 +76,23 @@ enforces completeness). The `ardoise` CLI renders in English — it's the dev/ad
 Three conventions keep the French readable, and `tests/unit/test_i18n.py` enforces the first two:
 
 - **French typography.** A no-break space (`\u00a0`, written as the escape so it stays visible)
-  before `: ; ? !` and inside `« »`. U+00A0, never the narrower U+202F: the PDFs draw with
-  Helvetica in WinAnsi encoding, which has no glyph for it. (reportlab still lays U+00A0 out as an
-  ordinary space, so it protects the web app and API messages more than the PDFs.)
+  before `: ; ? !` and inside `« »`. U+00A0, never the narrower U+202F: the PDFs' text font
+  (Atkinson Hyperlegible) has no glyph for it.
 - **Plurals come in pairs**, `<key>_one` / `<key>_other`, chosen by a `count` param — French counts
   0 as singular. Call `translate` with the bare key.
 - **Pass values, not strings.** `translate` formats `date` and `Decimal` params for the locale
-  (`26/10/2026`, `1 234,50` in French; English output is unchanged), and PDFs use `format_date` /
-  `format_money`. A service that calls `.isoformat()` or `f"{x:.2f}"` into an error param bakes in
-  English notation.
+  (`26/10/2026`, `1 234,50` in French; English output is unchanged). PDFs write dates and money
+  the way the app does instead: `format_day` ("14 nov. 2026") and `pdf_export.money` ("240 DH").
+  A service that calls `.isoformat()` or `f"{x:.2f}"` into an error param bakes in English
+  notation.
+
+**The PDFs look like the app** (`app/api/pdf_export.py` for the page and its blocks,
+`app/api/pdf_documents.py` for what each of the four says). A4 portrait, so one sent over
+WhatsApp opens full width on a phone; the app's fonts, bundled in `app/assets/fonts` (OFL) and
+registered by name, with digits always from Bricolage because Atkinson slashes its zero; the app's
+colours and status words; "Prof. {name}" and "Page x sur y" on every page. The tests read them
+with `pypdf` (`pdf_text` in `tests/integration/test_api_profile.py`): with embedded fonts the
+content stream holds glyph codes, not text, so grepping the raw bytes finds nothing.
 
 Build order matters and is intentional — each layer depends on the previous being correct:
 

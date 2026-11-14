@@ -1,16 +1,16 @@
 """Read-only student endpoints."""
 
 from datetime import date
-from decimal import Decimal
 from enum import StrEnum
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_locale
-from app.api.pdf_export import Stat, render_report_pdf, slugify_name
-from app.core.i18n import format_date, format_money, translate
-from app.models import Student, StudentStatus
+from app.api.deps import get_db, get_locale, require_session
+from app.api.pdf_documents import ledger_story, respond
+from app.api.pdf_export import slugify_name
+from app.core.i18n import translate
+from app.models import Student, StudentStatus, User
 from app.schemas.enrollment import (
     LeaveRequest,
     PeriodAmend,
@@ -31,7 +31,7 @@ from app.schemas.student import (
 )
 from app.services.debt_service import DebtService
 from app.services.enrollment_service import EnrollmentService
-from app.services.ledger_service import LedgerEntry, LedgerService, StudentSummary
+from app.services.ledger_service import LedgerService
 from app.services.override_service import OverrideService
 from app.services.payment_service import PaymentService
 from app.services.pricing_service import PricingService
@@ -127,80 +127,6 @@ async def get_drift(
     return DriftOut(student_id=student_id, as_of=as_of_date, cumulative_drift=drift)
 
 
-def _ledger_row_status(entry: LedgerEntry, locale: str) -> str:
-    # "Away" before "Unpaid": a month the student wasn't enrolled for is not a debt.
-    if entry.suspended:
-        return translate("csv.ledger.status.away", locale)
-    if entry.paid_date is None:
-        return translate("csv.ledger.status.unpaid", locale)
-    if entry.days_late is not None and entry.days_late > 0:
-        return translate("csv.ledger.status.days_late", locale, count=entry.days_late)
-    return translate("csv.ledger.status.on_time", locale)
-
-
-def _fmt_date(value: date | None, locale: str) -> str:
-    return format_date(value, locale) if value else translate("pdf.value.none", locale)
-
-
-def _class_label(student: Student, locale: str) -> str:
-    if student.school_class is None:
-        return translate("pdf.value.unassigned", locale)
-    return f"{student.school_class.level.value} — {student.school_class.name}"
-
-
-def _pack_label(student: Student, locale: str) -> str:
-    """The pack name, plus its level only when that differs from the student's class.
-
-    Printing the level unconditionally reads as a stutter — "2BAC — Groupe A · Maths seul · 2BAC" —
-    since the class already says it. When they disagree, though, that is exactly what a reader
-    needs to see.
-    """
-    if student.pack is None:
-        return translate("pdf.value.no_pack", locale)
-    same_level = (
-        student.school_class is not None
-        and student.school_class.level is student.pack.level
-    )
-    return student.pack.name if same_level else f"{student.pack.name} · {student.pack.level.value}"
-
-
-def _ledger_facts(
-    student: Student, summary: StudentSummary, locale: str
-) -> list[tuple[str, str]]:
-    """The secondary detail block: everything about the student that isn't a headline figure."""
-    yes_no = translate("pdf.value.yes" if student.is_repeating else "pdf.value.no", locale)
-    facts = [
-        (translate("pdf.field.phone", locale),
-         student.phone or translate("pdf.value.none", locale)),
-        (
-            translate("pdf.field.status", locale),
-            translate(f"status.{student.status.value}", locale),
-        ),
-        (translate("pdf.field.repeating", locale), yes_no),
-        (translate("pdf.field.join_date", locale), _fmt_date(student.join_date, locale)),
-        (translate("pdf.field.first_payment", locale),
-         _fmt_date(summary.first_payment_date, locale)),
-    ]
-    # Only shown when there is an arrangement — otherwise it's noise on every export.
-    if student.custom_price is not None:
-        note = student.price_note or translate("pdf.value.none", locale)
-        facts.append((translate("pdf.field.price_note", locale), note))
-    return facts
-
-
-def _ledger_stats(summary: StudentSummary, monthly_price: Decimal, locale: str) -> list[Stat]:
-    return [
-        Stat(translate("pdf.stat.monthly_price", locale), format_money(monthly_price, locale)),
-        Stat(translate("pdf.stat.total_paid", locale), format_money(summary.total_paid, locale)),
-        Stat(translate("pdf.stat.months_overdue", locale), str(summary.months_overdue)),
-        Stat(translate("pdf.stat.amount_owed", locale), format_money(summary.amount_owed, locale)),
-        Stat(
-            translate("pdf.stat.drift", locale),
-            translate("pdf.value.days", locale, count=summary.cumulative_drift),
-        ),
-    ]
-
-
 def _ledger_filename(student: Student) -> str:
     """Download filename for a student's ledger PDF, including a slug of their name when usable."""
     slug = slugify_name(student.full_name)
@@ -208,59 +134,41 @@ def _ledger_filename(student: Student) -> str:
     return f"{stem}-ledger.pdf"
 
 
-def _ledger_export(entries: list[LedgerEntry], locale: str) -> tuple[list[str], list[list[str]]]:
-    """Localized (header, rows) for the ledger export — cells are strings, ready to render."""
-    header = [
-        translate(f"csv.ledger.{col}", locale)
-        for col in (
-            "cycle",
-            "due_date",
-            "paid_date",
-            "days_late",
-            "amount",
-            "cumulative_drift",
-            "status",
-        )
-    ]
-    rows = [
-        [
-            str(e.cycle_number),
-            format_date(e.expected_due_date, locale),
-            format_date(e.paid_date, locale) if e.paid_date else "",
-            str(e.days_late) if e.days_late is not None else "",
-            format_money(e.amount, locale) if e.amount is not None else "",
-            str(e.cumulative_drift),
-            _ledger_row_status(e, locale),
-        ]
-        for e in entries
-    ]
-    return header, rows
-
-
 @router.get("/{student_id}/ledger.pdf", tags=["reports"])
 async def get_ledger_pdf(
     student_id: int,
     db: Session = Depends(get_db),
+    user: User = Depends(require_session),
     as_of: date | None = Query(None),
     locale: str = Depends(get_locale),
 ) -> Response:
-    as_of_date = as_of or date.today()
+    """A student's history on paper, for the teacher or a parent: the student page's status card
+    and month tiles, then every payment received."""
+    today = date.today()
+    as_of_date = as_of or today
     student = StudentService(db).get(student_id)  # 404 if unknown
     ledger = LedgerService(db)
-    summary = ledger.student_summary(student_id, as_of_date)
-    header, rows = _ledger_export(ledger.get_ledger(student_id, as_of_date), locale)
-    price = PricingService(db).price_of(student)
-    return render_report_pdf(
-        title=translate("pdf.ledger.title", locale),
-        subtitle=student.full_name,
-        meta=f"{_class_label(student, locale)} · {_pack_label(student, locale)}",
-        stats=_ledger_stats(summary, price, locale),
-        facts=_ledger_facts(student, summary, locale),
-        header=header,
-        rows=rows,
+    # Follows the enrolment periods, as the student page does, not `status`.
+    periods = EnrollmentService(db).history(student_id)
+    leaves = [p.leave_date for p in periods if p.leave_date is not None]
+    story = ledger_story(
+        student,
+        ledger.student_summary(student_id, as_of_date),
+        ledger.get_ledger(student_id, as_of_date),
+        PricingService(db).price_of(student),
+        enrolled=any(p.leave_date is None for p in periods),
+        left_on=max(leaves) if leaves else None,
+        as_of=as_of_date,
+        locale=locale,
+    )
+    return respond(
+        story,
+        title=f"{translate('pdf.ledger.title', locale)} · {student.full_name}",
+        teacher=user.display_name,
+        locale=locale,
         filename=_ledger_filename(student),
-        footer=translate("pdf.footer", locale, generated=date.today(), as_of=as_of_date),
-        empty_message=translate("pdf.ledger.empty", locale),
+        made_on=today,
+        as_of=as_of_date,
     )
 
 

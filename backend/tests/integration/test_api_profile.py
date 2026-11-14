@@ -1,12 +1,11 @@
 """API tests for the student profile fields and the reworked PDF exports."""
 
-import re
-import zlib
-from base64 import a85decode
+import io
 from datetime import date
 from decimal import Decimal
 
 from httpx import AsyncClient
+from pypdf import PdfReader
 from sqlalchemy.orm import Session
 
 from app.models import ClassLevel
@@ -19,24 +18,19 @@ _JOIN = "2023-03-05"
 
 
 def pdf_text(raw: bytes) -> str:
-    """Visible text of a reportlab PDF, so exports can be asserted on rather than eyeballed.
+    """Visible text of a PDF, lowercased with whitespace collapsed, so exports can be asserted on.
 
-    Content streams are ASCII85 + Flate; the drawn strings are the parenthesised literals.
+    Read with pypdf rather than by grepping the content stream: the PDFs embed their fonts, so
+    the stream holds glyph codes, not text. ``split()`` also folds the no-break spaces French
+    typography puts inside numbers and before punctuation into plain ones.
     """
-    chunks: list[bytes] = []
-    for match in re.finditer(rb"stream\r?\n(.*?)endstream", raw, re.S):
-        body = match.group(1).strip()
-        for attempt in (lambda b: zlib.decompress(a85decode(b, adobe=True)),
-                        lambda b: zlib.decompress(b),
-                        lambda b: b):
-            try:
-                chunks.append(attempt(body))
-                break
-            except Exception:  # noqa: BLE001 - try the next decoding
-                continue
-    shown = re.findall(rb"\((?:\\.|[^()\\])*\)", b"\n".join(chunks))
-    # Lowercased: the header labels are rendered in small caps, which is styling, not content.
-    return "\n".join(s[1:-1].decode("latin-1") for s in shown).lower()
+    return " ".join(pdf_pages(raw))
+
+
+def pdf_pages(raw: bytes) -> list[str]:
+    """Each page's text, as `pdf_text` reads it."""
+    reader = PdfReader(io.BytesIO(raw))
+    return [" ".join((page.extract_text() or "").split()).lower() for page in reader.pages]
 
 
 def _seed(db_session: Session) -> int:
@@ -141,7 +135,7 @@ async def test_search_by_either_name_part(client: AsyncClient, db_session: Sessi
 # --------------------------------------------------------------------------- #
 
 
-async def test_ledger_pdf_shows_the_whole_profile(
+async def test_ledger_pdf_reads_like_the_student_page(
     client: AsyncClient, db_session: Session
 ) -> None:
     student_id = _seed(db_session)
@@ -151,21 +145,25 @@ async def test_ledger_pdf_shows_the_whole_profile(
     assert resp.status_code == 200
     text = pdf_text(resp.content)
 
+    # Who, and how to reach them.
+    assert "payment history" in text
     assert "amina benali" in text
-    assert "2bac" in text
-    assert "maths seul" in text
-    # Headline figures
-    assert "monthly price" in text and "150.00" in text
-    assert "total paid" in text
-    assert "amount owed" in text
-    assert "cumulative drift" in text
-    # Detail block
-    assert "+212600112233" in text
-    assert "student since" in text and "2023-03-05" in text
-    assert "first payment" in text and "2023-04-10" in text
-    assert "repeating the year" in text
-    # Provenance
-    assert "as of 2023-06-30" in text
+    assert "2bac — groupe a · maths seul · +212600112233" in text
+    # The status card: March, May and June unpaid at the price of the pack.
+    assert "3 months unpaid · 450 dh" in text
+    assert "oldest unpaid month: march 2023." in text
+    # The facts under it.
+    assert "monthly price 150 dh" in text
+    assert "student since 5 mar 2023" in text
+    assert "total paid 150 dh" in text
+    assert "days late in total 5 days" in text
+    # The school year as tiles, then the one payment, saying how late it was.
+    assert "2022–2023 school year" in text
+    assert "april 2023 10 apr 2023 150 dh 5 days late" in text
+    # Who made it, and the date its figures are for.
+    assert "prof. teacher" in text
+    assert "figures as of 30 jun 2023" in text
+    assert "page 1 of 1" in text
 
 
 async def test_ledger_pdf_is_localized(client: AsyncClient, db_session: Session) -> None:
@@ -176,28 +174,25 @@ async def test_ledger_pdf_is_localized(client: AsyncClient, db_session: Session)
     )
     text = pdf_text(resp.content)
     assert "historique des paiements" in text
-    assert "tarif mensuel" in text
-    assert "redoublant" in text
-    assert "premier paiement" in text
-    # Accents survive the Helvetica/latin-1 round trip: "Impayé" in the status column.
-    assert "impay\\351" in text
-    # French values render as plain text, not missing glyphs: a decimal comma, and "jours"
-    # pluralised. reportlab lays the catalogue's no-break space out as an ordinary space (it
-    # cannot stop a table cell wrapping there), so the text reads "5 jours de retard".
-    assert "5 jours de retard" in text
-    assert "150,00" in text
-    assert "05/04/2023" in text  # dates read day first
+    assert "3 mois impayés · 450 dh" in text
+    assert "le plus ancien mois impayé : mars 2023." in text
+    assert "tarif mensuel 150 dh" in text
+    assert "inscrit le 5 mars 2023" in text
+    assert "année 2022–2023" in text
+    assert "avril 2023 10 avr. 2023 150 dh 5 jours de retard" in text
+    assert "chiffres au 30 juin 2023" in text
+    assert "page 1 sur 1" in text
 
 
-async def test_ledger_pdf_of_a_student_with_no_cycles_says_so(client: AsyncClient) -> None:
-    """An empty export should be a sentence, not a lone header row."""
+async def test_ledger_pdf_of_a_student_who_has_paid_nothing_says_so(client: AsyncClient) -> None:
+    """An empty table should be a sentence, not a lone header row."""
     created = await client.post(
         "/api/v1/students",
         json={"first_name": "Nouveau", "join_date": "2099-01-01"},
     )
     resp = await client.get(f"/api/v1/students/{created.json()['id']}/ledger.pdf")
     assert resp.status_code == 200
-    assert "no billing cycles" in pdf_text(resp.content)
+    assert "no payments received yet." in pdf_text(resp.content)
 
 
 async def test_ledger_pdf_omits_the_agreed_price_row_when_there_is_none(
@@ -211,14 +206,39 @@ async def test_ledger_pdf_omits_the_agreed_price_row_when_there_is_none(
 async def test_ledger_pdf_shows_the_agreed_price_when_set(
     client: AsyncClient, db_session: Session
 ) -> None:
+    """A parent reading a different price from their neighbour's sees why."""
     student_id = _seed(db_session)
     await client.patch(
         f"/api/v1/students/{student_id}",
         json={"custom_price": "90", "price_note": "remise fratrie"},
     )
     text = pdf_text((await client.get(f"/api/v1/students/{student_id}/ledger.pdf")).content)
-    assert "agreed price" in text
-    assert "remise fratrie" in text
+    assert "monthly price 90 dh agreed price: remise fratrie" in text
+
+
+async def test_a_long_history_carries_the_teacher_and_the_page_on_every_page(
+    client: AsyncClient, db_session: Session
+) -> None:
+    student = StudentService(db_session).enroll(
+        first_name="Youssef", phone=None, join_date=date(2023, 9, 5), custom_price=Decimal("300")
+    )
+    payments = PaymentService(db_session)
+    for cycle in range(36):
+        due = date(2023 + (8 + cycle) // 12, (8 + cycle) % 12 + 1, 5)
+        payments.record_payment(
+            student_id=student.id, cycle_number=cycle, paid_date=due, amount=Decimal("300")
+        )
+    resp = await client.get(
+        f"/api/v1/students/{student.id}/ledger.pdf", params={"as_of": "2026-08-31"}
+    )
+    pages = pdf_pages(resp.content)
+    assert len(pages) >= 2
+    for number, page in enumerate(pages, start=1):
+        assert "prof. teacher" in page
+        assert f"page {number} of {len(pages)}" in page
+        # The table's header is repeated wherever the table runs on.
+        if "on time" in page:
+            assert "month paid for" in page
 
 
 # --------------------------------------------------------------------------- #
@@ -234,9 +254,12 @@ async def test_roster_pdf_has_class_totals(client: AsyncClient, db_session: Sess
     )
     text = pdf_text(resp.content)
     assert "class roster" in text
-    assert "groupe a" in text
-    assert "students" in text and "outstanding" in text
-    assert "amina benali" in text
+    assert "2bac — groupe a" in text
+    assert "students 1" in text
+    assert "unpaid 450 dh 1 student" in text
+    assert "amina benali +212600112233" in text
+    assert "3 months unpaid" in text
+    assert "prof. teacher" in text
 
 
 async def test_monthly_pdf_has_totals(client: AsyncClient, db_session: Session) -> None:
@@ -244,5 +267,9 @@ async def test_monthly_pdf_has_totals(client: AsyncClient, db_session: Session) 
     resp = await client.get("/api/v1/reports/monthly.pdf", params={"year": 2023, "month": 6})
     text = pdf_text(resp.content)
     assert "monthly report" in text
-    assert "collected" in text and "outstanding" in text
-    assert "amina benali" in text
+    assert "june 2023" in text
+    assert "collected in june" in text
+    assert "unpaid on 30 jun 2023" in text
+    # Each student's class sits under their name.
+    assert "amina benali 2bac — groupe a" in text
+    assert "prof. teacher" in text

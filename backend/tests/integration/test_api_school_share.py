@@ -74,9 +74,8 @@ async def test_the_pdfs_show_both_parts_in_french(
         else {"year": 2026, "lang": "fr"}
     )
     text = pdf_text((await client.get(f"/api/v1/reports/{kind}.pdf", params=params)).content)
-    # Stat labels are set in capitals, so "É" is octal 311 here, and PDF escapes the brackets.
-    assert "part de l'\\311cole \\(25 %\\)" in text
-    assert "60,00" in text and "180,00" in text
+    assert "part de l'école (25 %)" in text
+    assert "60 dh" in text and "180 dh" in text
     assert "votre part" in text
 
 

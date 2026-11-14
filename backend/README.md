@@ -278,15 +278,14 @@ Reporting endpoints under `/api/v1`, for the "evidence" use case.
 |---|---|
 | `GET /api/v1/reports/monthly?year=&month=` | JSON: total collected, total outstanding, a row per active student |
 | `GET /api/v1/reports/monthly.pdf?year=&month=` | The same, as a downloadable PDF |
-| `GET /api/v1/students/{id}/ledger.pdf` | A student's full ledger as PDF, headed by their name (and phone, when on file) and a human status column |
+| `GET /api/v1/students/{id}/ledger.pdf` | A student's history as PDF: status, the school year as month tiles, every payment received |
 
 - **Monthly report** lists active students only; `collected` counts payments by paid-date in that
   month, `outstanding` = unpaid cycles due by month-end × fee, `drift` is as of month-end. Totals are
   the sums of the rows (invariant, tested).
-- **Exports are PDF** (`application/pdf`, `Content-Disposition: attachment`) — friendly to open on a
-  phone/tablet. The ledger PDF's **Status** column reads `Unpaid` / `On time` / `N days late` — a
-  chronic latecomer's history at a glance. Rendered with reportlab's built-in font (Latin + French
-  accents); Arabic-script names are not shaped/rendered.
+- **Exports are PDF** (`application/pdf`, `Content-Disposition: attachment`), A4 portrait so they
+  open full width on a phone. They follow the app's design (see "The PDFs, in the app's design"
+  below); Arabic-script names are not shaped/rendered.
 
 ```bash
 curl "http://127.0.0.1:8000/api/v1/students/1/ledger.pdf?as_of=2023-07-31" -o ledger.pdf
@@ -623,6 +622,24 @@ already left is a different conversation from chasing someone still attending.
 
 **Assumption worth confirming (backlog §6 Q6):** a month counts as owed if its due date fell on or
 before the leave date. A student who leaves on the 3rd therefore owes that month.
+
+## The PDFs, in the app's design
+
+The four PDFs (a student's history, Bilan › Mois, Bilan › Année, a class list) were redrawn to
+match the app, for the teacher and for parents who receive a student's history:
+
+- **A4 portrait**, with the Ardoise mark and "Prof. {teacher}" at the top of every page and
+  "Établi le … avec Ardoise · Page x sur y" at the bottom (plus "chiffres au …" when the figures
+  are for another day).
+- **The app's fonts and colours**, bundled in `app/assets/fonts` (SIL Open Font License), and its
+  words: "À jour", "2 mois impayés", "9 jours de retard", money as "240 DH".
+- **A student's history** opens on the student page's status card, then the facts (price, with
+  any agreed-price note; date joined; total paid; days late), then each school year as twelve
+  month tiles (`app/services/school_year.py`, the same rules as the app), then one row per
+  payment received. A student who owes three years no longer gets three pages of "Impayé".
+- **Bilan › Mois / Année** carry the screen's figures and the school share bar; the year adds a
+  bar chart and "Votre part" / "Part de l'école" columns, computed by the reports service.
+- **The class list** gives each student's situation as a coloured pill and the class's totals.
 
 ## Reloading the demo data
 

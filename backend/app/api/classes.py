@@ -6,15 +6,15 @@ supports the status/sort filters. One representation of a student list, not two.
 """
 
 from datetime import date
-from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_locale
-from app.api.pdf_export import Stat, render_report_pdf, slugify_name
-from app.core.i18n import format_money, translate
-from app.models import ClassLevel, SchoolClass
+from app.api.deps import get_db, get_locale, require_session
+from app.api.pdf_documents import respond, roster_story
+from app.api.pdf_export import slugify_name
+from app.core.i18n import translate
+from app.models import ClassLevel, SchoolClass, User
 from app.schemas.school_class import (
     ClassCreate,
     ClassDetailOut,
@@ -25,18 +25,6 @@ from app.schemas.school_class import (
 from app.services.class_service import ClassService, RosterRows
 
 router = APIRouter(prefix="/classes", tags=["classes"])
-
-_ROSTER_COLUMNS = (
-    "student_id",
-    "name",
-    "phone",
-    "status",
-    "price",
-    "cumulative_drift",
-    "months_overdue",
-    "amount_owed",
-)
-
 
 def _totals(rows: RosterRows) -> tuple[int, int]:
     """(student_count, class-wide cumulative drift) for a class's roster rows."""
@@ -103,25 +91,6 @@ async def delete_class(class_id: int, db: Session = Depends(get_db)) -> Response
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-def _roster_export(rows: RosterRows, locale: str) -> tuple[list[str], list[list[str]]]:
-    """Localized (header, rows) for the roster export — cells are strings, ready to render."""
-    header = [translate(f"csv.roster.{col}", locale) for col in _ROSTER_COLUMNS]
-    body = [
-        [
-            str(row.student.id),
-            row.student.full_name,
-            row.student.phone or "",
-            translate(f"status.{row.student.status.value}", locale),
-            format_money(row.monthly_price, locale),
-            str(row.cumulative_drift),
-            str(row.months_overdue),
-            format_money(row.amount_owed, locale),
-        ]
-        for row in rows
-    ]
-    return header, body
-
-
 def _roster_filename(school_class: SchoolClass) -> str:
     """Download filename for a class roster, e.g. ``2bac-groupe-a-roster.pdf``."""
     slug = slugify_name(f"{school_class.level.value} {school_class.name}")
@@ -129,40 +98,25 @@ def _roster_filename(school_class: SchoolClass) -> str:
     return f"{stem}-roster.pdf"
 
 
-def _roster_stats(rows: RosterRows, locale: str) -> list[Stat]:
-    """Class-level totals, so the sheet answers "how is this class doing" at a glance."""
-    owed = sum((row.amount_owed for row in rows), Decimal("0"))
-    behind = sum(1 for row in rows if row.months_overdue > 0)
-    return [
-        Stat(translate("pdf.stat.students", locale), str(len(rows))),
-        Stat(translate("csv.roster.months_overdue", locale), str(behind)),
-        Stat(translate("pdf.stat.outstanding", locale), format_money(owed, locale)),
-        Stat(
-            translate("pdf.stat.drift", locale),
-            translate("pdf.value.days", locale, count=sum(row.cumulative_drift for row in rows)),
-        ),
-    ]
-
-
 @router.get("/{class_id}/roster.pdf", tags=["reports"])
 async def get_roster_pdf(
     class_id: int,
     db: Session = Depends(get_db),
+    user: User = Depends(require_session),
     as_of: date | None = Query(None),
     locale: str = Depends(get_locale),
 ) -> Response:
-    as_of_date = as_of or date.today()
+    today = date.today()
+    as_of_date = as_of or today
     service = ClassService(db)
     school_class = service.get(class_id)  # 404 if unknown
-    roster = service.roster(class_id, as_of_date)
-    header, rows = _roster_export(roster, locale)
-    return render_report_pdf(
-        title=translate("pdf.roster.title", locale),
-        subtitle=f"{school_class.level.value} — {school_class.name}",
-        stats=_roster_stats(roster, locale),
-        header=header,
-        rows=rows,
+    title = f"{school_class.level.value} — {school_class.name}"
+    return respond(
+        roster_story(title, service.roster(class_id, as_of_date), locale),
+        title=f"{translate('pdf.roster.title', locale)} · {title}",
+        teacher=user.display_name,
+        locale=locale,
         filename=_roster_filename(school_class),
-        footer=translate("pdf.footer", locale, generated=date.today(), as_of=as_of_date),
-        empty_message=translate("pdf.roster.empty", locale),
+        made_on=today,
+        as_of=as_of_date,
     )

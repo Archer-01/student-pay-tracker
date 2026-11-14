@@ -212,30 +212,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "This student left owing {amount} for {count} months",
         "fr": "Cet élève est parti sans régler {amount} ({count}\u00a0mois)",
     },
-    # --- Ledger status for a month the student was away: not owed, so "not billed" ---
-    "csv.ledger.status.away": {"en": "Away", "fr": "Non facturé"},
-    # --- Student status labels (used in CSV display) ---
-    "status.active": {"en": "Active", "fr": "Actif"},
-    "status.inactive": {"en": "Inactive", "fr": "Inactif"},
-    # --- Ledger headers + status column ---
-    "csv.ledger.cycle": {"en": "Cycle", "fr": "N°"},
-    "csv.ledger.due_date": {"en": "Due date", "fr": "Échéance"},
-    "csv.ledger.paid_date": {"en": "Paid date", "fr": "Payé le"},
-    "csv.ledger.days_late": {"en": "Days late", "fr": "Jours de retard"},
-    "csv.ledger.amount": {"en": "Amount", "fr": "Montant"},
-    "csv.ledger.cumulative_drift": {"en": "Cumulative drift", "fr": "Retard cumulé"},
-    "csv.ledger.status": {"en": "Status", "fr": "Statut"},
-    "csv.ledger.status.unpaid": {"en": "Unpaid", "fr": "Impayé"},
-    "csv.ledger.status.on_time": {"en": "On time", "fr": "À l'heure"},
-    "csv.ledger.status.days_late_one": {
-        "en": "{count} day late",
-        "fr": "{count}\u00a0jour de retard",
-    },
-    "csv.ledger.status.days_late_other": {
-        "en": "{count} days late",
-        "fr": "{count}\u00a0jours de retard",
-    },
-    # --- Month names (the annual report's row labels) ---
+    # --- Month names: titles ("Octobre 2026") and table rows ---
     "month.1": {"en": "January", "fr": "Janvier"},
     "month.2": {"en": "February", "fr": "Février"},
     "month.3": {"en": "March", "fr": "Mars"},
@@ -248,83 +225,126 @@ MESSAGES: dict[str, dict[str, str]] = {
     "month.10": {"en": "October", "fr": "Octobre"},
     "month.11": {"en": "November", "fr": "Novembre"},
     "month.12": {"en": "December", "fr": "Décembre"},
-    # --- Annual report ---
-    "csv.annual.month": {"en": "Month", "fr": "Mois"},
-    "csv.annual.collected": {"en": "Collected", "fr": "Encaissé"},
-    "csv.annual.payments": {"en": "Payments", "fr": "Paiements"},
-    "pdf.annual.title": {"en": "Annual revenue — {year}", "fr": "Bilan annuel — {year}"},
-    "pdf.annual.empty": {
-        "en": "No payments were recorded in this year.",
-        "fr": "Aucun paiement enregistré cette année.",
+    # --- PDFs: every page ---
+    "pdf.teacher": {"en": "Prof. {name}", "fr": "Prof. {name}"},
+    "pdf.made_on": {"en": "Made on {date} with Ardoise", "fr": "Établi le {date} avec Ardoise"},
+    "pdf.figures_as_of": {"en": "figures as of {date}", "fr": "chiffres au {date}"},
+    "pdf.page": {"en": "Page {page} of {total}", "fr": "Page {page} sur {total}"},
+    "pdf.total": {"en": "Total", "fr": "Total"},
+    # --- PDFs: shared words (the app's own, so paper and screen agree) ---
+    "pdf.paid_up": {"en": "Up to date", "fr": "À jour"},
+    "pdf.no_price": {"en": "No price", "fr": "Sans tarif"},
+    "pdf.former": {"en": "Former student", "fr": "Ancien élève"},
+    "pdf.on_time": {"en": "On time", "fr": "À l'heure"},
+    "pdf.days_late_one": {"en": "{count} day late", "fr": "{count}\u00a0jour de retard"},
+    "pdf.days_late_other": {"en": "{count} days late", "fr": "{count}\u00a0jours de retard"},
+    "pdf.days_one": {"en": "{count} day", "fr": "{count}\u00a0jour"},
+    "pdf.days_other": {"en": "{count} days", "fr": "{count}\u00a0jours"},
+    "pdf.months_unpaid_one": {"en": "{count} month unpaid", "fr": "{count}\u00a0mois impayé"},
+    "pdf.months_unpaid_other": {"en": "{count} months unpaid", "fr": "{count}\u00a0mois impayés"},
+    "pdf.students_one": {"en": "{count} student", "fr": "{count}\u00a0élève"},
+    "pdf.students_other": {"en": "{count} students", "fr": "{count}\u00a0élèves"},
+    "pdf.no_pack": {"en": "No pack", "fr": "Aucun pack"},
+    "pdf.share.yours": {"en": "Your share", "fr": "Votre part"},
+    "pdf.share.school": {"en": "School's share ({percent})", "fr": "Part de l'école ({percent})"},
+    "pdf.share.school_short": {"en": "School's share", "fr": "Part de l'école"},
+    "pdf.share.yours_of": {"en": "of which {amount} is yours", "fr": "dont {amount} pour vous"},
+    "pdf.col.student": {"en": "Student", "fr": "Élève"},
+    "pdf.col.price": {"en": "Price", "fr": "Tarif"},
+    "pdf.col.still_owed": {"en": "Still owed", "fr": "Reste dû"},
+    # --- PDFs: a student's history ---
+    "pdf.ledger.title": {"en": "Payment history", "fr": "Historique des paiements"},
+    "pdf.ledger.owes_one": {
+        "en": "{count} month unpaid · {amount}",
+        "fr": "{count}\u00a0mois impayé · {amount}",
     },
-    "pdf.stat.best_month": {"en": "Best month", "fr": "Meilleur mois"},
-    "pdf.stat.school_share": {
-        "en": "School's share ({percent})",
-        "fr": "Part de l'école ({percent})",
+    "pdf.ledger.owes_other": {
+        "en": "{count} months unpaid · {amount}",
+        "fr": "{count}\u00a0mois impayés · {amount}",
     },
-    "pdf.stat.teacher_share": {"en": "Your share", "fr": "Votre part"},
-    "pdf.stat.monthly_average": {"en": "Monthly average", "fr": "Moyenne mensuelle"},
-    # --- Monthly report headers ---
-    "csv.monthly.student_id": {"en": "Student ID", "fr": "N° élève"},
-    "csv.monthly.name": {"en": "Name", "fr": "Nom"},
-    "csv.monthly.status": {"en": "Status", "fr": "Statut"},
-    "csv.monthly.price": {"en": "Price", "fr": "Tarif"},
-    "csv.monthly.collected": {"en": "Collected", "fr": "Encaissé"},
-    "csv.monthly.cumulative_drift": {"en": "Cumulative drift", "fr": "Retard cumulé"},
-    "csv.monthly.outstanding": {"en": "Outstanding", "fr": "Reste dû"},
-    # --- Class roster export ---
-    "csv.roster.student_id": {"en": "Student ID", "fr": "N° élève"},
-    "csv.roster.name": {"en": "Name", "fr": "Nom"},
-    "csv.roster.phone": {"en": "Phone", "fr": "Téléphone"},
-    "csv.roster.status": {"en": "Status", "fr": "Statut"},
-    "csv.roster.price": {"en": "Price", "fr": "Tarif"},
-    "csv.roster.cumulative_drift": {"en": "Cumulative drift", "fr": "Retard cumulé"},
-    "csv.roster.months_overdue": {"en": "Months overdue", "fr": "Mois impayés"},
-    "csv.roster.amount_owed": {"en": "Amount owed", "fr": "Montant dû"},
-    # --- PDF export titles (the csv.* header/status keys above are reused for the table cells) ---
-    "pdf.ledger.title": {"en": "Payment ledger", "fr": "Historique des paiements"},
+    "pdf.ledger.oldest_unpaid": {
+        "en": "Oldest unpaid month: {month}.",
+        "fr": "Le plus ancien mois impayé\u00a0: {month}.",
+    },
+    "pdf.ledger.next_payment": {
+        "en": "Next payment expected on {date}.",
+        "fr": "Prochain paiement attendu le {date}.",
+    },
+    "pdf.ledger.no_price_text": {
+        "en": "Nothing is charged to this student until they have a pack or an agreed price.",
+        "fr": "Rien n'est facturé à cet élève tant qu'il n'a ni pack ni tarif convenu.",
+    },
+    "pdf.ledger.left": {"en": "Left", "fr": "Parti"},
+    "pdf.ledger.left_text": {
+        "en": "No longer a student since {date}.",
+        "fr": "Ne fait plus partie des élèves depuis le {date}.",
+    },
+    "pdf.ledger.monthly_price": {"en": "Monthly price", "fr": "Tarif mensuel"},
+    "pdf.ledger.agreed_price": {"en": "Agreed price: {note}", "fr": "Tarif convenu\u00a0: {note}"},
+    "pdf.ledger.joined": {"en": "Student since", "fr": "Inscrit le"},
+    "pdf.ledger.total_paid": {"en": "Total paid", "fr": "Total payé"},
+    "pdf.ledger.lateness": {"en": "Days late in total", "fr": "Retards cumulés"},
+    "pdf.ledger.school_year": {"en": "{start}–{end} school year", "fr": "Année {start}–{end}"},
+    "pdf.ledger.payments": {"en": "Payments received", "fr": "Paiements reçus"},
+    "pdf.ledger.col.month": {"en": "Month paid for", "fr": "Mois réglé"},
+    "pdf.ledger.col.paid_on": {"en": "Paid on", "fr": "Payé le"},
+    "pdf.ledger.col.amount": {"en": "Amount", "fr": "Montant"},
+    "pdf.ledger.col.timing": {"en": "Timing", "fr": "Ponctualité"},
     "pdf.ledger.empty": {
-        "en": "No billing cycles have fallen due yet.",
-        "fr": "Aucune échéance pour le moment.",
+        "en": "No payments received yet.",
+        "fr": "Aucun paiement reçu pour l'instant.",
     },
-    "pdf.roster.empty": {
-        "en": "No students in this class yet.",
-        "fr": "Aucun élève dans cette classe pour le moment.",
+    # The words on the month tiles, as on the student page.
+    "pdf.tile.paid": {"en": "paid", "fr": "payé"},
+    "pdf.tile.late_one": {"en": "{count} d late", "fr": "{count}\u00a0j"},
+    "pdf.tile.late_other": {"en": "{count} d late", "fr": "{count}\u00a0j"},
+    "pdf.tile.due": {"en": "to pay", "fr": "à payer"},
+    "pdf.tile.away": {"en": "away", "fr": "absent"},
+    "pdf.tile.upcoming": {"en": "to come", "fr": "à venir"},
+    # --- PDFs: the month ---
+    "pdf.monthly.eyebrow": {"en": "Monthly report", "fr": "Bilan du mois"},
+    "pdf.monthly.collected": {"en": "Collected in {month}", "fr": "Encaissé en {month}"},
+    "pdf.monthly.outstanding": {"en": "Unpaid on {date}", "fr": "Impayés au {date}"},
+    "pdf.monthly.students": {"en": "Students", "fr": "Élèves"},
+    "pdf.monthly.paid_count_one": {
+        "en": "{count} paid this month",
+        "fr": "{count}\u00a0a payé ce mois-ci",
     },
+    "pdf.monthly.paid_count_other": {
+        "en": "{count} paid this month",
+        "fr": "{count}\u00a0ont payé ce mois-ci",
+    },
+    "pdf.monthly.by_student": {"en": "By student", "fr": "Par élève"},
+    "pdf.monthly.col.paid_in": {"en": "Paid in {month}", "fr": "Payé en {month}"},
     "pdf.monthly.empty": {
         "en": "No active students for this month.",
         "fr": "Aucun élève inscrit ce mois-ci.",
     },
-    "pdf.footer": {
-        "en": "Generated {generated} · figures as of {as_of}",
-        "fr": "Généré le {generated} · chiffres au {as_of}",
+    # --- PDFs: the year ---
+    "pdf.annual.eyebrow": {"en": "Annual report", "fr": "Bilan de l'année"},
+    "pdf.annual.total": {"en": "Total collected", "fr": "Total encaissé"},
+    "pdf.annual.payments": {"en": "Payments", "fr": "Paiements"},
+    "pdf.annual.average": {"en": "Monthly average", "fr": "Moyenne mensuelle"},
+    "pdf.annual.average_hint": {
+        "en": "Over the months with takings",
+        "fr": "Sur les mois avec des encaissements",
     },
-    # --- Shared labels for the PDF header blocks ---
-    "pdf.field.phone": {"en": "Phone", "fr": "Téléphone"},
-    "pdf.field.status": {"en": "Status", "fr": "Statut"},
-    "pdf.field.join_date": {"en": "Student since", "fr": "Date d'inscription"},
-    "pdf.field.first_payment": {"en": "First payment", "fr": "Premier paiement"},
-    "pdf.field.repeating": {"en": "Repeating the year", "fr": "Redoublant"},
-    "pdf.field.price_note": {"en": "Agreed price", "fr": "Tarif convenu"},
-    "pdf.stat.monthly_price": {"en": "Monthly price", "fr": "Tarif mensuel"},
-    "pdf.stat.total_paid": {"en": "Total paid", "fr": "Total payé"},
-    "pdf.stat.months_overdue": {"en": "Months overdue", "fr": "Mois impayés"},
-    "pdf.stat.amount_owed": {"en": "Amount owed", "fr": "Montant dû"},
-    "pdf.stat.drift": {"en": "Cumulative drift", "fr": "Retard cumulé"},
-    "pdf.stat.students": {"en": "Students", "fr": "Élèves"},
-    "pdf.stat.collected": {"en": "Collected", "fr": "Encaissé"},
-    "pdf.stat.outstanding": {"en": "Outstanding", "fr": "Impayés"},
-    "pdf.value.yes": {"en": "Yes", "fr": "Oui"},
-    "pdf.value.no": {"en": "No", "fr": "Non"},
-    "pdf.value.none": {"en": "—", "fr": "—"},
-    "pdf.value.days_one": {"en": "{count} day", "fr": "{count}\u00a0jour"},
-    "pdf.value.days_other": {"en": "{count} days", "fr": "{count}\u00a0jours"},
-    "pdf.value.unassigned": {"en": "Unassigned", "fr": "Sans classe"},
-    "pdf.value.no_pack": {"en": "No pack", "fr": "Aucun pack"},
+    "pdf.annual.best": {"en": "Best month", "fr": "Meilleur mois"},
+    "pdf.annual.col.month": {"en": "Month", "fr": "Mois"},
+    "pdf.annual.col.collected": {"en": "Collected", "fr": "Encaissé"},
+    "pdf.annual.to_come": {"en": "to come", "fr": "à venir"},
+    "pdf.annual.empty": {
+        "en": "No payments were recorded in this year.",
+        "fr": "Aucun paiement enregistré cette année.",
+    },
+    # --- PDFs: a class ---
     "pdf.roster.title": {"en": "Class roster", "fr": "Liste de la classe"},
-    "pdf.monthly.title": {
-        "en": "Monthly report — {month:02d}/{year}",
-        "fr": "Rapport mensuel — {month:02d}/{year}",
+    "pdf.roster.up_to_date": {"en": "Up to date", "fr": "À jour"},
+    "pdf.roster.outstanding": {"en": "Unpaid", "fr": "Impayés"},
+    "pdf.roster.col.situation": {"en": "Situation", "fr": "Situation"},
+    "pdf.roster.empty": {
+        "en": "No students in this class yet.",
+        "fr": "Aucun élève dans cette classe pour le moment.",
     },
 }
 
@@ -356,6 +376,33 @@ def resolve_locale(accept_language: str | None) -> str:
 def format_date(value: date, locale: str) -> str:
     """A date as the teacher reads it: 26/10/2026 in French. English keeps ISO, as before."""
     return value.strftime("%d/%m/%Y") if locale == "fr" else value.isoformat()
+
+
+# Abbreviated months: chart and tile labels ("Juin", "Juil") and medium dates ("14 nov. 2026").
+_MONTH_SHORT = {
+    "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
+    "fr": ("Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov",
+           "Déc"),
+}
+_MONTH_IN_DATE_FR = ("janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
+                     "oct.", "nov.", "déc.")
+
+
+def month_short(month: int, locale: str) -> str:
+    """"Juin" / "Jun": short enough for twelve side by side, long enough to tell apart."""
+    return _MONTH_SHORT.get(locale, _MONTH_SHORT[DEFAULT_LOCALE])[month - 1]
+
+
+def month_name(month: int, locale: str, *, in_sentence: bool = False) -> str:
+    """"Octobre", or "octobre" inside a French sentence ("Encaissé en octobre")."""
+    name = translate(f"month.{month}", locale)
+    return name.lower() if in_sentence and locale == "fr" else name
+
+
+def format_day(value: date, locale: str) -> str:
+    """A date as the app writes it: "14 nov. 2026" / "14 Nov 2026", held on one line."""
+    month = _MONTH_IN_DATE_FR[value.month - 1] if locale == "fr" else month_short(value.month, "en")
+    return f"{value.day}\u00a0{month}\u00a0{value.year}"
 
 
 def format_money(value: Decimal, locale: str) -> str:

@@ -1,51 +1,23 @@
-"""Monthly report endpoints (JSON + PDF)."""
+"""Monthly and annual report endpoints (JSON + PDF)."""
 
 from datetime import date
-from decimal import Decimal
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_locale
-from app.api.pdf_export import Stat, render_report_pdf
-from app.core.i18n import format_money, format_percent, translate
+from app.api.deps import get_db, get_locale, require_session
+from app.api.pdf_documents import annual_story, class_label, monthly_story, respond
+from app.core.i18n import translate
 from app.core.settings import settings
+from app.models import User
 from app.schemas.reports import AnnualReportOut, MonthlyReportOut
-from app.services.reports_service import AnnualReport, MonthlyReport, ReportsService
-from app.services.school_share import ShareSplit
+from app.services.reports_service import ReportsService
+from app.services.student_service import StudentService
 
 router = APIRouter(prefix="/reports", tags=["reports"])
 
 _YEAR = Query(..., ge=1, le=9999)
 _MONTH = Query(..., ge=1, le=12)
-
-_MONTHLY_COLUMNS = (
-    "student_id",
-    "name",
-    "status",
-    "price",
-    "collected",
-    "cumulative_drift",
-    "outstanding",
-)
-
-
-def _monthly_export(report: MonthlyReport, locale: str) -> tuple[list[str], list[list[str]]]:
-    """Localized (header, rows) for the monthly report export — cells are strings."""
-    header = [translate(f"csv.monthly.{col}", locale) for col in _MONTHLY_COLUMNS]
-    rows = [
-        [
-            str(row.student_id),
-            row.name,
-            translate(f"status.{row.status.value}", locale),
-            format_money(row.fee, locale),
-            format_money(row.collected, locale),
-            str(row.cumulative_drift),
-            format_money(row.outstanding, locale),
-        ]
-        for row in report.rows
-    ]
-    return header, rows
 
 
 @router.get("/monthly", response_model=MonthlyReportOut)
@@ -63,102 +35,29 @@ async def monthly_report_pdf(
     year: int = _YEAR,
     month: int = _MONTH,
     db: Session = Depends(get_db),
+    user: User = Depends(require_session),
     locale: str = Depends(get_locale),
 ) -> Response:
     report = ReportsService(db).monthly_report(
         year, month, share_percent=settings.school_share_percent
     )
-    header, rows = _monthly_export(report, locale)
-    behind = sum(1 for row in report.rows if row.outstanding > 0)
-    return render_report_pdf(
-        title=translate("pdf.monthly.title", locale, year=year, month=month),
-        stats=[
-            Stat(translate("pdf.stat.students", locale), str(len(report.rows))),
-            Stat(
-                translate("pdf.stat.collected", locale),
-                format_money(report.total_collected, locale),
-            ),
-            Stat(
-                translate("pdf.stat.outstanding", locale),
-                format_money(report.total_outstanding, locale),
-            ),
-            Stat(translate("csv.roster.months_overdue", locale), str(behind)),
-            *_share_stats(report.share, locale),
-        ],
-        header=header,
-        rows=rows,
+    # Each student's class, for the grey line under their name; former students included.
+    labels = {s.id: class_label(s, locale) for s in StudentService(db).list()}
+    return respond(
+        monthly_story(report, labels, locale),
+        title=f"{translate('pdf.monthly.eyebrow', locale)} · {month:02d}/{year}",
+        teacher=user.display_name,
+        locale=locale,
         filename=f"monthly-{year}-{month:02d}.pdf",
-        footer=translate(
-            "pdf.footer",
-            locale,
-            generated=date.today(),
-            as_of=report.as_of,
-        ),
-        empty_message=translate("pdf.monthly.empty", locale),
+        made_on=date.today(),
+        as_of=report.as_of,
     )
-
-
-_ANNUAL_COLUMNS = ("month", "collected", "payments")
-
-
-def _annual_export(report: AnnualReport, locale: str) -> tuple[list[str], list[list[str]]]:
-    """Localized (header, rows) for the annual report — one row per month, empty ones included."""
-    header = [translate(f"csv.annual.{col}", locale) for col in _ANNUAL_COLUMNS]
-    rows = [
-        [
-            translate(f"month.{row.month}", locale),
-            format_money(row.collected, locale),
-            str(row.payments_count),
-        ]
-        for row in report.months
-    ]
-    return header, rows
-
-
-def _annual_stats(report: AnnualReport, locale: str) -> list[Stat]:
-    earning = [row for row in report.months if row.collected > 0]
-    best = max(report.months, key=lambda row: row.collected) if earning else None
-    # Averaged over the months that actually earned, not over twelve — a year that only ran from
-    # September would otherwise look like it took a third of what it did.
-    average = report.total_collected / len(earning) if earning else Decimal("0")
-    return [
-        Stat(
-            translate("pdf.stat.collected", locale),
-            format_money(report.total_collected, locale),
-        ),
-        Stat(translate("csv.annual.payments", locale), str(report.payments_count)),
-        Stat(translate("pdf.stat.monthly_average", locale), format_money(average, locale)),
-        Stat(
-            translate("pdf.stat.best_month", locale),
-            translate(f"month.{best.month}", locale)
-            if best
-            else translate("pdf.value.none", locale),
-        ),
-        *_share_stats(report.share, locale),
-    ]
-
-
-def _share_stats(share: ShareSplit, locale: str) -> list[Stat]:
-    """The school's part and the teacher's, when there is a share to show at all."""
-    if share.percent <= 0:
-        return []
-    return [
-        Stat(
-            translate(
-                "pdf.stat.school_share", locale, percent=format_percent(share.percent, locale)
-            ),
-            format_money(share.school, locale),
-        ),
-        Stat(translate("pdf.stat.teacher_share", locale), format_money(share.teacher, locale)),
-    ]
 
 
 @router.get("/annual", response_model=AnnualReportOut)
 async def annual_report(year: int = _YEAR, db: Session = Depends(get_db)) -> AnnualReportOut:
     """What came in over a year, month by month. Every month is present, including empty ones."""
-    report = ReportsService(db).annual_report(
-        year, share_percent=settings.school_share_percent
-    )
+    report = ReportsService(db).annual_report(year, share_percent=settings.school_share_percent)
     return AnnualReportOut.model_validate(report)
 
 
@@ -166,24 +65,18 @@ async def annual_report(year: int = _YEAR, db: Session = Depends(get_db)) -> Ann
 async def annual_report_pdf(
     year: int = _YEAR,
     db: Session = Depends(get_db),
+    user: User = Depends(require_session),
     locale: str = Depends(get_locale),
 ) -> Response:
-    report = ReportsService(db).annual_report(
-        year, share_percent=settings.school_share_percent
-    )
-    header, rows = _annual_export(report, locale)
-    return render_report_pdf(
-        title=translate("pdf.annual.title", locale, year=year),
-        stats=_annual_stats(report, locale),
-        header=header,
-        # An empty year still lists its months; the message covers the no-payments case.
-        rows=rows if report.payments_count else [],
+    today = date.today()
+    report = ReportsService(db).annual_report(year, share_percent=settings.school_share_percent)
+    return respond(
+        annual_story(report, today, locale),
+        title=f"{translate('pdf.annual.eyebrow', locale)} · {year}",
+        teacher=user.display_name,
+        locale=locale,
         filename=f"annual-{year}.pdf",
-        footer=translate(
-            "pdf.footer",
-            locale,
-            generated=date.today(),
-            as_of=date(year, 12, 31),
-        ),
-        empty_message=translate("pdf.annual.empty", locale),
+        made_on=today,
+        # A past year's figures are final at its end; this year's are as of today.
+        as_of=min(date(year, 12, 31), today),
     )

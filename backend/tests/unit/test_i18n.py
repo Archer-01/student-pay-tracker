@@ -10,8 +10,11 @@ from app.core.i18n import (
     MESSAGES,
     SUPPORTED_LOCALES,
     format_date,
+    format_day,
     format_money,
     format_percent,
+    month_name,
+    month_short,
     normalize_locale,
     resolve_locale,
     translate,
@@ -32,7 +35,7 @@ def test_translate_unknown_key_returns_key() -> None:
 
 
 def test_translate_unknown_locale_falls_back_to_default() -> None:
-    assert translate("status.active", "de") == "Active"  # falls back to en
+    assert translate("month.1", "de") == "January"  # falls back to en
 
 
 @pytest.mark.parametrize(
@@ -72,6 +75,36 @@ def test_every_message_has_all_supported_locales() -> None:
 def test_dates_are_day_first_in_french_and_unchanged_in_english() -> None:
     assert format_date(date(2026, 10, 26), "fr") == "26/10/2026"
     assert format_date(date(2026, 10, 26), "en") == "2026-10-26"
+
+
+@pytest.mark.parametrize(
+    ("day", "fr", "en"),
+    [
+        (date(2026, 11, 14), "14 nov. 2026", "14 Nov 2026"),
+        (date(2026, 3, 5), "5 mars 2026", "5 Mar 2026"),
+        (date(2026, 9, 1), "1 sept. 2026", "1 Sep 2026"),
+        (date(2026, 8, 31), "31 août 2026", "31 Aug 2026"),
+    ],
+)
+def test_a_day_reads_the_way_the_app_writes_it(day: date, fr: str, en: str) -> None:
+    # The PDFs match the app's medium dates ("14 nov. 2026"), which a parent reads at a glance.
+    # A no-break space keeps the day, month and year on one line.
+    assert format_day(day, "fr") == fr.replace(" ", NBSP)
+    assert format_day(day, "en") == en.replace(" ", NBSP)
+
+
+def test_short_months_tell_every_month_apart() -> None:
+    # The labels under a chart and on the month tiles, as in the app: "J" and "J" were ambiguous.
+    fr = [month_short(m, "fr") for m in range(1, 13)]
+    assert fr == ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct",
+                  "Nov", "Déc"]
+    assert [month_short(m, "en") for m in (1, 6, 7, 9)] == ["Jan", "Jun", "Jul", "Sep"]
+
+
+def test_a_month_name_is_lowercase_inside_a_french_sentence() -> None:
+    assert month_name(10, "fr") == "Octobre"
+    assert month_name(10, "fr", in_sentence=True) == "octobre"
+    assert month_name(10, "en", in_sentence=True) == "October"
 
 
 @pytest.mark.parametrize(
@@ -117,8 +150,8 @@ def test_message_params_are_formatted_for_the_locale() -> None:
     ],
 )
 def test_lateness_is_pluralised_per_locale(count: int, fr: str, en: str) -> None:
-    assert translate("csv.ledger.status.days_late", "fr", count=count) == fr
-    assert translate("csv.ledger.status.days_late", "en", count=count) == en
+    assert translate("pdf.days_late", "fr", count=count) == fr
+    assert translate("pdf.days_late", "en", count=count) == en
 
 
 def test_plural_keys_come_in_pairs() -> None:
