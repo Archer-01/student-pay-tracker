@@ -8,6 +8,10 @@ lint:
 run:
     uv run fastapi dev app/main.py
 
+# Run against a copy of production data in local-prod/ (gitignored, like every *.db here)
+run-prod-copy:
+    DATABASE_URL=sqlite:///./local-prod/central.db uv run fastapi dev app/main.py
+
 migrate:
     uv run alembic upgrade head
 
