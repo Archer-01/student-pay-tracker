@@ -1,7 +1,10 @@
 import type { ReactNode } from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "./icons";
 
-/** A headline figure: a label over a big number. `alarming` turns the number red. */
+/**
+ * A headline figure: a label over a big number. `alarming` turns the number red. Stacked from the
+ * top, so figures side by side line up whether or not each has a hint underneath.
+ */
 export function Figure({
   label,
   value,
@@ -14,7 +17,7 @@ export function Figure({
   alarming?: boolean;
 }) {
   return (
-    <div className="flex flex-col justify-between gap-1 rounded-2xl border border-line bg-surface p-4">
+    <div className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
       <span className="text-sm text-muted">{label}</span>
       <span
         className={`font-display text-2xl font-extrabold tabular-nums tracking-tight sm:text-3xl ${
