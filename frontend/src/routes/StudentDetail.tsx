@@ -11,7 +11,7 @@ import { slugify } from "../lib/slug";
 import { resolveErrorMessage } from "../lib/errors";
 import { DriftBadge } from "../components/DriftBadge";
 import { OverdueBadge } from "../components/OverdueBadge";
-import { RecordPaymentForm } from "../components/students/RecordPaymentForm";
+import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
@@ -31,16 +31,18 @@ import {
   Tr,
 } from "../components/ui";
 
-type OpenModal = null | "payment" | "override" | "edit" | "leave" | "return";
+type OpenModal = null | "override" | "edit" | "leave" | "return";
 
 export function StudentDetail() {
   const { t } = useTranslation();
   const { id } = useParams();
   const studentId = Number(id);
 
+  const payments = usePaymentSheet();
   const state = useApi(
     () => Promise.all([getStudent(studentId), getLedger(studentId), listPeriods(studentId)]),
-    [studentId],
+    // `payments.version` refreshes the page after a payment taken from the shared sheet.
+    [studentId, payments.version],
   );
 
   const [downloadError, setDownloadError] = useState<string | null>(null);
@@ -80,15 +82,15 @@ export function StudentDetail() {
               actions={
                 <div className="flex flex-col items-end gap-1">
                   <div className="flex flex-wrap justify-end gap-2">
-                    <Button onClick={() => setOpenModal("payment")}>{t("detail.actions.recordPayment")}</Button>
+                    <Button onClick={() => payments.open(studentId)}>{t("detail.actions.recordPayment")}</Button>
                     <Button variant="secondary" onClick={() => setOpenModal("override")}>
                       {t("detail.actions.addOverride")}
                     </Button>
                     <Button
                       variant="secondary"
-                      onClick={() => setOpenModal(detail.status === "active" ? "leave" : "return")}
+                      onClick={() => setOpenModal(isEnrolled(periods) ? "leave" : "return")}
                     >
-                      {t(detail.status === "active" ? "student.markLeft" : "student.markReturned")}
+                      {t(isEnrolled(periods) ? "student.markLeft" : "student.markReturned")}
                     </Button>
                     <Button variant="secondary" onClick={() => setOpenModal("edit")}>
                       {t("detail.actions.edit")}
@@ -104,16 +106,6 @@ export function StudentDetail() {
               }
             />
 
-            {openModal === "payment" && (
-              <Modal title={t("payment.title")} onClose={close}>
-                <RecordPaymentForm
-                  studentId={studentId}
-                  monthlyPrice={detail.monthly_price}
-                  onSuccess={handleSaved}
-                  onCancel={close}
-                />
-              </Modal>
-            )}
             {openModal === "override" && (
               <Modal title={t("override.title")} onClose={close}>
                 <CreateOverrideForm studentId={studentId} onSuccess={handleSaved} onCancel={close} />
@@ -162,7 +154,7 @@ export function StudentDetail() {
                 <Stat label={t("detail.fields.status")}>{t(`status.${detail.status}`)}</Stat>
                 <Stat label={t("detail.fields.class")}>
                   {detail.school_class ? (
-                    <Link to={`/classes/${detail.school_class.id}`} className="hover:underline">
+                    <Link to={`/settings/classes/${detail.school_class.id}`} className="hover:underline">
                       {classLabel(detail.school_class)}
                     </Link>
                   ) : (
@@ -374,4 +366,14 @@ function Stat({ label, children }: { label: string; children: ReactNode }) {
       <dd className="mt-1 text-sm font-medium text-slate-900 dark:text-slate-100">{children}</dd>
     </div>
   );
+}
+
+/**
+ * Whether the student is currently enrolled, read from their periods rather than `status`. A
+ * student set to "Inactif" by hand still has an open period, so offering "Réinscrire" there would
+ * be refused by the server; "Marquer comme parti" is the action that actually records the
+ * departure (and is where the dashboard's "sans date de départ" warning sends the teacher).
+ */
+function isEnrolled(periods: { leave_date: string | null }[]): boolean {
+  return periods.some((p) => p.leave_date === null);
 }

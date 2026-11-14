@@ -37,7 +37,7 @@ describe("LeaversWithDebt", () => {
     renderWithProviders(<LeaversWithDebt />);
     await screen.findAllByRole("link", { name: "Fatima Zahra" });
     expect(table().getByRole("link", { name: "Fatima Zahra" })).toBeInTheDocument();
-    expect(table().getAllByText("170.00").length).toBeGreaterThan(0);
+    expect(table().getAllByText("170 DH").length).toBeGreaterThan(0);
   });
 
   it("invites action when nobody owes", async () => {

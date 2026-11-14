@@ -1,15 +1,17 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f4e4a" />
     <title>Ardoise</title>
     <script>
       // Apply the saved/system theme before first paint to avoid a flash of the wrong theme.
       try {
+        // No stored choice means "follow the device" (see lib/theme.tsx).
         var t = localStorage.getItem("ardoise.theme");
-        if (t === "dark" || (!t && matchMedia("(prefers-color-scheme: dark)").matches)) {
+        if (t === "dark" || (t !== "light" && matchMedia("(prefers-color-scheme: dark)").matches)) {
           document.documentElement.classList.add("dark");
         }
       } catch (e) {}

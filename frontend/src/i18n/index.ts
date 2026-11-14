@@ -34,10 +34,15 @@ const storage = {
   },
 };
 
+/**
+ * French unless someone chose otherwise in Réglages. The teachers' phones are not always set to
+ * French, and an app that opens in English for one of them and French for the other is worse than
+ * one that always opens in the language both of them work in.
+ */
 function initialLocale(): Locale {
   const stored = storage.get(STORAGE_KEY);
   if (stored === "en" || stored === "fr") return stored;
-  return navigator?.language?.toLowerCase().startsWith("fr") ? "fr" : "en";
+  return "fr";
 }
 
 i18n.use(initReactI18next).init({

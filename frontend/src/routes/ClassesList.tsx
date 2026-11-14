@@ -79,7 +79,7 @@ export function ClassesList() {
                 primary: true,
                 cell: (c) => (
                   <Link
-                    to={`/classes/${c.id}`}
+                    to={`/settings/classes/${c.id}`}
                     className="font-medium text-slate-900 hover:underline dark:text-slate-100"
                   >
                     {c.level} — {c.name}

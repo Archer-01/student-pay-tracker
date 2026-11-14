@@ -1,12 +1,13 @@
 import { createContext, useContext } from "react";
 
-export type Theme = "light" | "dark";
+/** What the teacher chose. "system" follows the phone, and is the default. */
+export type ThemePreference = "system" | "light" | "dark";
 
 export const THEME_STORAGE_KEY = "ardoise.theme";
 
 export type ThemeContextValue = {
-  theme: Theme;
-  toggle: () => void;
+  preference: ThemePreference;
+  setPreference: (preference: ThemePreference) => void;
 };
 
 export const ThemeContext = createContext<ThemeContextValue | null>(null);

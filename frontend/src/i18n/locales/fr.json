@@ -9,7 +9,12 @@
     "classes": "Classes",
     "packs": "Packs",
     "annual": "Bilan annuel",
-    "debts": "Impayés"
+    "debts": "Impayés",
+    "label": "Navigation principale",
+    "home": "Accueil",
+    "reports": "Bilan",
+    "settings": "Réglages",
+    "pay": "Encaisser"
   },
   "pages": {
     "dashboard": "Tableau de bord",
@@ -338,5 +343,74 @@
     "usernameRequired": "Saisissez votre nom d'utilisateur",
     "passwordRequired": "Saisissez votre mot de passe",
     "expired": "Votre session a expiré. Veuillez vous reconnecter."
+  },
+  "reports": {
+    "tabs": {
+      "month": "Mois",
+      "year": "Année",
+      "leavers": "Partis sans régler"
+    }
+  },
+  "settings": {
+    "title": "Réglages",
+    "signedIn": "Connecté sur cet appareil",
+    "school": "École",
+    "prices": "Tarifs des packs",
+    "classes": "Classes",
+    "app": "Application",
+    "appearance": "Apparence",
+    "languages": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "themes": {
+      "system": "Comme l'appareil",
+      "light": "Clair",
+      "dark": "Sombre"
+    }
+  },
+  "home": {
+    "greeting": "Bonjour {{name}}",
+    "collected": "Encaissé ce mois-ci",
+    "outstanding": "Impayés au {{date}}",
+    "pay": "Encaisser un paiement",
+    "chase": "À relancer",
+    "chaseOrder": "Les plus gros montants d'abord",
+    "allPaid": "Tout le monde est à jour.",
+    "lateTotal_one": "{{count}} j de retard",
+    "lateTotal_other": "{{count}} j de retard",
+    "attention": "À vérifier",
+    "noPrice": "{{name}} n'a pas de tarif : rien ne lui est facturé.",
+    "choosePack": "Choisir un pack",
+    "leftNoDate": "{{name}} est indiqué comme parti sans date de départ, donc toujours facturé.",
+    "fix": "Corriger",
+    "leavers": "Partis sans régler",
+    "leaversCount_one": "{{count}} ancien élève",
+    "leaversCount_other": "{{count}} anciens élèves"
+  },
+  "owed": {
+    "paidUp": "À jour",
+    "noPrice": "Sans tarif",
+    "monthsUnpaid_one": "{{count}} mois impayé",
+    "monthsUnpaid_other": "{{count}} mois impayés"
+  },
+  "pay": {
+    "title": "Encaisser un paiement",
+    "pickStudent": "Pour quel élève ?",
+    "searchStudent": "Rechercher un élève",
+    "owes_one": "Doit {{count}} mois · {{amount}}",
+    "owes_other": "Doit {{count}} mois · {{amount}}",
+    "upToDate": "À jour",
+    "change": "Changer",
+    "month": "Mois payé",
+    "inAdvance": "d'avance",
+    "amountHintRepeat": "Comme la dernière fois · maximum {{price}}",
+    "amountHintFirst": "Tarif mensuel : {{price}}",
+    "paidOn": "Payé le",
+    "today": "Aujourd'hui",
+    "otherDate": "Autre date",
+    "submit": "Encaisser {{amount}}",
+    "submitEmpty": "Encaisser",
+    "done": "Paiement enregistré : {{amount}} pour {{name}}"
   }
 }

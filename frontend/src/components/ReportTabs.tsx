@@ -2,28 +2,30 @@ import { NavLink } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 
 const tabs = [
-  { to: "/reports/monthly", key: "report" },
-  { to: "/reports/annual", key: "annual" },
+  { to: "/reports/monthly", key: "month" },
+  { to: "/reports/annual", key: "year" },
+  { to: "/reports/leavers", key: "leavers" },
 ] as const;
 
-/** Month and year are two views of the same question, so they are tabs rather than nav entries. */
+/**
+ * Bilan's three views of the money: this month, the year, and former students who left owing.
+ * They are tabs rather than places in the bottom bar, which has room for four and no more.
+ */
 export function ReportTabs() {
   const { t } = useTranslation();
   return (
-    <div className="mb-6 flex gap-1 border-b border-slate-200 dark:border-slate-800">
+    <div className="mb-6 flex gap-1 overflow-x-auto rounded-xl bg-surface p-1 ring-1 ring-line">
       {tabs.map((tab) => (
         <NavLink
           key={tab.to}
           to={tab.to}
           className={({ isActive }) =>
-            `-mb-px border-b-2 px-3 py-2 text-sm font-medium ${
-              isActive
-                ? "border-indigo-600 text-indigo-700 dark:border-indigo-400 dark:text-indigo-300"
-                : "border-transparent text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200"
+            `min-h-11 flex-1 shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-center text-sm font-bold ${
+              isActive ? "bg-brand text-brand-ink" : "text-muted hover:text-ink"
             }`
           }
         >
-          {t(`nav.${tab.key}`)}
+          {t(`reports.tabs.${tab.key}`)}
         </NavLink>
       ))}
     </div>

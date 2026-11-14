@@ -16,12 +16,12 @@ export function Field({
 }) {
   return (
     <div>
-      <label htmlFor={id} className="mb-1 block text-sm font-medium text-slate-700 dark:text-slate-300">
+      <label htmlFor={id} className="mb-1.5 block text-sm font-bold text-ink">
         {label}
       </label>
       {children}
-      {hint && !error && <p className="mt-1 text-xs text-slate-400 dark:text-slate-500">{hint}</p>}
-      {error && <p className="mt-1 text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+      {hint && !error && <p className="mt-1.5 text-sm text-muted">{hint}</p>}
+      {error && <p className="mt-1.5 text-sm font-bold text-bad">{error}</p>}
     </div>
   );
 }

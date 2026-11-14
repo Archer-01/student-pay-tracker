@@ -8,8 +8,9 @@ const FOCUSABLE =
   'textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 /**
- * Lightweight modal: backdrop overlay + centered panel. Closes on backdrop click, the × button,
- * or Escape.
+ * Lightweight modal: a sheet that rises from the bottom on a phone (where the thumb already is,
+ * and the way phone apps present a quick task) and a centred panel from `sm` up. Closes on
+ * backdrop click, the × button, or Escape.
  *
  * Focus is managed, because `aria-modal` is a promise to assistive technology that the rest of
  * the page is inert — and on its own it does nothing to make that true:
@@ -83,7 +84,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-slate-900/40 p-3 pt-6 sm:p-4 sm:pt-20 dark:bg-black/60"
+      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/45 sm:items-start sm:p-4 sm:pt-20"
       onClick={onClose}
       role="presentation"
     >
@@ -95,22 +96,22 @@ export function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={trapTab}
-        className="w-full max-w-md rounded-lg border border-slate-200 bg-white shadow-xl focus:outline-none dark:border-slate-700 dark:bg-slate-900"
+        className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-2xl focus:outline-none sm:max-w-md sm:rounded-3xl sm:pb-0"
       >
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
-          <h2 id={titleId} className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+        <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-surface px-5 pb-2 pt-5">
+          <h2 id={titleId} className="font-display text-xl font-extrabold tracking-tight text-ink">
             {title}
           </h2>
           <button
             type="button"
             onClick={onClose}
             aria-label={t("common.close")}
-            className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ground text-muted hover:text-ink focus-visible:outline focus-visible:outline-2 focus-visible:outline-brand"
           >
             ✕
           </button>
         </div>
-        <div ref={bodyRef} className="p-5">
+        <div ref={bodyRef} className="px-5 pb-6 pt-2">
           {children}
         </div>
       </div>

@@ -7,6 +7,7 @@ import { useApi } from "../lib/useApi";
 import { useMutation } from "../lib/useMutation";
 import { resolveErrorMessage } from "../lib/errors";
 import { formatMoney } from "../lib/money";
+import { ReportTabs } from "../components/ReportTabs";
 import { formatDate } from "../lib/dates";
 import {
   AsyncView,
@@ -31,6 +32,7 @@ export function LeaversWithDebt() {
 
   return (
     <div>
+      <ReportTabs />
       <PageHeader title={t("pages.debts")} />
 
       {writingOff && (

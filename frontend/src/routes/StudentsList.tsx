@@ -8,6 +8,7 @@ import { classLabel } from "../lib/classes";
 import { DriftBadge } from "../components/DriftBadge";
 import { OverdueBadge } from "../components/OverdueBadge";
 import { AsyncView, Button, DataTable, PageHeader, Select, TextField } from "../components/ui";
+import { usePaymentsVersion } from "../lib/paymentSheetContext";
 
 type StatusFilter = "" | "active" | "inactive";
 
@@ -17,6 +18,8 @@ export function StudentsList() {
   const [classId, setClassId] = useState("");
   const [search, setSearch] = useState("");
 
+  // Refreshes after a payment taken from the shared sheet, wherever it was opened.
+  const paymentsVersion = usePaymentsVersion();
   const state = useApi(
     () =>
       listStudents({
@@ -25,7 +28,7 @@ export function StudentsList() {
         q: search.trim() || undefined,
         sort: "drift_desc",
       }),
-    [status, classId, search],
+    [status, classId, search, paymentsVersion],
   );
   // Populates the class filter. A failure here must not blank the page, so the options simply
   // fall back to "all classes" rather than being surfaced as a page-level error.
@@ -119,7 +122,7 @@ export function StudentsList() {
                 header: t("students.columns.class"),
                 cell: (s) =>
                   s.school_class ? (
-                    <Link to={`/classes/${s.school_class.id}`} className="hover:underline">
+                    <Link to={`/settings/classes/${s.school_class.id}`} className="hover:underline">
                       {classLabel(s.school_class)}
                     </Link>
                   ) : (

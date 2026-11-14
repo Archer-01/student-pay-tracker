@@ -19,6 +19,7 @@ import {
   THead,
   Tr,
 } from "../components/ui";
+import { usePaymentsVersion } from "../lib/paymentSheetContext";
 
 /** The last few years, newest first — enough to look back without a date picker. */
 function yearOptions(): { value: string; label: string }[] {
@@ -34,7 +35,9 @@ export function AnnualReport() {
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
-  const state = useApi(() => getAnnualReport(Number(year)), [year]);
+  // Refreshes after a payment taken from the shared sheet, wherever it was opened.
+  const paymentsVersion = usePaymentsVersion();
+  const state = useApi(() => getAnnualReport(Number(year)), [year, paymentsVersion]);
 
   // Month names come from the browser's locale data rather than a hand-kept list.
   const monthName = (month: number) =>

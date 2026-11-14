@@ -49,17 +49,17 @@ export function DataTable<T>({ rows, columns, keyOf, empty, rowClassName }: Prop
         {rows.map((row) => (
           <li
             key={keyOf(row)}
-            className={`rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 ${rowClassName?.(row) ?? ""}`}
+            className={`rounded-2xl border border-line bg-surface p-4 ${rowClassName?.(row) ?? ""}`}
           >
             {heading.map((c) => (
-              <div key={c.key} className="mb-2 text-base font-medium">
+              <div key={c.key} className="mb-2 text-base font-bold">
                 {c.cell(row)}
               </div>
             ))}
             <dl className="grid grid-cols-[auto,1fr] gap-x-4 gap-y-1.5 text-sm">
               {fields.map((c) => (
                 <div key={c.key} className="col-span-2 flex items-baseline justify-between gap-4">
-                  <dt className="text-slate-500 dark:text-slate-400">{c.header}</dt>
+                  <dt className="text-muted">{c.header}</dt>
                   <dd className="text-right">{c.cell(row)}</dd>
                 </div>
               ))}

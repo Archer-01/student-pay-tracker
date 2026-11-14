@@ -17,6 +17,7 @@ import {
   PageHeader,
   Select,
 } from "../components/ui";
+import { usePaymentsVersion } from "../lib/paymentSheetContext";
 
 const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 
@@ -26,7 +27,9 @@ export function MonthlyReport() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1);
 
-  const state = useApi(() => getMonthlyReport(year, month), [year, month]);
+  // Refreshes after a payment taken from the shared sheet, wherever it was opened.
+  const paymentsVersion = usePaymentsVersion();
+  const state = useApi(() => getMonthlyReport(year, month), [year, month, paymentsVersion]);
 
   const [downloadError, setDownloadError] = useState<string | null>(null);
 

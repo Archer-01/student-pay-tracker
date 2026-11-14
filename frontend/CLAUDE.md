@@ -60,10 +60,10 @@ and the browser does the rest. Never send an `Authorization` header.
 - **Local dev needs `COOKIE_SECURE=false` on the backend.** Over plain http a `Secure` cookie is
   silently dropped, which presents as "login succeeds, then everything 401s".
 
-**Routing (`src/App.tsx`)** — React Router. All pages render inside `Layout` (`src/components/Layout.tsx`,
-the nav shell). Route pages live in `src/routes/` and are currently **stubs** awaiting implementation:
-`Dashboard`, `StudentsList`, `StudentDetail`, `EnrollStudent`, `MonthlyReport`. Each stub has a TODO
-comment naming the endpoint(s) it should call.
+**Routing (`src/App.tsx`)** — React Router. All pages render inside `Layout` (`src/components/Layout.tsx`),
+which has four places: Accueil `/`, Élèves `/students`, Bilan `/reports` (tabs: monthly, annual,
+`leavers`) and Réglages `/settings` (with `classes` and `prices` under it). Old paths (`/classes`,
+`/packs`, `/debts`) redirect, so keep those routes. Pages live in `src/routes/`.
 
 **Data fetching (`src/lib/useApi.ts`)** — `useApi(fetcher, deps)` runs an async fetch on mount / when deps
 change, returns a discriminated union (`loading | error | success`), and exposes `reload()` for
@@ -84,8 +84,10 @@ give it a `_one`/`_other` pair. French text follows French typography — a no-b
 before `: ; ? !` and inside `« »` — and `src/i18n/catalogues.test.ts` fails on a plain space there,
 or on a key present in only one catalogue. Don't pass `defaultValue` to `t()`: it hides a missing
 key from that test and from the setup's missing-key check, which is how an English "Close" once
-shipped in the French UI. `formatMoney` formats with the active locale (so fr renders
-`300,00`), but the value stays a string end to end.
+shipped in the French UI. `formatMoney` formats with the active locale and names the currency,
+dropping cents when there are none (`"240.00"` → `240 DH`, `"199.50"` → `199,50 DH` in French);
+the value stays a string end to end. The app opens in French unless someone picked English in
+Réglages — the phone's own language is deliberately not consulted.
 
 ## Domain rules the UI must respect
 
@@ -139,15 +141,61 @@ and `sm:` upward adds what a wider screen can afford. Concretely:
   card's heading) and anything that only earns its width in a table `wideOnly`. Both presentations
   sit in the DOM and CSS shows one, so tests must scope with `within(screen.getByRole("table"))`
   or they will find two of everything.
-- **The header is two rows on a phone**, one from `sm` up, and the nav scrolls sideways instead of
-  wrapping — six items wrapped into three lines ate a third of a 375px viewport.
+- **Navigation is a bottom bar on a phone and a side menu from `lg` up**, four items either way.
+  The old top bar was 602px wide on a 390px screen and hid two of its six items. Anything rare
+  (classes, prices, language, appearance, sign-out) goes under Réglages, not into the bar.
+- **Pages pad their bottom** for the tab bar; `Layout`'s `<main>` already does. Something fixed to
+  the bottom of the screen (a toast, a floating button) sits above it, safe-area inset included.
+- **Dialogs are bottom sheets on a phone** and centred panels from `sm` up (`Modal`).
 - **`PageHeader` stacks** its title and actions below `sm`.
+- **Lists are one line per person** on the rebuilt screens: initials, name, one grey line of facts
+  (months unpaid, lateness, class), and an `OwedPill` (`src/components/people.tsx`) on the right.
+  Put the amount in the pill and everything else in the grey line, or names get cut off.
 - **The packs grid stays a grid.** It is a six-level matrix whose entire purpose is comparison
   across a row; folding it into cards would destroy that, so it scrolls with the offering column
   pinned via `sticky left-0`.
 
 Anything with a fixed pixel width needs a `hidden sm:…` escape or it will push real content off a
 375px screen.
+
+## Look and feel
+
+The design tokens live in `src/index.css` (CSS variables, light and `.dark`) and are exposed to
+Tailwind in `tailwind.config.js` as semantic names: `brand`, `ground`, `surface`, `ink`, `muted`,
+`line`, and the status pairs `ok`/`warn`/`bad`/`off` (each with a `-soft` background). **New code uses
+those names.** `indigo` and `slate` are remapped to the brand and its neutrals only so that screens
+not yet rebuilt match; don't reach for them in new code.
+
+- **Status is colour plus words**: green "À jour", amber for one month owed, red for two or more,
+  grey "Sans tarif". Never colour alone.
+- **Type**: Atkinson Hyperlegible for text (built for legibility), Bricolage Grotesque
+  (`font-display`) for titles and big figures. Digits always come from Bricolage, through the
+  `Ardoise Digits` face in `index.css`, because Atkinson slashes its zero and "2Ø26" reads as a
+  serial number. Both are bundled via `@fontsource`; the app makes no request to Google.
+- **Base size is 17px** (`html { font-size: 106.25% }`), and tap targets are at least 44px
+  (`min-h-11`).
+- **Theme follows the device** unless someone chose light or dark in Réglages
+  (`lib/theme.tsx`; the pre-paint script in `index.html` mirrors the rule).
+
+## Taking a payment
+
+There is one payment sheet for the whole app, provided by `Layout` (`PaymentSheetProvider` in
+`src/components/PaymentSheet.tsx`). Open it with `usePaymentSheet().open(studentId?)`; without an id it
+starts on a student picker that lists the students who owe first. Don't build a second payment
+form. Screens that show money put `usePaymentSheet().version` in their `useApi` deps, so they
+refresh themselves after a payment taken from anywhere.
+
+The sheet opens filled in (`src/lib/paymentDefaults.ts`, with its own tests):
+
+- **Month**: the oldest unpaid month that is actually owed (months the student was away for are
+  skipped), with the next month offered last for paying in advance.
+- **Amount**: what the student paid last time, unless that is above their current price, in
+  which case the price. Not the price by default: several students pay less than their listed
+  price, and starting there invites the over-payment typo the backend cap exists for.
+- **Date**: today.
+
+Money stays a string throughout: `Number()` only compares, and the value sent is always one of
+the original strings (a French "199,5" is turned into "199.5" by a string edit).
 
 ## Dialogs
 

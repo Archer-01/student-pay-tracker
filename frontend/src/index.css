@@ -1,7 +1,80 @@
+@import "@fontsource/atkinson-hyperlegible/400.css";
+@import "@fontsource/atkinson-hyperlegible/700.css";
+@import "@fontsource-variable/bricolage-grotesque/index.css";
+
+/*
+ * Digits only, from Bricolage Grotesque. Atkinson Hyperlegible slashes its zero to tell it from
+ * the letter O, which is right for codes and wrong for "240 DH" and "2026": the teachers read
+ * amounts and dates all day, and a slashed zero makes them look like serial numbers. Listed first
+ * in the font stack, this face wins for 0-9 only (`unicode-range`); every letter stays Atkinson.
+ */
+@font-face {
+  font-family: "Ardoise Digits";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url("../node_modules/@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2")
+    format("woff2-variations");
+  unicode-range: U+0030-0039;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/*
+ * Semantic colour tokens. A status colour always travels with words ("À jour", or an amount on a
+ * row that also says how many months), never alone.
+ */
+:root {
+  --ground: #f3f6f5;
+  --surface: #ffffff;
+  --ink: #16201e;
+  --muted: #5f6c69;
+  --line: #dce3e1;
+  --brand: #1f4e4a;
+  --brand-soft: #e2eeec;
+  --brand-ink: #ffffff;
+  --ok: #1d7a4c;
+  --ok-soft: #e1f3e8;
+  --warn: #8f5300;
+  --warn-soft: #fdf0d9;
+  --bad: #ad2f27;
+  --bad-soft: #fbe5e2;
+  --off: #6b7875;
+  --off-soft: #eef1f0;
+}
+
+.dark {
+  --ground: #111615;
+  --surface: #19201f;
+  --ink: #e6ecea;
+  --muted: #9aa8a5;
+  --line: #2a3432;
+  --brand: #79bdb3;
+  --brand-soft: #1c2e2c;
+  --brand-ink: #0c1d1c;
+  --ok: #55c98d;
+  --ok-soft: #14301f;
+  --warn: #f0a53c;
+  --warn-soft: #33250d;
+  --bad: #f2786d;
+  --bad-soft: #3a1714;
+  --off: #8e9c99;
+  --off-soft: #222b29;
+}
+
+/* 17px base: the teachers read this on a phone, often at arm's length. Everything sized in rem
+   (text, spacing, tap targets) grows with it. */
+html {
+  font-size: 106.25%;
+}
+
 body {
-  @apply bg-slate-50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+  @apply bg-ground font-sans text-ink antialiased;
+}
+
+h1,
+h2 {
+  text-wrap: balance;
 }

@@ -9,7 +9,12 @@
     "classes": "Classes",
     "packs": "Packs",
     "annual": "Year",
-    "debts": "Owed"
+    "debts": "Owed",
+    "label": "Main navigation",
+    "home": "Home",
+    "reports": "Money",
+    "settings": "Settings",
+    "pay": "Record payment"
   },
   "pages": {
     "dashboard": "Dashboard",
@@ -338,5 +343,74 @@
     "usernameRequired": "Enter your username",
     "passwordRequired": "Enter your password",
     "expired": "Your session expired. Please sign in again."
+  },
+  "reports": {
+    "tabs": {
+      "month": "Month",
+      "year": "Year",
+      "leavers": "Left owing"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "signedIn": "Signed in on this device",
+    "school": "School",
+    "prices": "Pack prices",
+    "classes": "Classes",
+    "app": "App",
+    "appearance": "Appearance",
+    "languages": {
+      "fr": "Français",
+      "en": "English"
+    },
+    "themes": {
+      "system": "Match device",
+      "light": "Light",
+      "dark": "Dark"
+    }
+  },
+  "home": {
+    "greeting": "Hello {{name}}",
+    "collected": "Collected this month",
+    "outstanding": "Owed as of {{date}}",
+    "pay": "Record a payment",
+    "chase": "Who to chase",
+    "chaseOrder": "Most owed first",
+    "allPaid": "Everyone is up to date.",
+    "lateTotal_one": "{{count}} day late",
+    "lateTotal_other": "{{count}} days late",
+    "attention": "Needs attention",
+    "noPrice": "{{name}} has no price, so nothing is being charged.",
+    "choosePack": "Choose a pack",
+    "leftNoDate": "{{name}} is marked as gone but has no departure date, so billing continues.",
+    "fix": "Fix",
+    "leavers": "Left owing",
+    "leaversCount_one": "{{count}} former student",
+    "leaversCount_other": "{{count}} former students"
+  },
+  "owed": {
+    "paidUp": "Up to date",
+    "noPrice": "No price",
+    "monthsUnpaid_one": "{{count}} month unpaid",
+    "monthsUnpaid_other": "{{count}} months unpaid"
+  },
+  "pay": {
+    "title": "Record a payment",
+    "pickStudent": "Which student?",
+    "searchStudent": "Search for a student",
+    "owes_one": "Owes {{count}} month · {{amount}}",
+    "owes_other": "Owes {{count}} months · {{amount}}",
+    "upToDate": "Up to date",
+    "change": "Change",
+    "month": "Month paid",
+    "inAdvance": "in advance",
+    "amountHintRepeat": "Same as last time · up to {{price}}",
+    "amountHintFirst": "Monthly price: {{price}}",
+    "paidOn": "Paid on",
+    "today": "Today",
+    "otherDate": "Another date",
+    "submit": "Record {{amount}}",
+    "submitEmpty": "Record",
+    "done": "Payment recorded: {{amount}} for {{name}}"
   }
 }

@@ -1,82 +1,118 @@
+import type { ComponentType, SVGProps } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LanguageSwitcher } from "./LanguageSwitcher";
-import { ThemeToggle } from "./ThemeToggle";
-import { SignOutButton } from "./SignOutButton";
+import { useAuth } from "../lib/authContext";
+import { usePaymentSheet } from "../lib/paymentSheetContext";
+import { ChartIcon, HomeIcon, PlusIcon, SettingsIcon, StudentsIcon } from "./icons";
+import { PaymentSheetProvider } from "./PaymentSheet";
 
 /**
- * Destinations only, in the order the work happens: who you teach, what you charge, what came in,
- * what's still owed.
+ * Four places, in the order the work happens: today, the students, the money, and the things set
+ * up once a year. Classes, prices, language and sign-out live under Réglages rather than in the
+ * bar, because a teacher touches them a few times a year, not a few times a day.
  *
- * "Enrol a student" used to sit here, between Packs and Reports. It is an *action*, not a place,
- * and it now lives as the primary button on the students page — which is where you already are
- * when you need it. The two report pages collapsed into one entry with tabs inside, for the same
- * reason a nav bar shouldn't enumerate a page's sub-views.
+ * On a phone the four sit at the bottom, under the thumb, and always fit: the old top bar was
+ * 602px wide on a 390px screen and hid two of its six items. From `lg` up they become a side menu.
  */
-const navItems = [
-  { to: "/", key: "dashboard", end: true },
-  { to: "/students", key: "students", end: false },
-  { to: "/classes", key: "classes", end: false },
-  { to: "/packs", key: "packs", end: false },
-  { to: "/reports", key: "report", end: false },
-  { to: "/debts", key: "debts", end: false },
-] as const;
+const navItems: {
+  to: string;
+  key: string;
+  icon: ComponentType<SVGProps<SVGSVGElement>>;
+  end?: boolean;
+}[] = [
+  { to: "/", key: "home", icon: HomeIcon, end: true },
+  { to: "/students", key: "students", icon: StudentsIcon },
+  { to: "/reports", key: "reports", icon: ChartIcon },
+  { to: "/settings", key: "settings", icon: SettingsIcon },
+];
 
 export function Layout() {
+  return (
+    <PaymentSheetProvider>
+      <Shell />
+    </PaymentSheetProvider>
+  );
+}
+
+function Shell() {
   const { t } = useTranslation();
+  const { user } = useAuth();
+  const payments = usePaymentSheet();
 
   return (
-    <div className="min-h-screen">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-        {/* Two rows on a phone, one from `sm` up. Wrapping six nav items into three lines ate a
-            third of a 375px viewport before anything useful appeared. */}
-        <div className="mx-auto max-w-5xl px-4 py-3 sm:flex sm:items-center sm:justify-between sm:gap-3 sm:px-6 sm:py-4">
-          <div className="flex items-center justify-between gap-3">
-            <span className="font-semibold text-slate-900 dark:text-slate-100">
-              {t("app.title")}
-            </span>
-            {/* Theme and language sit on the title row on a phone, where the nav row is already
-                full, and rejoin the nav on wider screens. */}
-            <span className="flex items-center gap-2 sm:hidden">
-              <ThemeToggle />
-              <LanguageSwitcher />
-              <SignOutButton />
-            </span>
-          </div>
-          {/* Scrolls sideways rather than wrapping: one predictable row, and the active item is
-              always where you left it. `-mx-4 px-4` lets it bleed to the screen edge. */}
-          <nav className="-mx-4 mt-2 flex items-center gap-1 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
-            {navItems.map((item) => (
-              <NavLink
-                key={item.to}
-                to={item.to}
-                end={item.end}
-                className={({ isActive }) =>
-                  `shrink-0 rounded-md px-3 py-2 text-sm font-medium ${
-                    isActive
-                      ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300"
-                      : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                  }`
-                }
-              >
-                {t(`nav.${item.key}`)}
-              </NavLink>
-            ))}
-            <span className="ml-2 hidden sm:inline-flex">
-              <ThemeToggle />
-            </span>
-            <span className="ml-2 hidden sm:inline-flex">
-              <LanguageSwitcher />
-            </span>
-            <span className="ml-2 hidden sm:inline-flex">
-              <SignOutButton />
-            </span>
-          </nav>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-8">
+    <div className="min-h-screen lg:pl-64">
+      <aside className="hidden border-r border-line bg-surface px-4 py-6 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
+        <span className="px-3 font-display text-2xl font-extrabold tracking-tight text-brand">
+          {t("app.title")}
+        </span>
+        <nav aria-label={t("nav.label")} className="mt-8 flex flex-col gap-1">
+          {navItems.map(({ to, key, icon: Icon, end }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={end}
+              className={({ isActive }) =>
+                `flex items-center gap-3 rounded-xl px-3 py-3 font-bold transition-colors ${
+                  isActive ? "bg-brand-soft text-brand" : "text-muted hover:bg-ground hover:text-ink"
+                }`
+              }
+            >
+              <Icon className="h-5 w-5" />
+              {t(`nav.${key}`)}
+            </NavLink>
+          ))}
+        </nav>
+        {/* On a computer the most frequent job sits in the menu itself, one click from any page. */}
+        <button
+          type="button"
+          onClick={() => payments.open()}
+          className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90"
+        >
+          <PlusIcon className="h-5 w-5" />
+          {t("nav.pay")}
+        </button>
+        {user && (
+          <p className="mt-auto px-3 text-sm text-muted">
+            {t("auth.signedInAs", { name: user.display_name })}
+          </p>
+        )}
+      </aside>
+
+      {/* Bottom padding clears the tab bar on a phone, safe-area inset included. */}
+      <main className="mx-auto max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-10">
         <Outlet />
       </main>
+
+      <nav
+        aria-label={t("nav.label")}
+        className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t border-line bg-surface pb-[env(safe-area-inset-bottom)] lg:hidden"
+      >
+        {navItems.map(({ to, key, icon: Icon, end }) => (
+          <NavLink
+            key={to}
+            to={to}
+            end={end}
+            className={({ isActive }) =>
+              `flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-bold ${
+                isActive ? "text-brand" : "text-muted"
+              }`
+            }
+          >
+            {({ isActive }) => (
+              <>
+                <span
+                  className={`flex h-8 w-14 items-center justify-center rounded-full ${
+                    isActive ? "bg-brand-soft" : ""
+                  }`}
+                >
+                  <Icon className="h-[22px] w-[22px]" />
+                </span>
+                {t(`nav.${key}`)}
+              </>
+            )}
+          </NavLink>
+        ))}
+      </nav>
     </div>
   );
 }

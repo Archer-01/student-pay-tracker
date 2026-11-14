@@ -2,7 +2,6 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, PasswordField, TextField } from "../components/ui";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
-import { ThemeToggle } from "../components/ThemeToggle";
 import { resolveErrorMessage } from "../lib/errors";
 import { useAuth } from "../lib/authContext";
 
@@ -58,7 +57,6 @@ export function Login() {
             {t("app.title")}
           </span>
           <span className="flex items-center gap-2">
-            <ThemeToggle />
             <LanguageSwitcher />
           </span>
         </div>

@@ -11,8 +11,8 @@ type Tone = "normal" | "alert";
  * attribute, so passing `bg-amber-50` alongside the default `bg-white` is a coin flip.
  */
 const tones: Record<Tone, string> = {
-  normal: "border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900",
-  alert: "border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/40",
+  normal: "border-line bg-surface",
+  alert: "border-transparent bg-warn-soft text-warn",
 };
 
 export function Card({
@@ -28,7 +28,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`overflow-hidden rounded-lg border ${tones[tone]} ${padded ? "p-5" : ""} ${className}`}
+      className={`overflow-hidden rounded-2xl border ${tones[tone]} ${padded ? "p-4 sm:p-5" : ""} ${className}`}
     >
       {children}
     </div>

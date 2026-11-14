@@ -6,7 +6,7 @@ export function LanguageSwitcher() {
 
   return (
     <div
-      className="flex items-center gap-0.5 rounded-md border border-slate-200 p-0.5 dark:border-slate-700"
+      className="flex items-center gap-1 rounded-xl bg-surface p-1 ring-1 ring-line"
       aria-label={t("language.label")}
     >
       {SUPPORTED_LOCALES.map((lng) => (
@@ -14,10 +14,8 @@ export function LanguageSwitcher() {
           key={lng}
           onClick={() => i18n.changeLanguage(lng)}
           aria-pressed={i18n.language === lng}
-          className={`rounded px-2 py-1 text-xs font-medium uppercase ${
-            i18n.language === lng
-              ? "bg-indigo-600 text-white"
-              : "text-slate-500 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800"
+          className={`min-h-11 min-w-11 rounded-lg px-3 text-sm font-bold uppercase ${
+            i18n.language === lng ? "bg-brand text-brand-ink" : "text-muted hover:text-ink"
           }`}
         >
           {lng}

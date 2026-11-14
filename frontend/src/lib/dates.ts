@@ -13,3 +13,9 @@ export function formatMonth(ym: string): string {
   if (Number.isNaN(d.getTime())) return ym;
   return new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(d);
 }
+
+/** "2026-11" → "Novembre 2026": `formatMonth`, capitalised to stand alone as a title or a choice. */
+export function formatMonthTitle(ym: string): string {
+  const text = formatMonth(ym);
+  return text.charAt(0).toLocaleUpperCase(i18n.language) + text.slice(1);
+}

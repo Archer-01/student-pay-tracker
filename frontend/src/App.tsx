@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Layout } from "./components/Layout";
 import { LoadingState } from "./components/ui";
@@ -15,6 +15,7 @@ import { PacksGrid } from "./routes/PacksGrid";
 import { AnnualReport } from "./routes/AnnualReport";
 import { LeaversWithDebt } from "./routes/LeaversWithDebt";
 import { NotFound } from "./routes/NotFound";
+import { Settings } from "./routes/Settings";
 
 /**
  * The gate. Signed out, the only thing that renders is the login screen — including for a deep
@@ -40,17 +41,30 @@ export default function App() {
         <Route path="students" element={<StudentsList />} />
         <Route path="students/new" element={<EnrollStudent />} />
         <Route path="students/:id" element={<StudentDetail />} />
-        <Route path="classes" element={<ClassesList />} />
-        <Route path="classes/:id" element={<ClassDetail />} />
-        <Route path="packs" element={<PacksGrid />} />
-        {/* /reports is the nav destination so both report views highlight it; the month view
-            is the one you want nine times out of ten. */}
+
+        {/* Bilan: the month is the view you want nine times out of ten. */}
         <Route path="reports" element={<Navigate to="/reports/monthly" replace />} />
         <Route path="reports/monthly" element={<MonthlyReport />} />
         <Route path="reports/annual" element={<AnnualReport />} />
-        <Route path="debts" element={<LeaversWithDebt />} />
+        <Route path="reports/leavers" element={<LeaversWithDebt />} />
+
+        <Route path="settings" element={<Settings />} />
+        <Route path="settings/classes" element={<ClassesList />} />
+        <Route path="settings/classes/:id" element={<ClassDetail />} />
+        <Route path="settings/prices" element={<PacksGrid />} />
+
+        {/* Where these pages used to live, so bookmarks and muscle memory still land. */}
+        <Route path="classes" element={<Navigate to="/settings/classes" replace />} />
+        <Route path="classes/:id" element={<LegacyClassRedirect />} />
+        <Route path="packs" element={<Navigate to="/settings/prices" replace />} />
+        <Route path="debts" element={<Navigate to="/reports/leavers" replace />} />
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   );
+}
+
+function LegacyClassRedirect() {
+  const { id } = useParams();
+  return <Navigate to={`/settings/classes/${id}`} replace />;
 }

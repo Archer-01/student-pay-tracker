@@ -6,20 +6,30 @@ import { slugify } from "./slug";
 import { CLASS_LEVELS, classLabel } from "./classes";
 
 describe("formatMoney", () => {
-  it("always shows two decimal places", () => {
-    expect(formatMoney("300")).toBe("300.00");
-    expect(formatMoney("300.5")).toBe("300.50");
+  it("says DH, and drops cents when there are none", () => {
+    // Fees are whole dirhams; "240,00" reads as noise to the teacher, "240 DH" reads as money.
+    expect(formatMoney("300")).toBe("300\u00a0DH");
+    expect(formatMoney("300.00")).toBe("300\u00a0DH");
+  });
+
+  it("keeps cents when there are some", () => {
+    expect(formatMoney("300.5")).toBe("300.50\u00a0DH");
+    expect(formatMoney("12.05")).toBe("12.05\u00a0DH");
   });
 
   it("follows the active locale", async () => {
     await i18n.changeLanguage("fr");
-    // French uses a comma for the decimal separator; the teacher reads these numbers.
-    expect(formatMoney("300.00")).toContain(",");
-    expect(formatMoney("300.00")).not.toContain(".");
+    // A decimal comma, and digits grouped by a space the line can't break at.
+    expect(formatMoney("300.50")).toBe("300,50\u00a0DH");
+    expect(formatMoney("1234")).toMatch(/^1\s234\u00a0DH$/u);
   });
 
   it("renders zero rather than an empty string", () => {
-    expect(formatMoney("0")).toBe("0.00");
+    expect(formatMoney("0")).toBe("0\u00a0DH");
+  });
+
+  it("can leave the currency off, for a figure inside a sentence that already says it", () => {
+    expect(formatMoney("240.00", { currency: false })).toBe("240");
   });
 });
 

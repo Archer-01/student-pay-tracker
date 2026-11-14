@@ -1,196 +1,179 @@
-import { type ReactNode } from "react";
+import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getDashboardSummary } from "../api/endpoints";
-import type { StudentDigest } from "../api/types";
+import type { DashboardSummary } from "../api/types";
 import { useApi } from "../lib/useApi";
+import { AuthContext } from "../lib/authContext";
+import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { formatMoney } from "../lib/money";
-import { formatDate } from "../lib/dates";
-import { DriftBadge } from "../components/DriftBadge";
-import { AsyncView, Card, PageHeader } from "../components/ui";
+import { formatDate, formatMonthTitle } from "../lib/dates";
+import { AsyncView, Button } from "../components/ui";
+import { Avatar, OwedPill } from "../components/people";
+import { CheckIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
 
 /**
- * The landing page answers two questions, in this order: **who do I chase**, and **what is
- * quietly wrong**.
+ * Accueil: this month's money, one button to take a payment, then who to chase, worst first.
+ * Each row is one line (who, how late, what they owe) and opens the student.
  *
- * It used to rank students by drift — cumulative days late. Drift is the metric this product is
- * built on and still sits on every row, but it is the wrong thing to sort a worklist by: someone
- * with 25 days of drift who is fully paid up needs nothing, while someone who has never paid at
- * all has no drift whatsoever and owes a fortune. Money leads; drift breaks ties.
+ * Former students who left owing get a quiet link to Bilan rather than a tile of their own: they
+ * are worth knowing about, not worth the top of the screen every morning.
  */
 export function Dashboard() {
   const { t } = useTranslation();
-  // 100 is the backend's max top-N and covers the whole roster (~20–30 students).
-  const state = useApi(() => getDashboardSummary({ limit: 100 }), []);
+  const payments = usePaymentSheet();
+  // Read without `useAuth` so the screen renders in isolation (tests); signed out never gets here.
+  const user = useContext(AuthContext)?.user;
+  const state = useApi(() => getDashboardSummary({ limit: 100 }), [payments.version]);
 
   return (
-    <div>
-      <PageHeader title={t("pages.dashboard")} />
+    <AsyncView state={state} onRetry={state.reload}>
+      {(data) => (
+        <div className="flex flex-col gap-6">
+          <header>
+            {user && <p className="text-muted">{t("home.greeting", { name: user.display_name })}</p>}
+            <h1 className="font-display text-3xl font-extrabold tracking-tight">
+              {formatMonthTitle(data.as_of.slice(0, 7))}
+            </h1>
+          </header>
 
-      <AsyncView state={state} onRetry={state.reload}>
-        {(data) => (
-          <>
-            <p className="-mt-4 mb-6 text-sm text-slate-400 dark:text-slate-500">
-              {t("dashboard.asOf", { date: formatDate(data.as_of) })} ·{" "}
-              {t("dashboard.activeStudents", { count: data.active_students })}
-            </p>
+          <section className="grid grid-cols-2 gap-3">
+            <Figure label={t("home.collected")} value={formatMoney(data.total_collected_this_month)} />
+            <Figure
+              label={t("home.outstanding", { date: formatDate(data.as_of) })}
+              value={formatMoney(data.total_outstanding)}
+              alarming={Number(data.total_outstanding) > 0}
+            />
+          </section>
 
-            <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-3">
-              <StatTile label={t("dashboard.collectedThisMonth")}>
-                {formatMoney(data.total_collected_this_month)}
-              </StatTile>
-              <StatTile label={t("dashboard.totalOutstanding")}>
-                {formatMoney(data.total_outstanding)}
-              </StatTile>
-              {/* Kept apart from the figure above, which covers students still attending:
-                  chasing someone who already left is a different conversation. Only rendered
-                  when there is something to chase. */}
-              {/* focus-visible rather than a bare outline-none: this tile is a link, and
-                  removing the outline without replacing it hides it from keyboard users. */}
-              {data.leavers_with_debt > 0 && (
-                <Link
-                  to="/debts"
-                  className="block rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-950"
-                >
-                  <StatTile label={t("debts.onDashboard")} tone="alert">
-                    {formatMoney(data.owed_by_leavers)}
-                    <span className="ml-2 text-sm font-normal text-slate-400">
-                      ({data.leavers_with_debt})
-                    </span>
-                  </StatTile>
-                </Link>
+          {/* The side menu carries this button on a computer. */}
+          <Button onClick={() => payments.open()} className="min-h-14 w-full text-lg lg:hidden">
+            <PlusIcon className="h-5 w-5" />
+            {t("home.pay")}
+          </Button>
+
+          <Attention data={data} />
+
+          <section className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between">
+              <h2 id="chase-heading" className="text-lg font-bold">
+                {t("home.chase")}
+              </h2>
+              {data.top_debtors.length > 0 && (
+                <span className="text-sm text-muted">{t("home.chaseOrder")}</span>
               )}
             </div>
-
-            {/* Problems that raise no error and produce no bill. Absent entirely when there are
-                none, so a healthy database shows a clean page rather than a row of green ticks. */}
-            <Attention
-              unbilled={data.unbilled_students}
-              missingLeaveDate={data.missing_leave_date}
-            />
-
-            <Card padded={false}>
-              <div className="flex items-baseline justify-between border-b border-slate-200 px-5 py-3 dark:border-slate-800">
-                <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {t("dashboard.whoToChase")}
-                </h2>
-                <span className="text-xs text-slate-400 dark:text-slate-500">
-                  {t("dashboard.rankedByOwed")}
-                </span>
-              </div>
-              {data.top_debtors.length === 0 ? (
-                <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">
-                  {t("dashboard.empty")}
-                </p>
-              ) : (
-                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {data.top_debtors.map((s) => (
-                    <li
-                      key={s.student_id}
-                      className="flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3"
+            {data.top_debtors.length === 0 ? (
+              <p className="flex items-center gap-2 rounded-2xl bg-ok-soft p-4 font-bold text-ok">
+                <CheckIcon className="h-5 w-5" />
+                {t("home.allPaid")}
+              </p>
+            ) : (
+              <ul
+                aria-labelledby="chase-heading"
+                className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+              >
+                {data.top_debtors.map((d) => (
+                  <li key={d.student_id}>
+                    <Link
+                      to={`/students/${d.student_id}`}
+                      className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground"
                     >
-                      <div className="min-w-0 flex-1">
-                        <Link
-                          to={`/students/${s.student_id}`}
-                          className="text-sm font-medium text-slate-900 hover:underline dark:text-slate-100"
-                        >
-                          {s.name}
-                        </Link>
-                        {s.class_label && (
-                          <span className="ml-2 text-xs text-slate-400 dark:text-slate-500">
-                            {s.class_label}
-                          </span>
-                        )}
-                      </div>
-                      <span className="text-xs text-slate-500 dark:text-slate-400">
-                        {t("dashboard.monthsBehind", { count: s.months_overdue })}
+                      <Avatar name={d.name} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate font-bold">{d.name}</span>
+                        <span className="block truncate text-sm text-muted">
+                          {[
+                            t("owed.monthsUnpaid", { count: d.months_overdue }),
+                            d.cumulative_drift > 0 ? t("home.lateTotal", { count: d.cumulative_drift }) : null,
+                            d.class_label,
+                          ]
+                            .filter(Boolean)
+                            .join(" · ")}
+                        </span>
                       </span>
-                      <DriftBadge drift={s.cumulative_drift} />
-                      <span className="w-24 text-right text-sm font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-                        {formatMoney(s.amount_owed)}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card>
-          </>
-        )}
-      </AsyncView>
+                      <OwedPill
+                        monthsOverdue={d.months_overdue}
+                        amountOwed={d.amount_owed}
+                        monthlyPrice={d.monthly_price}
+                      />
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {data.leavers_with_debt > 0 && (
+            <Link
+              to="/reports/leavers"
+              className="flex min-h-14 items-center gap-3 rounded-2xl border border-line bg-surface px-4 py-3 hover:bg-ground"
+            >
+              <span className="flex-1">
+                <span className="block font-bold">{t("home.leavers")}</span>
+                <span className="block text-sm text-muted">
+                  {t("home.leaversCount", { count: data.leavers_with_debt })}
+                </span>
+              </span>
+              <span className="rounded-full bg-bad-soft px-3 py-1 text-sm font-bold text-bad">
+                {formatMoney(data.owed_by_leavers)}
+              </span>
+              <ChevronRightIcon className="h-5 w-5 text-muted" />
+            </Link>
+          )}
+        </div>
+      )}
+    </AsyncView>
+  );
+}
+
+function Figure({ label, value, alarming = false }: { label: string; value: string; alarming?: boolean }) {
+  return (
+    <div className="flex flex-col justify-between gap-1 rounded-2xl border border-line bg-surface p-4">
+      <span className="text-sm text-muted">{label}</span>
+      <span
+        className={`font-display text-2xl font-extrabold tabular-nums tracking-tight sm:text-3xl ${
+          alarming ? "text-bad" : "text-ink"
+        }`}
+      >
+        {value}
+      </span>
     </div>
   );
 }
 
-function Attention({
-  unbilled,
-  missingLeaveDate,
-}: {
-  unbilled: StudentDigest[];
-  missingLeaveDate: StudentDigest[];
-}) {
+/**
+ * Data problems that quietly cost money, each with the button that fixes it. Hidden entirely
+ * when there is nothing to fix, so its appearance means something.
+ */
+function Attention({ data }: { data: DashboardSummary }) {
   const { t } = useTranslation();
-  if (unbilled.length === 0 && missingLeaveDate.length === 0) return null;
-
+  const items = [
+    ...data.unbilled_students.map((s) => ({
+      id: s.student_id,
+      text: t("home.noPrice", { name: s.name }),
+      action: t("home.choosePack"),
+    })),
+    ...data.missing_leave_date.map((s) => ({
+      id: s.student_id,
+      text: t("home.leftNoDate", { name: s.name }),
+      action: t("home.fix"),
+    })),
+  ];
+  if (items.length === 0) return null;
   return (
-    <Card tone="alert" className="mb-6">
-      <h2 className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-        {t("dashboard.attention")}
-      </h2>
-      <ul className="mt-2 space-y-1.5 text-sm text-amber-900 dark:text-amber-200">
-        {unbilled.length > 0 && (
-          <AttentionRow
-            message={t("dashboard.unbilled", { count: unbilled.length })}
-            students={unbilled}
-          />
-        )}
-        {missingLeaveDate.length > 0 && (
-          <AttentionRow
-            message={t("dashboard.missingLeaveDate", { count: missingLeaveDate.length })}
-            students={missingLeaveDate}
-          />
-        )}
+    <section className="flex flex-col gap-2 rounded-2xl bg-warn-soft p-4 text-warn">
+      <h2 className="font-bold">{t("home.attention")}</h2>
+      <ul className="flex flex-col gap-2">
+        {items.map((item) => (
+          <li key={`${item.id}-${item.action}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+            <span className="text-ink">{item.text}</span>
+            <Link to={`/students/${item.id}`} className="min-h-11 content-center font-bold underline">
+              {item.action}
+            </Link>
+          </li>
+        ))}
       </ul>
-    </Card>
-  );
-}
-
-function AttentionRow({ message, students }: { message: string; students: StudentDigest[] }) {
-  return (
-    <li>
-      {message}{" "}
-      {students.map((s, i) => (
-        <span key={s.student_id}>
-          {i > 0 && ", "}
-          <Link to={`/students/${s.student_id}`} className="underline underline-offset-2">
-            {s.name}
-          </Link>
-        </span>
-      ))}
-    </li>
-  );
-}
-
-function StatTile({
-  label,
-  children,
-  tone = "normal",
-}: {
-  label: string;
-  children: ReactNode;
-  tone?: "normal" | "alert";
-}) {
-  return (
-    <Card>
-      <p className="text-sm text-slate-500 dark:text-slate-400">{label}</p>
-      <p
-        className={`mt-1 text-2xl font-semibold tabular-nums ${
-          tone === "alert"
-            ? "text-rose-700 dark:text-rose-400"
-            : "text-slate-900 dark:text-slate-100"
-        }`}
-      >
-        {children}
-      </p>
-    </Card>
+    </section>
   );
 }

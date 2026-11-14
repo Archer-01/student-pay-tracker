@@ -21,6 +21,7 @@ import {
   TextField,
 } from "../components/ui";
 import { updateClass } from "../api/endpoints";
+import { usePaymentsVersion } from "../lib/paymentSheetContext";
 
 export function ClassDetail() {
   const { id } = useParams();
@@ -29,9 +30,11 @@ export function ClassDetail() {
 
   // Two reads rather than one: the roster is the existing students endpoint filtered by class,
   // so there is a single representation of "a list of students" across the app.
+  // Refreshes after a payment taken from the shared sheet, wherever it was opened.
+  const paymentsVersion = usePaymentsVersion();
   const state = useApi(
     () => Promise.all([getClass(classId), listStudents({ class_id: classId })]),
-    [classId],
+    [classId, paymentsVersion],
   );
 
   return (
@@ -42,7 +45,7 @@ export function ClassDetail() {
             schoolClass={schoolClass}
             roster={roster}
             onChanged={state.reload}
-            onDeleted={() => navigate("/classes")}
+            onDeleted={() => navigate("/settings/classes")}
           />
         )}
       </AsyncView>
@@ -102,7 +105,7 @@ function ClassView({
   return (
     <>
       <Link
-        to="/classes"
+        to="/settings/classes"
         className="mb-2 inline-block text-sm text-slate-500 hover:underline dark:text-slate-400"
       >
         ← {t("classes.backToClasses")}
