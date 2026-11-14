@@ -5,6 +5,7 @@ import { useAuth } from "../lib/authContext";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { ChartIcon, HomeIcon, PlusIcon, SettingsIcon, StudentsIcon } from "./icons";
 import { PaymentSheetProvider } from "./PaymentSheet";
+import { Logo } from "./Logo";
 
 /**
  * Four places, in the order the work happens: today, the students, the money, and the things set
@@ -44,7 +45,8 @@ function Shell() {
     // taller than a phone's visible area while the address bar shows, adding a scroll for nothing.
     <div className="lg:pl-64">
       <aside className="hidden border-r border-line bg-surface px-4 py-6 lg:fixed lg:inset-y-0 lg:left-0 lg:flex lg:w-64 lg:flex-col">
-        <span className="px-3 font-display text-2xl font-extrabold tracking-tight text-brand">
+        <span className="flex items-center gap-2.5 px-3 font-display text-2xl font-extrabold tracking-tight text-brand">
+          <Logo />
           {t("app.title")}
         </span>
         <nav aria-label={t("nav.label")} className="mt-8 flex flex-col gap-1">

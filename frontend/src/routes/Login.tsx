@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Card, PasswordField, TextField } from "../components/ui";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
+import { Logo } from "../components/Logo";
 import { resolveErrorMessage } from "../lib/errors";
 import { useAuth } from "../lib/authContext";
 
@@ -57,7 +58,10 @@ export function Login() {
         <div className="mb-6 flex items-center justify-between">
           {/* The page's heading: the card itself has no title, since "Se connecter" on the
               button already says what it is for. */}
-          <h1 className="font-display text-2xl font-extrabold tracking-tight text-brand">{t("app.title")}</h1>
+          <h1 className="flex items-center gap-2.5 font-display text-2xl font-extrabold tracking-tight text-brand">
+            <Logo className="h-10 w-10" />
+            {t("app.title")}
+          </h1>
           <span className="flex items-center gap-2">
             <LanguageSwitcher />
           </span>
