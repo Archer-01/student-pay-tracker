@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { deleteClass, downloadClassRoster, getClass, listStudents } from "../api/endpoints";
 import type { ClassDetailOut, StudentListItem } from "../api/types";
 import { useApi } from "../lib/useApi";
+import { useReadOnly } from "../lib/connectivity";
 import { useMutation } from "../lib/useMutation";
 import { resolveErrorMessage } from "../lib/errors";
 import { classLabel } from "../lib/classes";
@@ -62,6 +63,7 @@ function ClassView({
   const [actionError, setActionError] = useState<string | null>(null);
   const remove = useMutation(deleteClass);
   const moneyFacts = useMoneyFacts();
+  const readOnly = useReadOnly();
   const label = classLabel(schoolClass);
 
   async function handleDelete() {
@@ -96,13 +98,15 @@ function ClassView({
       </header>
 
       {/* Pre-fills (and shows) the class on the enrolment form, never silently. */}
-      <Link
-        to={`/students/new?class_id=${schoolClass.id}`}
-        className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 font-bold text-brand-ink hover:opacity-90 sm:self-start"
-      >
-        <PlusIcon className="h-5 w-5" />
-        {t("classes.addStudent")}
-      </Link>
+      {!readOnly && (
+        <Link
+          to={`/students/new?class_id=${schoolClass.id}`}
+          className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-5 font-bold text-brand-ink hover:opacity-90 sm:self-start"
+        >
+          <PlusIcon className="h-5 w-5" />
+          {t("classes.addStudent")}
+        </Link>
+      )}
 
       {renaming && (
         <RenameClassModal
@@ -139,7 +143,7 @@ function ClassView({
       )}
 
       <div className="flex flex-col gap-2 sm:flex-row">
-        <Button variant="secondary" onClick={() => setRenaming(true)}>
+        <Button variant="secondary" onClick={() => setRenaming(true)} disabled={readOnly}>
           {t("classes.rename")}
         </Button>
         <Button
@@ -153,7 +157,13 @@ function ClassView({
       {/* Alone at the bottom, away from the everyday buttons: deleting is rare and needs the
           class to be empty first. */}
       <div className="flex flex-col gap-2 border-t border-line pt-5">
-        <Button variant="ghost" onClick={handleDelete} pending={remove.status === "pending"} className="text-bad sm:self-start">
+        <Button
+          variant="ghost"
+          onClick={handleDelete}
+          pending={remove.status === "pending"}
+          disabled={readOnly}
+          className="text-bad sm:self-start"
+        >
           {t("classes.delete")}
         </Button>
         {actionError && <p className="text-sm font-bold text-bad">{actionError}</p>}

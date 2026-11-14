@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { createClass, listClasses } from "../api/endpoints";
 import type { ClassLevel } from "../api/types";
 import { useApi } from "../lib/useApi";
+import { useReadOnly } from "../lib/connectivity";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { CLASS_LEVELS } from "../lib/classes";
@@ -17,6 +18,7 @@ import { ChevronLeftIcon, ChevronRightIcon, PlusIcon } from "../components/icons
 export function ClassesList() {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
+  const readOnly = useReadOnly();
   const state = useApi(() => listClasses(), []);
 
   return (
@@ -27,7 +29,7 @@ export function ClassesList() {
       </Link>
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("pages.classes")}</h1>
-        <Button onClick={() => setCreating(true)}>
+        <Button onClick={() => setCreating(true)} disabled={readOnly}>
           <PlusIcon className="h-5 w-5" />
           {t("classes.create")}
         </Button>

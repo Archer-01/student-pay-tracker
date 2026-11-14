@@ -6,6 +6,7 @@ import { useApi } from "../lib/useApi";
 import { useDebounced } from "../lib/useDebounced";
 import { formatMoney } from "../lib/money";
 import { PaymentSheetContext } from "../lib/paymentSheetContext";
+import { connectivity } from "../lib/connectivity";
 import { AsyncView, Modal } from "./ui";
 import { Avatar, OwedPill } from "./people";
 import { SearchIcon } from "./icons";
@@ -25,8 +26,11 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<{ message: string; leaving: boolean } | null>(null);
 
   const open = useCallback(
-    (studentId?: number, month?: string) =>
-      setSheet({ open: true, studentId, month, pickedHere: studentId === undefined }),
+    (studentId?: number, month?: string) => {
+      // Read only offline: a payment couldn't be saved, so don't let one be typed in.
+      if (connectivity().mode !== "live") return;
+      setSheet({ open: true, studentId, month, pickedHere: studentId === undefined });
+    },
     [],
   );
   const close = useCallback(() => setSheet({ open: false }), []);

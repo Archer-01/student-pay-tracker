@@ -176,4 +176,46 @@ describe("AuthProvider — distinguishing an interrupted session from being sign
     await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("signed-out"));
     expect(screen.getByTestId("expired")).toHaveTextContent("-");
   });
+
+  describe("the offline copy of the data", () => {
+    // The phone keeps the last data each screen showed, for offline use. It must never outlive
+    // the session it belongs to, or one account's students could show for another.
+    let deleted: string[];
+    beforeEach(() => {
+      deleted = [];
+      vi.stubGlobal("caches", { delete: vi.fn(async (name: string) => (deleted.push(name), true)) });
+    });
+
+    it("is wiped on sign-out", async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse(TEACHER))
+        .mockResolvedValueOnce(new Response(null, { status: 204 }));
+      renderProbe();
+      await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("Aymen"));
+      await userEvent.click(screen.getByText("out"));
+      await waitFor(() => expect(deleted).toContain("ardoise-data"));
+    });
+
+    it("is wiped on sign-in, in case a session ran out while offline", async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse({ detail: "no" }, 401))
+        .mockResolvedValueOnce(jsonResponse(TEACHER));
+      renderProbe();
+      await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("signed-out"));
+      deleted = [];
+      await userEvent.click(screen.getByText("in"));
+      await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("Aymen"));
+      expect(deleted).toContain("ardoise-data");
+    });
+
+    it("is wiped when the session expires", async () => {
+      vi.mocked(fetch)
+        .mockResolvedValueOnce(jsonResponse(TEACHER))
+        .mockResolvedValueOnce(jsonResponse({ detail: "no" }, 401));
+      renderProbe();
+      await waitFor(() => expect(screen.getByTestId("state")).toHaveTextContent("Aymen"));
+      await act(() => apiRequest("/students").catch(() => undefined));
+      await waitFor(() => expect(deleted).toContain("ardoise-data"));
+    });
+  });
 });

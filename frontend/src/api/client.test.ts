@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError, apiRequest, downloadFile, setUnauthorizedHandler } from "./client";
+import { connectivity, resetConnectivity } from "../lib/connectivity";
 
 function jsonResponse(body: unknown, status = 200) {
   return new Response(JSON.stringify(body), {
@@ -124,5 +125,49 @@ describe("session handling", () => {
       status: 401,
       code: "not_authenticated",
     });
+  });
+});
+
+describe("offline (service worker answers)", () => {
+  // The service worker stamps a stored copy with when it was saved, and answers 503 "offline"
+  // for a screen it never stored. The app reads both, to say it's showing old data.
+  afterEach(() => resetConnectivity());
+
+  it("reports stored data, with the time it was saved", async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response("[]", { headers: { "x-ardoise-saved-at": "2026-11-14T09:41:00.000Z" } }),
+    );
+    await apiRequest("/students");
+    expect(connectivity()).toEqual({ mode: "stored", savedAt: "2026-11-14T09:41:00.000Z" });
+  });
+
+  it("goes back to live as soon as a fresh answer arrives", async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response("[]", { headers: { "x-ardoise-saved-at": "2026-11-14T09:41:00.000Z" } }),
+    );
+    await apiRequest("/students");
+    vi.mocked(fetch).mockResolvedValueOnce(jsonResponse([]));
+    await apiRequest("/students");
+    expect(connectivity()).toEqual({ mode: "live" });
+  });
+
+  it("turns 'never stored' into a sentence, not 'something went wrong'", async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({ detail: "offline", code: "offline" }, 503));
+    const err = (await apiRequest("/students").catch((e: unknown) => e)) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.code).toBe("offline");
+    expect(err.message).toMatch(/not available offline yet/i);
+    expect(connectivity()).toEqual({ mode: "offline" });
+  });
+
+  it("says nothing was saved when a write finds no network", async () => {
+    vi.mocked(fetch).mockRejectedValue(new TypeError("Failed to fetch"));
+    const err = (await apiRequest("/students/1/payments", { method: "POST", body: {} }).catch(
+      (e: unknown) => e,
+    )) as ApiError;
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.code).toBe("network");
+    expect(err.message).toMatch(/nothing was saved/i);
+    expect(connectivity()).toEqual({ mode: "offline" });
   });
 });

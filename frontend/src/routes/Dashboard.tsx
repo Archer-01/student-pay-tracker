@@ -6,6 +6,7 @@ import type { DashboardSummary } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { AuthContext } from "../lib/authContext";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
+import { useReadOnly } from "../lib/connectivity";
 import { formatMoney } from "../lib/money";
 import { formatDate, formatMonthTitle } from "../lib/dates";
 import { AsyncView, Button } from "../components/ui";
@@ -25,6 +26,7 @@ import { Figure } from "../components/report";
 export function Dashboard() {
   const { t } = useTranslation();
   const payments = usePaymentSheet();
+  const readOnly = useReadOnly();
   const moneyFacts = useMoneyFacts();
   // Read without `useAuth` so the screen renders in isolation (tests); signed out never gets here.
   const user = useContext(AuthContext)?.user;
@@ -59,7 +61,7 @@ export function Dashboard() {
           </section>
 
           {/* The side menu carries this button on a computer. */}
-          <Button onClick={() => payments.open()} className="min-h-14 w-full text-lg lg:hidden">
+          <Button onClick={() => payments.open()} disabled={readOnly} className="min-h-14 w-full text-lg lg:hidden">
             <PlusIcon className="h-5 w-5" />
             {t("home.pay")}
           </Button>

@@ -13,6 +13,7 @@ import { resolveErrorMessage } from "../lib/errors";
 import { payableMonths } from "../lib/paymentDefaults";
 import { monthTiles, schoolYearStart, schoolYears, type MonthTile } from "../lib/schoolYear";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
+import { useReadOnly } from "../lib/connectivity";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
@@ -42,6 +43,8 @@ export function StudentDetail() {
     [studentId, payments.version],
   );
   const [openModal, setOpenModal] = useState<OpenModal>(null);
+  // Offline, the page is read only: the buttons that would save something are switched off.
+  const readOnly = useReadOnly();
 
   const close = () => setOpenModal(null);
   const handleSaved = () => {
@@ -124,7 +127,7 @@ export function StudentDetail() {
               {typeof openModal === "object" && openModal !== null && (
                 <TileDetails
                   tile={openModal.tile}
-                  payable={payableMonths(ledger.entries, detail.next_expected_date).some(
+                  payable={!readOnly && payableMonths(ledger.entries, detail.next_expected_date).some(
                     (m) => m.month === openModal.tile.month,
                   )}
                   onClose={close}
@@ -194,6 +197,7 @@ function StatusCard({
   onEdit: () => void;
 }) {
   const { t } = useTranslation();
+  const readOnly = useReadOnly();
   const months = payableMonths(ledger.entries, detail.next_expected_date);
 
   if (detail.months_overdue > 0) {
@@ -205,7 +209,7 @@ function StatusCard({
           {t("pay.owes", { count: detail.months_overdue, amount: formatMoney(detail.amount_owed) })}
         </p>
         <p className="text-ink">{t("student.oldestUnpaid", { month: formatMonthTitle(oldest) })}</p>
-        <Button onClick={() => onPay(oldest)} className="min-h-12 text-lg sm:self-start">
+        <Button onClick={() => onPay(oldest)} disabled={readOnly} className="min-h-12 text-lg sm:self-start">
           {t("student.payMonth", { month: formatMonthTitle(oldest) })}
         </Button>
       </Panel>
@@ -216,7 +220,7 @@ function StatusCard({
       <Panel className="bg-off-soft text-off" showing="no-price">
         <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.noPrice")}</p>
         <p className="text-ink">{t("student.noPriceText")}</p>
-        <Button variant="secondary" onClick={onEdit} className="sm:self-start">
+        <Button variant="secondary" onClick={onEdit} disabled={readOnly} className="sm:self-start">
           {t("home.choosePack")}
         </Button>
       </Panel>
@@ -239,7 +243,7 @@ function StatusCard({
     <Panel className="bg-ok-soft text-ok" showing="paid-up">
       <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.paidUp")}</p>
       <p className="text-ink">{t("student.nextPayment", { date: formatDate(detail.next_expected_date) })}</p>
-      <Button variant="secondary" onClick={() => onPay()} className="sm:self-start">
+      <Button variant="secondary" onClick={() => onPay()} disabled={readOnly} className="sm:self-start">
         {t("home.pay")}
       </Button>
     </Panel>
@@ -551,6 +555,7 @@ function MoreActions({
   onPick: (modal: "edit" | "leave" | "return" | "override") => void;
 }) {
   const { t } = useTranslation();
+  const readOnly = useReadOnly();
   const [downloadError, setDownloadError] = useState<string | null>(null);
 
   async function handleDownload() {
@@ -582,7 +587,8 @@ function MoreActions({
             <button
               type="button"
               onClick={item.onClick}
-              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-3 text-left font-bold hover:bg-ground"
+              disabled={readOnly}
+              className="flex min-h-14 w-full items-center justify-between gap-3 rounded-xl px-3 text-left font-bold hover:bg-ground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {item.label}
               <ChevronRightIcon className="h-5 w-5 text-muted" />

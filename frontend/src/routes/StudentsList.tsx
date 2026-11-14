@@ -6,6 +6,7 @@ import type { StudentListItem } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { useDebounced } from "../lib/useDebounced";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
+import { useReadOnly } from "../lib/connectivity";
 import { AsyncView } from "../components/ui";
 import { OwedPill } from "../components/people";
 import { StudentRow, StudentRows } from "../components/StudentRow";
@@ -26,6 +27,7 @@ export function StudentsList() {
   const [search, setSearch] = useState("");
   const q = useDebounced(search.trim(), 250);
   const moneyFacts = useMoneyFacts();
+  const readOnly = useReadOnly();
 
   // Refreshes after a payment taken from the shared sheet, wherever it was opened.
   const paymentsVersion = usePaymentsVersion();
@@ -57,14 +59,16 @@ export function StudentsList() {
             <span className="ml-2 text-lg font-bold text-muted">{shown(state.data, filter).length}</span>
           )}
         </h1>
-        {/* On a phone this is the floating button below. */}
-        <Link
-          to="/students/new"
-          className="hidden min-h-11 items-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90 sm:flex"
-        >
-          <PlusIcon className="h-5 w-5" />
-          {t("students.add")}
-        </Link>
+        {/* On a phone this is the floating button below. Neither shows offline (read only). */}
+        {!readOnly && (
+          <Link
+            to="/students/new"
+            className="hidden min-h-11 items-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90 sm:flex"
+          >
+            <PlusIcon className="h-5 w-5" />
+            {t("students.add")}
+          </Link>
+        )}
       </div>
 
       <label className="flex min-h-12 items-center gap-2 rounded-xl border-2 border-line bg-surface px-3 focus-within:border-brand">
@@ -132,13 +136,15 @@ export function StudentsList() {
         )}
       </AsyncView>
 
-      <Link
-        to="/students/new"
-        className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 font-bold text-brand-ink shadow-lg sm:hidden"
-      >
-        <PlusIcon className="h-5 w-5" />
-        {t("students.addShort")}
-      </Link>
+      {!readOnly && (
+        <Link
+          to="/students/new"
+          className="fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] right-4 z-30 flex h-14 items-center gap-2 rounded-2xl bg-brand px-5 font-bold text-brand-ink shadow-lg sm:hidden"
+        >
+          <PlusIcon className="h-5 w-5" />
+          {t("students.addShort")}
+        </Link>
+      )}
     </div>
   );
 }

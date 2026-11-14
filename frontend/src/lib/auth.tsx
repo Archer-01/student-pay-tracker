@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react
 import { setUnauthorizedHandler } from "../api/client";
 import { getCurrentUser, login as loginRequest, logout as logoutRequest } from "../api/endpoints";
 import { AuthContext, type AuthState } from "./authContext";
+import { clearOfflineData } from "./offlineData";
 
 /**
  * Owns "who is signed in".
@@ -36,12 +37,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (current) setSessionExpired(true);
         return null;
       });
+      // The stored offline copy belongs to the session that just ended.
+      void clearOfflineData();
     });
     return () => setUnauthorizedHandler(null);
   }, []);
 
   const signIn = useCallback(async (username: string, password: string) => {
     const me = await loginRequest({ username, password });
+    // Whatever was stored offline may be another session's (one that ran out while offline).
+    await clearOfflineData();
     setSessionExpired(false);
     setUser(me);
   }, []);
@@ -58,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Already signed out as far as this tab is concerned.
     }
+    await clearOfflineData();
     // Signing out on purpose is not an interrupted session — no explanation is owed.
     setSessionExpired(false);
     setUser(null);

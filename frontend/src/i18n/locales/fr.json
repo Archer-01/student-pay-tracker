@@ -226,7 +226,9 @@
     "home": "Retour au tableau de bord"
   },
   "errors": {
-    "generic": "Une erreur est survenue. Veuillez réessayer."
+    "generic": "Une erreur est survenue. Veuillez réessayer.",
+    "network": "Pas de connexion : rien n'a été enregistré. Réessayez une fois connecté.",
+    "offline": "Pas encore disponible hors ligne : ouvrez cet écran une fois connecté."
   },
   "classes": {
     "empty": "Aucune classe pour l'instant. Créez-en une pour regrouper vos élèves.",
@@ -481,5 +483,9 @@
     "school": "Part de l'école ({{percent}})",
     "yoursOf": "dont {{amount}} pour vous",
     "yoursShort": "Votre part : {{amount}}"
+  },
+  "offline": {
+    "stored": "Hors ligne · lecture seule · données du {{date}} à {{time}}",
+    "none": "Hors ligne · lecture seule"
   }
 }

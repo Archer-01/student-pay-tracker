@@ -18,3 +18,13 @@ createRoot(document.getElementById("root")!).render(
     </BrowserRouter>
   </StrictMode>,
 );
+
+// Offline support (sw/service-worker.js, built into dist/sw.js). Production only: in `vite dev` a
+// worker would serve stale files over the live ones, and tests run without one.
+if (import.meta.env.PROD && "serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {
+      // Offline support is a bonus; the app works the same without it.
+    });
+  });
+}

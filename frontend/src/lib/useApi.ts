@@ -38,5 +38,13 @@ export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[]): AsyncStat
 
   useEffect(() => load(), [load]);
 
+  // Back online: fetch again, so a screen showing stored data turns live without a reload (an
+  // installed app has no reload button).
+  useEffect(() => {
+    const onOnline = () => setTick((t) => t + 1);
+    window.addEventListener("online", onOnline);
+    return () => window.removeEventListener("online", onOnline);
+  }, []);
+
   return { ...state, reload: () => setTick((t) => t + 1) };
 }

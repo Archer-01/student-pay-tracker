@@ -1,10 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { PaymentSheetProvider } from "../components/PaymentSheet";
 import { Dashboard } from "./Dashboard";
+import { reportStored, resetConnectivity } from "../lib/connectivity";
 
 function digest(over: Partial<Record<string, unknown>> = {}) {
   return {
@@ -149,5 +150,17 @@ describe("Accueil", () => {
     renderHome();
     await screen.findByText("1,300 DH");
     expect(screen.queryByText(/is yours/)).toBeNull();
+  });
+
+  it("switches off taking a payment while showing stored data offline", async () => {
+    // Read only: a payment can't be saved without a connection, so the button says so up front
+    // rather than letting the teacher fill in a sheet that fails at the end.
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(summary() as never);
+    renderHome();
+    await screen.findByText("1,300 DH");
+    act(() => reportStored("2026-11-14T09:41:00"));
+    expect(screen.getByRole("button", { name: /record a payment/i })).toBeDisabled();
+    act(() => resetConnectivity());
+    expect(screen.getByRole("button", { name: /record a payment/i })).toBeEnabled();
   });
 });

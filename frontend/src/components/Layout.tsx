@@ -5,6 +5,8 @@ import { useAuth } from "../lib/authContext";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { ChartIcon, HomeIcon, PlusIcon, SettingsIcon, StudentsIcon } from "./icons";
 import { PaymentSheetProvider } from "./PaymentSheet";
+import { OfflineBanner } from "./OfflineBanner";
+import { useReadOnly } from "../lib/connectivity";
 import { Logo } from "./Logo";
 
 /**
@@ -39,6 +41,7 @@ function Shell() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const payments = usePaymentSheet();
+  const readOnly = useReadOnly();
 
   return (
     // No full-height rule: `body` already paints the background, and `min-h-screen` (100vh) is
@@ -70,7 +73,8 @@ function Shell() {
         <button
           type="button"
           onClick={() => payments.open()}
-          className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90"
+          disabled={readOnly}
+          className="mt-6 flex min-h-12 items-center justify-center gap-2 rounded-xl bg-brand px-4 font-bold text-brand-ink hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <PlusIcon className="h-5 w-5" />
           {t("nav.pay")}
@@ -81,6 +85,8 @@ function Shell() {
           </p>
         )}
       </aside>
+
+      <OfflineBanner />
 
       {/* Bottom padding clears the tab bar on a phone, safe-area inset included. */}
       <main className="mx-auto max-w-3xl px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-[calc(1.5rem+env(safe-area-inset-top))] sm:px-6 lg:max-w-4xl lg:px-10 lg:pb-12 lg:pt-[calc(2.5rem+env(safe-area-inset-top))]">

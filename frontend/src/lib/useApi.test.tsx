@@ -54,6 +54,16 @@ describe("useApi", () => {
     expect(result.current.data).toBe("second");
   });
 
+  it("refetches by itself when the connection comes back", async () => {
+    const fetcher = vi.fn().mockResolvedValue("x");
+    renderHook(() => useApi(fetcher, []));
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1));
+    act(() => {
+      window.dispatchEvent(new Event("online"));
+    });
+    await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+  });
+
   it("refetches when a dependency changes", async () => {
     const fetcher = vi.fn().mockResolvedValue("x");
     const { rerender } = renderHook(({ dep }) => useApi(fetcher, [dep]), {

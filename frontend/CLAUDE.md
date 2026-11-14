@@ -172,12 +172,42 @@ opens with no address bar or tabs. That changes a few things to keep in mind:
   sets it before React loads.
 - **There is no browser back or reload button.** Every page needs its own way back (the "‹"
   links), and screens refresh themselves after a change rather than relying on a reload.
-- **No service worker, on purpose.** An offline cache can keep an installed app on an old version
-  after a deploy, and the app needs the network for its data anyway.
+- **Offline, read only** (see "Offline" below): the installed app opens without a connection and
+  shows the last data it saw.
 - **Icons:** `favicon.svg`, `apple-touch-icon.png` (180px, square: iOS rounds it), `icon-192.png`,
   `icon-512.png`, and `icon-maskable-512.png`, whose slate sits inside the central safe circle
   with the wood running to the edges, so any launcher shape crops cleanly. Same drawing as
   `components/Logo.tsx`; change them together. `src/installable.test.ts` checks the manifest.
+
+## Offline
+
+Read only, by design: the app opens without a connection and shows the last data each screen
+saw, with a banner saying so and how old it is. Nothing is stored for later sending.
+
+- **The service worker** is `sw/service-worker.js`, built into `dist/sw.js` by the
+  `ardoise-service-worker` plugin in `vite.config.ts` (which writes in the build id and the files
+  to keep), and registered in `main.tsx` for production builds only. `vite dev` and the tests run
+  without one.
+- **Data: network first, stored copy only when the network fails** or takes over 4 seconds. A
+  server answer, even a 401 or a 500, always reaches the app unchanged: old data must never hide
+  an expired session. Only successful GETs under `/api/v1/` are stored (not PDFs), stamped with
+  `x-ardoise-saved-at`; a read with nothing stored gets a 503 with code `offline`.
+- **The app reads those two signals** in `api/client.ts` and reports into `lib/connectivity.ts`:
+  `OfflineBanner` shows the time, and `useReadOnly()` switches off the buttons that would save
+  something (payments, adding or editing students, classes, packs). A write that still finds no
+  network fails with code `network` and a sentence saying nothing was saved. Screens refetch on
+  the browser's `online` event, which turns them live again.
+- **The stored data is wiped** on sign-in, sign-out and an expired session (`lib/offlineData.ts`,
+  from `lib/auth.tsx`), so one account's students never show for another.
+- **Updates:** every build has a new id, so a deploy ships a new worker; it takes over at once and
+  deletes the previous build's files. Pages themselves are fetched network-first.
+- **Testing it** needs a production build: `npm run build`, serve `dist`, and cut the connection
+  by stopping the server. Browser "offline" switches (Playwright's included) don't reach the
+  service worker's own requests.
+- **Recording payments offline (level 3) is not built.** It would add a queue of unsent writes,
+  replayed on reconnecting. The backend already refuses a second payment for the same month,
+  which is what would make replaying safe; the open questions are telling the teacher about a
+  payment refused later, and never losing an unsent one.
 
 ## Look and feel
 

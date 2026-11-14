@@ -51,7 +51,8 @@ address bar or tabs.
   (Chrome may also offer it on its own).
 
 The installed app has its own sign-in on iPhone, separate from Safari. Updates arrive with each
-deploy; there is no offline cache to go stale.
+deploy. Without a connection it still opens and shows the last data seen on each screen, read
+only, with a banner saying how old it is; nothing can be recorded until the connection is back.
 
 ## Constraints (do not change)
 

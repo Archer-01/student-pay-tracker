@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { createPack, deletePack, listPacks, updatePack } from "../api/endpoints";
 import type { ClassLevel, PackDetail, PackUpdate } from "../api/types";
 import { useApi } from "../lib/useApi";
+import { useReadOnly } from "../lib/connectivity";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { formatMoney } from "../lib/money";
@@ -20,6 +21,7 @@ export function PacksList() {
   const state = useApi(() => listPacks(), []);
   const [editing, setEditing] = useState<PackDetail | "new" | null>(null);
   const [level, setLevel] = useState<ClassLevel | null>(null);
+  const readOnly = useReadOnly();
 
   const done = () => {
     setEditing(null);
@@ -34,7 +36,7 @@ export function PacksList() {
       </Link>
       <div className="flex items-center justify-between gap-3">
         <h1 className="font-display text-3xl font-extrabold tracking-tight">{t("packs.title")}</h1>
-        <Button onClick={() => setEditing("new")}>
+        <Button onClick={() => setEditing("new")} disabled={readOnly}>
           <PlusIcon className="h-5 w-5" />
           {t("packs.new")}
         </Button>
@@ -87,6 +89,7 @@ export function PacksList() {
                     <button
                       type="button"
                       onClick={() => setEditing(p)}
+                      disabled={readOnly}
                       className={`flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ground active:bg-line ${
                         p.is_active ? "" : "text-muted"
                       }`}

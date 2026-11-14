@@ -1,11 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { screen } from "@testing-library/react";
+import { act, screen } from "@testing-library/react";
 import { Route, Routes } from "react-router-dom";
 import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { PaymentSheetProvider } from "../components/PaymentSheet";
 import { StudentDetail } from "./StudentDetail";
+import { reportStored, resetConnectivity } from "../lib/connectivity";
 
 function student(over: Partial<Record<string, unknown>> = {}) {
   return {
@@ -119,5 +120,21 @@ describe("StudentDetail contact buttons", () => {
     renderPage();
     expect(await screen.findByRole("link", { name: /^Call/ })).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /WhatsApp/ })).toBeNull();
+  });
+});
+
+describe("StudentDetail offline", () => {
+  it("keeps calling possible but switches off everything that would save", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ phone: "0612345678" }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await screen.findByRole("link", { name: /^Call/ });
+    act(() => reportStored("2026-11-14T09:41:00"));
+    expect(screen.getByRole("button", { name: /record a payment/i })).toBeDisabled();
+    await userEvent.click(screen.getByRole("button", { name: /more actions/i }));
+    expect(screen.getByRole("button", { name: /mark as left/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /edit details/i })).toBeDisabled();
+    expect(screen.getByRole("link", { name: /^Call/ })).toBeInTheDocument(); // a phone call needs no internet
+    act(() => resetConnectivity());
   });
 });

@@ -226,7 +226,9 @@
     "home": "Back to dashboard"
   },
   "errors": {
-    "generic": "Something went wrong. Please try again."
+    "generic": "Something went wrong. Please try again.",
+    "network": "No connection: nothing was saved. Try again once you're online.",
+    "offline": "Not available offline yet: open this screen once you're online."
   },
   "classes": {
     "empty": "No classes yet. Create one to start grouping students.",
@@ -481,5 +483,9 @@
     "school": "School's share ({{percent}})",
     "yoursOf": "of which {{amount}} is yours",
     "yoursShort": "Your share: {{amount}}"
+  },
+  "offline": {
+    "stored": "Offline · read only · data from {{date}} at {{time}}",
+    "none": "Offline · read only"
   }
 }

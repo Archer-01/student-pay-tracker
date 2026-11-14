@@ -1,4 +1,5 @@
 import i18n from "../i18n";
+import { reportLive, reportOffline, reportStored } from "../lib/connectivity";
 
 // Relative by default → same-origin, served through the Vite dev proxy (see vite.config.ts), which avoids
 // CORS. Override with VITE_API_BASE_URL (e.g. an absolute URL) when the backend is reachable directly.
@@ -76,21 +77,40 @@ export async function apiRequest<T>(
   path: string,
   { method = "GET", body, query }: RequestOptions = {},
 ): Promise<T> {
-  const res = await fetch(buildUrl(path, query), {
-    method,
-    credentials: CREDENTIALS,
-    headers: {
-      "Accept-Language": i18n.language,
-      ...(body ? { "Content-Type": "application/json" } : {}),
-    },
-    body: body ? JSON.stringify(body) : undefined,
-  });
+  let res: Response;
+  try {
+    res = await fetch(buildUrl(path, query), {
+      method,
+      credentials: CREDENTIALS,
+      headers: {
+        "Accept-Language": i18n.language,
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+  } catch {
+    // No network at all. Reads are answered by the service worker when it can; this is what
+    // reaches a write (never stored or replayed) or a read with no worker installed.
+    reportOffline();
+    throw new ApiError(0, i18n.t("errors.network"), "network");
+  }
+
+  // The service worker stamps a stored copy with when it was saved (sw/service-worker.js).
+  const savedAt = res.headers.get("x-ardoise-saved-at");
+  if (savedAt) reportStored(savedAt);
 
   if (!res.ok) {
     handleUnauthorized(res.status);
     const payload = await res.json().catch(() => null);
+    if (payload?.code === "offline") {
+      // Offline, and this screen was never opened online: nothing stored to show.
+      reportOffline();
+      throw new ApiError(res.status, i18n.t("errors.offline"), "offline");
+    }
+    if (!savedAt) reportLive();
     throw new ApiError(res.status, payload?.detail ?? res.statusText, payload?.code);
   }
+  if (!savedAt) reportLive();
 
   if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
