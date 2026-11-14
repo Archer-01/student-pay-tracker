@@ -84,7 +84,7 @@ export function Modal({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end justify-center overflow-y-auto bg-black/45 sm:items-start sm:p-4 sm:pt-20"
+      className="fixed inset-0 z-50 flex animate-fade-in items-end justify-center overflow-y-auto bg-black/45 sm:items-start sm:p-4 sm:pt-20"
       onClick={onClose}
       role="presentation"
     >
@@ -96,7 +96,7 @@ export function Modal({
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
         onKeyDown={trapTab}
-        className="max-h-[92vh] w-full overflow-y-auto rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-2xl focus:outline-none sm:max-w-md sm:rounded-3xl sm:pb-0"
+        className="max-h-[92vh] w-full animate-sheet-up overflow-y-auto rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-2xl focus:outline-none sm:max-w-md sm:animate-dialog-in sm:rounded-3xl sm:pb-0"
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 bg-surface px-5 pb-2 pt-5">
           <h2 id={titleId} className="font-display text-xl font-extrabold tracking-tight text-ink">

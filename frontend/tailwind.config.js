@@ -61,6 +61,40 @@ export default {
         line: "var(--line)",
         placeholder: "var(--placeholder)",
       },
+      /*
+       * A handful of short entrances, each answering "where did this come from?" or "did that
+       * work?". Nothing loops, nothing runs longer than a quarter of a second (the check mark
+       * waits for the toast first), and all of it is switched off under "reduce motion" in
+       * index.css.
+       */
+      keyframes: {
+        "fade-in": { from: { opacity: "0" }, to: { opacity: "1" } },
+        "sheet-up": { from: { transform: "translateY(100%)" }, to: { transform: "translateY(0)" } },
+        "dialog-in": {
+          from: { opacity: "0", transform: "translateY(8px) scale(0.98)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "toast-in": {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "none" },
+        },
+        "toast-out": { from: { opacity: "1" }, to: { opacity: "0", transform: "translateY(6px)" } },
+        draw: { from: { strokeDashoffset: "24" }, to: { strokeDashoffset: "0" } },
+        "paid-pop": {
+          "0%": { transform: "scale(1)" },
+          "40%": { transform: "scale(1.08)" },
+          "100%": { transform: "scale(1)" },
+        },
+      },
+      animation: {
+        "fade-in": "fade-in 180ms ease-out",
+        "sheet-up": "sheet-up 240ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "dialog-in": "dialog-in 180ms ease-out",
+        "toast-in": "toast-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "toast-out": "toast-out 200ms ease-in forwards",
+        draw: "draw 260ms ease-out 160ms both",
+        "paid-pop": "paid-pop 320ms ease-out",
+      },
       fontFamily: {
         sans: ['"Ardoise Digits"', '"Atkinson Hyperlegible"', "system-ui", "-apple-system", '"Segoe UI"', "sans-serif"],
         display: ['"Bricolage Grotesque Variable"', '"Atkinson Hyperlegible"', "system-ui", "sans-serif"],

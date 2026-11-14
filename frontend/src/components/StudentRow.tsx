@@ -21,7 +21,7 @@ export function StudentRow({
 }) {
   return (
     <li>
-      <Link to={to} className="flex min-h-16 items-center gap-3 px-4 py-3 hover:bg-ground">
+      <Link to={to} className="flex min-h-16 items-center gap-3 px-4 py-3 transition-colors hover:bg-ground active:bg-line">
         <Avatar name={name} />
         <span className="min-w-0 flex-1">
           <span className="block truncate font-bold">{name}</span>

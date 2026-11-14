@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "../lib/money";
+import { useFlashOnChange } from "../lib/useFlashOnChange";
 
 /** "Amina Benali" → "AB"; "Fatima Zahra El Idrissi" → "FZ". */
 function initials(name: string): string {
@@ -58,8 +59,18 @@ export function OwedPill({
     tone = "off";
     label = t("owed.noPrice");
   }
+  return <PillText tone={tone} label={label} />;
+}
+
+function PillText({ tone, label }: { tone: keyof typeof tones; label: string }) {
+  const { flashing, done } = useFlashOnChange(label);
   return (
-    <span className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-bold tabular-nums ${tones[tone]}`}>
+    <span
+      onAnimationEnd={done}
+      className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-sm font-bold tabular-nums ${tones[tone]} ${
+        flashing ? "animate-paid-pop" : ""
+      }`}
+    >
       {label}
     </span>
   );

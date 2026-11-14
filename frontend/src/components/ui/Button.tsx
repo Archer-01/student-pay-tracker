@@ -20,7 +20,7 @@ export function Button({ variant = "primary", pending = false, disabled, classNa
   return (
     <button
       disabled={disabled || pending}
-      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 font-bold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
+      className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-xl px-4 py-2 font-bold transition active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50 ${variants[variant]} ${className}`}
       {...rest}
     >
       {pending && <Spinner />}

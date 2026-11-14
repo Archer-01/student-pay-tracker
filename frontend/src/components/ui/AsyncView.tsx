@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import type { AsyncState } from "../../lib/useApi";
-import { LoadingState } from "./LoadingState";
+import { Skeleton } from "./Skeleton";
 import { ErrorState } from "./ErrorState";
 import { EmptyState } from "./EmptyState";
 
@@ -24,7 +24,7 @@ type Props<T> = {
  *   </AsyncView>
  */
 export function AsyncView<T>({ state, children, onRetry, isEmpty, emptyMessage }: Props<T>) {
-  if (state.status === "loading") return <LoadingState />;
+  if (state.status === "loading") return <Skeleton />;
   if (state.status === "error") return <ErrorState message={state.error} onRetry={onRetry} />;
   if (isEmpty?.(state.data)) return <EmptyState message={emptyMessage} />;
   return <>{children(state.data)}</>;

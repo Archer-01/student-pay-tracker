@@ -8,7 +8,7 @@ import { formatMoney } from "../lib/money";
 import { PaymentSheetContext } from "../lib/paymentSheetContext";
 import { AsyncView, Modal } from "./ui";
 import { Avatar, OwedPill } from "./people";
-import { CheckIcon, SearchIcon } from "./icons";
+import { SearchIcon } from "./icons";
 import { RecordPaymentForm } from "./students/RecordPaymentForm";
 
 type Sheet = { open: false } | { open: true; studentId?: number; month?: string; pickedHere: boolean };
@@ -22,7 +22,7 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<Sheet>({ open: false });
   const [version, setVersion] = useState(0);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; leaving: boolean } | null>(null);
 
   const open = useCallback(
     (studentId?: number, month?: string) =>
@@ -33,7 +33,10 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     if (!toast) return;
-    const timer = setTimeout(() => setToast(null), 5000);
+    // Fade out for the last 200ms rather than vanishing.
+    const timer = toast.leaving
+      ? setTimeout(() => setToast(null), 200)
+      : setTimeout(() => setToast({ ...toast, leaving: true }), 4800);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -55,7 +58,7 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
               onSuccess={(amount, name) => {
                 close();
                 setVersion((v) => v + 1);
-                setToast(t("pay.done", { amount: formatMoney(amount), name }));
+                setToast({ message: t("pay.done", { amount: formatMoney(amount), name }), leaving: false });
               }}
             />
           )}
@@ -68,9 +71,13 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center lg:inset-x-auto lg:bottom-6 lg:right-6"
       >
         {toast && (
-          <p className="flex items-center gap-2 rounded-2xl bg-ink px-4 py-3 font-bold text-ground shadow-xl">
-            <CheckIcon className="h-5 w-5 text-ok" />
-            {toast}
+          <p
+            className={`flex items-center gap-2 rounded-2xl bg-ink px-4 py-3 font-bold text-ground shadow-xl ${
+              toast.leaving ? "animate-toast-out" : "animate-toast-in"
+            }`}
+          >
+            <DrawnCheck />
+            {toast.message}
           </p>
         )}
       </div>
@@ -131,5 +138,22 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
 function owingFirst(rows: StudentListItem[]): StudentListItem[] {
   return [...rows].sort(
     (a, b) => b.months_overdue - a.months_overdue || a.full_name.localeCompare(b.full_name),
+  );
+}
+
+/** The payment's confirmation: a check mark that draws itself once the message has arrived. */
+function DrawnCheck() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 text-ok" fill="none" aria-hidden="true">
+      <path
+        d="M5 12.5l4.5 4.5L19 7.5"
+        stroke="currentColor"
+        strokeWidth={2.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeDasharray={24}
+        className="animate-draw"
+      />
+    </svg>
   );
 }

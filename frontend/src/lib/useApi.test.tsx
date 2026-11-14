@@ -36,6 +36,24 @@ describe("useApi", () => {
     expect(fetcher).toHaveBeenCalledTimes(2);
   });
 
+  it("keeps showing the current data while it refreshes, instead of going back to loading", async () => {
+    // After a payment every screen refreshes; dropping to a spinner made the whole page flash and
+    // replaced each row instead of letting it change in place.
+    let resolve!: (v: string) => void;
+    const fetcher = vi.fn().mockResolvedValueOnce("first").mockImplementationOnce(
+      () => new Promise<string>((r) => (resolve = r)),
+    );
+    const { result } = renderHook(() => useApi(fetcher, []));
+    await waitFor(() => expect(result.current.data).toBe("first"));
+
+    act(() => result.current.reload());
+    expect(result.current.status).toBe("success");
+    expect(result.current.data).toBe("first");
+
+    await act(async () => resolve("second"));
+    expect(result.current.data).toBe("second");
+  });
+
   it("refetches when a dependency changes", async () => {
     const fetcher = vi.fn().mockResolvedValue("x");
     const { rerender } = renderHook(({ dep }) => useApi(fetcher, [dep]), {

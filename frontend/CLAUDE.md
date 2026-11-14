@@ -175,6 +175,24 @@ not yet rebuilt match; don't reach for them in new code.
 - **Theme follows the device** unless someone chose light or dark in Réglages
   (`lib/theme.tsx`; the pre-paint script in `index.html` mirrors the rule).
 
+## Motion
+
+Slight, and only where it answers "where did this come from?" or "did that work?". The full set
+is defined in `tailwind.config.js` (`animate-*`), nothing runs longer than about a quarter of a
+second, and `index.css` switches all of it off under the device's "reduce motion" setting:
+
+- dialogs rise as a sheet on a phone and fade in from `sm` up (`Modal`);
+- the payment confirmation slides in, its check mark draws itself, and it fades out;
+- a pill, a month tile or the student's status card gives one small pop or fade when what it
+  shows changes (`useFlashOnChange`): never on first display, so opening a screen animates nothing;
+- buttons and rows answer a tap with a slight press;
+- a screen's first load shows grey placeholder shapes (`Skeleton`), and later refreshes keep the
+  current data on screen until the new data lands (`useApi`), which is also what lets a row
+  change in place after a payment instead of blinking out and back.
+
+No page transitions, no counting-up numbers, no bars that grow on every visit, nothing that
+bounces or loops. Add to this list deliberately, not by habit.
+
 ## Taking a payment
 
 There is one payment sheet for the whole app, provided by `Layout` (`PaymentSheetProvider` in

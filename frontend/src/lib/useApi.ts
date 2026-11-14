@@ -7,14 +7,20 @@ export type AsyncState<T> =
   | { status: "error"; data?: undefined; error: string }
   | { status: "success"; data: T; error?: undefined };
 
-/** Runs `fetcher` on mount and whenever `deps` change; exposes a `reload` to re-run it manually (e.g. after a mutation). */
+/**
+ * Runs `fetcher` on mount and whenever `deps` change; exposes a `reload` to re-run it manually
+ * (e.g. after a mutation). Once it has data, later loads keep that data showing until replaced.
+ */
 export function useApi<T>(fetcher: () => Promise<T>, deps: unknown[]): AsyncState<T> & { reload: () => void } {
   const [state, setState] = useState<AsyncState<T>>({ status: "loading" });
   const [tick, setTick] = useState(0);
 
   const load = useCallback(() => {
     let cancelled = false;
-    setState({ status: "loading" });
+    // Only the first load shows as loading. A refresh (after a payment, or a new filter) keeps the
+    // current data on screen until the new data lands, so rows change in place rather than the
+    // page blanking to a placeholder and back.
+    setState((prev) => (prev.status === "success" ? prev : { status: "loading" }));
     fetcher()
       .then((data) => {
         if (!cancelled) setState({ status: "success", data });

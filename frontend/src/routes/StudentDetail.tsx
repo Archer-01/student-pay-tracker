@@ -13,6 +13,7 @@ import { resolveErrorMessage } from "../lib/errors";
 import { payableMonths } from "../lib/paymentDefaults";
 import { monthTiles, schoolYearStart, schoolYears, type MonthTile } from "../lib/schoolYear";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
+import { useFlashOnChange } from "../lib/useFlashOnChange";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
@@ -206,7 +207,7 @@ function StatusCard({
     const oldest = months.find((m) => m.overdue)?.month ?? months[0]!.month;
     const tone = detail.months_overdue === 1 ? "bg-warn-soft text-warn" : "bg-bad-soft text-bad";
     return (
-      <Panel className={tone}>
+      <Panel className={tone} showing={`owes-${detail.months_overdue}-${detail.amount_owed}`}>
         <p className="font-display text-2xl font-extrabold tracking-tight">
           {t("pay.owes", { count: detail.months_overdue, amount: formatMoney(detail.amount_owed) })}
         </p>
@@ -219,7 +220,7 @@ function StatusCard({
   }
   if (Number(detail.monthly_price) <= 0) {
     return (
-      <Panel className="bg-off-soft text-off">
+      <Panel className="bg-off-soft text-off" showing="no-price">
         <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.noPrice")}</p>
         <p className="text-ink">{t("student.noPriceText")}</p>
         <Button variant="secondary" onClick={onEdit} className="sm:self-start">
@@ -235,14 +236,14 @@ function StatusCard({
       .sort()
       .at(-1);
     return (
-      <Panel className="bg-off-soft text-off">
+      <Panel className="bg-off-soft text-off" showing="left">
         <p className="font-display text-2xl font-extrabold tracking-tight">{t("student.leftTitle")}</p>
         {lastLeave && <p className="text-ink">{t("student.leftText", { date: formatDate(lastLeave) })}</p>}
       </Panel>
     );
   }
   return (
-    <Panel className="bg-ok-soft text-ok">
+    <Panel className="bg-ok-soft text-ok" showing="paid-up">
       <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.paidUp")}</p>
       <p className="text-ink">{t("student.nextPayment", { date: formatDate(detail.next_expected_date) })}</p>
       <Button variant="secondary" onClick={() => onPay()} className="sm:self-start">
@@ -252,8 +253,16 @@ function StatusCard({
   );
 }
 
-function Panel({ className, children }: { className: string; children: ReactNode }) {
-  return <section className={`flex flex-col gap-3 rounded-2xl p-4 sm:p-5 ${className}`}>{children}</section>;
+function Panel({ className, showing, children }: { className: string; showing: string; children: ReactNode }) {
+  const { flashing, done } = useFlashOnChange(showing);
+  return (
+    <section
+      onAnimationEnd={done}
+      className={`flex flex-col gap-3 rounded-2xl p-4 sm:p-5 ${className} ${flashing ? "animate-fade-in" : ""}`}
+    >
+      {children}
+    </section>
+  );
 }
 
 const tileStyles: Record<MonthTile["state"], string> = {
@@ -315,24 +324,7 @@ function YearTiles({
       </div>
       <ol className="grid grid-cols-4 gap-2 sm:grid-cols-6">
         {tiles.map((tile) => (
-          <li key={tile.month}>
-            <button
-              type="button"
-              disabled={tile.state === "none"}
-              onClick={() => onTile(tile)}
-              aria-label={`${formatMonthTitle(tile.month)} · ${t(`tiles.state.${tile.state}`)}`}
-              className={`flex min-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1 py-2 text-sm font-bold disabled:cursor-default ${tileStyles[tile.state]}`}
-            >
-              <span className="capitalize">{shortMonth(tile.month)}</span>
-              <span className="text-xs">
-                {tile.state === "late"
-                  ? t("tiles.late", { count: tile.entry?.days_late ?? 0 })
-                  : tile.state === "none"
-                    ? " "
-                    : t(`tiles.short.${tile.state}`)}
-              </span>
-            </button>
-          </li>
+          <Tile key={tile.month} tile={tile} shortMonth={shortMonth(tile.month)} onClick={() => onTile(tile)} />
         ))}
       </ol>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
@@ -344,6 +336,34 @@ function YearTiles({
         ))}
       </ul>
     </section>
+  );
+}
+
+function Tile({ tile, shortMonth, onClick }: { tile: MonthTile; shortMonth: string; onClick: () => void }) {
+  const { t } = useTranslation();
+  const { flashing, done } = useFlashOnChange(tile.state);
+  return (
+    <li>
+      <button
+        type="button"
+        disabled={tile.state === "none"}
+        onClick={onClick}
+        onAnimationEnd={done}
+        aria-label={`${formatMonthTitle(tile.month)} · ${t(`tiles.state.${tile.state}`)}`}
+        className={`flex min-h-16 w-full flex-col items-center justify-center gap-0.5 rounded-xl border-2 px-1 py-2 text-sm font-bold transition-colors active:scale-[0.97] disabled:cursor-default ${tileStyles[tile.state]} ${
+          flashing ? "animate-paid-pop" : ""
+        }`}
+      >
+        <span className="capitalize">{shortMonth}</span>
+        <span className="text-xs">
+          {tile.state === "late"
+            ? t("tiles.late", { count: tile.entry?.days_late ?? 0 })
+            : tile.state === "none"
+              ? "\u00a0"
+              : t(`tiles.short.${tile.state}`)}
+        </span>
+      </button>
+    </li>
   );
 }
 
