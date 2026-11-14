@@ -96,7 +96,7 @@
       "phone": "Téléphone (facultatif)",
       "class": "Classe"
     },
-    "joinDateHint": "Point de départ des échéances mensuelles : elle ne pourra plus être modifiée.",
+    "joinDateHint": "Sert de point de départ aux échéances mensuelles et ne pourra plus être modifiée.",
     "submit": "Inscrire l'élève",
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
@@ -176,14 +176,14 @@
       "amount": "Montant"
     },
     "validation": {
-      "monthRequired": "Choisissez le mois que règle ce paiement.",
+      "monthRequired": "Choisissez le mois correspondant à ce paiement.",
       "paidDateRequired": "La date de paiement est obligatoire.",
       "amountInvalid": "Saisissez un montant supérieur à 0.",
-      "amountAbovePrice": "C'est plus que le tarif mensuel de cet élève ({{price}}).",
+      "amountAbovePrice": "Le montant dépasse le tarif mensuel de l'élève ({{price}}).",
       "paidDateFuture": "La date de paiement ne peut pas être dans le futur."
     },
     "hints": {
-      "amountUpTo": "Au maximum {{price}}, le tarif mensuel de cet élève."
+      "amountUpTo": "Maximum {{price}} (tarif mensuel de l'élève)."
     }
   },
   "override": {
@@ -248,7 +248,7 @@
     "offering": "Offre",
     "subjects": "Matières",
     "subjectsHint": "Séparées par des virgules, ex. : Maths, Physique",
-    "pricesHint": "Laissez vide un niveau où vous ne proposez pas cette offre.",
+    "pricesHint": "Laissez vides les niveaux où cette offre n'est pas proposée.",
     "notOffered": "non proposé",
     "studentCount_one": "{{count}} élève",
     "studentCount_other": "{{count}} élèves",
@@ -266,7 +266,7 @@
     "affects_other": "Modifie immédiatement le tarif de {{count}} élèves, y compris pour leurs mois impayés.",
     "editOffering": "Modifier l'offre",
     "editOfferingTitle": "Modifier {{name}}",
-    "appliesToAllLevels": "Le nom et les matières valent pour tous les niveaux de cette offre ; seuls les tarifs changent.",
+    "appliesToAllLevels": "Le nom et les matières valent pour tous les niveaux de cette offre ; seuls les tarifs diffèrent.",
     "gridScrollHint": "Faites défiler pour voir tous les niveaux."
   },
   "student": {
@@ -283,21 +283,21 @@
     "lastNameHint": "Laissez vide si le nom de famille n'est pas connu",
     "repeating": "Redoublant",
     "repeatingShort": "Redoublant",
-    "levelMismatch": "Ce pack est prévu pour le niveau {{packLevel}}, mais la classe est en {{classLevel}}.",
+    "levelMismatch": "Ce pack est prévu pour le niveau {{packLevel}}, mais l'élève est en {{classLevel}}.",
     "attendance": "Périodes d'inscription",
     "from": "Du",
     "until": "Au",
     "reason": "Motif",
     "stillHere": "Toujours inscrit",
-    "markLeft": "Enregistrer un départ",
-    "markReturned": "Enregistrer un retour",
-    "leaveTitle": "Enregistrer un départ",
-    "returnTitle": "Enregistrer un retour",
+    "markLeft": "Marquer comme parti",
+    "markReturned": "Réinscrire",
+    "leaveTitle": "Départ de l'élève",
+    "returnTitle": "Retour de l'élève",
     "leaveDate": "Date de départ",
     "returnDate": "Date de retour",
     "leaveReason": "Motif",
     "leaveHint": "Les mois qui suivent cette date ne sont plus dus. Le retard déjà accumulé est conservé.",
-    "returnHint": "La date d'inscription ne change pas : les éventuels impayés et retards reviennent avec l'élève."
+    "returnHint": "La date d'inscription ne change pas : les impayés et le retard éventuels sont conservés."
   },
   "annual": {
     "year": "Année",
@@ -320,7 +320,7 @@
     "writeOff": "Effacer la dette",
     "writeOffTitle": "Effacer la dette de {{name}}",
     "writeOffReason": "Motif",
-    "writeOffHint": "Enregistré définitivement. Ce n'est pas un paiement : ce montant n'est jamais compté dans les recettes.",
+    "writeOffHint": "Cette opération est définitive. Ce n'est pas un paiement : le montant ne sera jamais compté dans les recettes.",
     "writeOffConfirm": "Effacer {{amount}}",
     "returnedWithDebt": "Cet élève est parti sans régler ses impayés",
     "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti sans régler {{amount}}.",

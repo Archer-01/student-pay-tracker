@@ -182,5 +182,5 @@ async def test_error_detail_is_localized(client: AsyncClient, db_session: Sessio
         headers={"Accept-Language": "fr"},
     )
     assert resp.json()["detail"] == (
-        "Cet élève est déjà inscrit\u00a0; enregistrez d'abord son départ"
+        "Cet élève est déjà inscrit\u00a0; indiquez d'abord son départ"
     )

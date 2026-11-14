@@ -92,7 +92,7 @@ def test_money_uses_a_decimal_comma_in_french(value: Decimal, fr: str, en: str) 
 def test_message_params_are_formatted_for_the_locale() -> None:
     params = {"amount": Decimal("350.00"), "price": Decimal("300.00")}
     assert translate("error.payment_exceeds_price", "fr", **params) == (
-        "350,00 dépasse le tarif mensuel de cet élève (300,00)"
+        "Le montant (350,00) dépasse le tarif mensuel de l'élève (300,00)"
     )
     assert translate("error.payment_exceeds_price", "en", **params) == (
         "350.00 is more than this student's monthly price of 300.00"

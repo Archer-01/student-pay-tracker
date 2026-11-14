@@ -164,7 +164,7 @@ async def test_duplicate_payment_is_409(client: AsyncClient) -> None:
     ("lang", "message"),
     [
         ("en", "350.00 is more than this student's monthly price of 300.00"),
-        ("fr", "350,00 dépasse le tarif mensuel de cet élève (300,00)"),
+        ("fr", "Le montant (350,00) dépasse le tarif mensuel de l'élève (300,00)"),
     ],
 )
 async def test_payment_above_the_monthly_price_is_400_with_a_readable_reason(

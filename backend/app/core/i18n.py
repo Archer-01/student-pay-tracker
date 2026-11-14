@@ -42,7 +42,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     },
     "error.payment_exceeds_price": {
         "en": "{amount} is more than this student's monthly price of {price}",
-        "fr": "{amount} dépasse le tarif mensuel de cet élève ({price})",
+        "fr": "Le montant ({amount}) dépasse le tarif mensuel de l'élève ({price})",
     },
     "error.override_reason_empty": {
         "en": "Override reason must not be empty",
@@ -160,7 +160,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     },
     "error.period_already_open": {
         "en": "Student {student_id} is already attending; record a departure first",
-        "fr": "Cet élève est déjà inscrit\u00a0; enregistrez d'abord son départ",
+        "fr": "Cet élève est déjà inscrit\u00a0; indiquez d'abord son départ",
     },
     "error.leave_before_entry": {
         "en": "A departure ({leave_date}) cannot precede the arrival it closes ({entry_date})",
