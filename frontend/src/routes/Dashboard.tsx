@@ -1,10 +1,8 @@
-import { useContext } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { getDashboardSummary } from "../api/endpoints";
 import type { DashboardSummary } from "../api/types";
 import { useApi } from "../lib/useApi";
-import { AuthContext } from "../lib/authContext";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { formatMoney } from "../lib/money";
@@ -28,20 +26,15 @@ export function Dashboard() {
   const payments = usePaymentSheet();
   const readOnly = useReadOnly();
   const moneyFacts = useMoneyFacts();
-  // Read without `useAuth` so the screen renders in isolation (tests); signed out never gets here.
-  const user = useContext(AuthContext)?.user;
   const state = useApi(() => getDashboardSummary({ limit: 100 }), [payments.version]);
 
   return (
     <AsyncView state={state} onRetry={state.reload}>
       {(data) => (
         <div className="flex flex-col gap-6">
-          <header>
-            {user && <p className="text-muted">{t("home.greeting", { name: user.display_name })}</p>}
-            <h1 className="font-display text-3xl font-extrabold tracking-tight">
-              {formatMonthTitle(data.as_of.slice(0, 7))}
-            </h1>
-          </header>
+          <h1 className="font-display text-3xl font-extrabold tracking-tight">
+            {formatMonthTitle(data.as_of.slice(0, 7))}
+          </h1>
 
           <section className="grid grid-cols-2 gap-3">
             <Figure

@@ -368,7 +368,6 @@
     "password": "Mot de passe",
     "submit": "Se connecter",
     "signOut": "Se déconnecter",
-    "signedInAs": "Connecté en tant que {{name}}",
     "checking": "Vérification de votre session…",
     "usernameRequired": "Saisissez votre nom d'utilisateur",
     "passwordRequired": "Saisissez votre mot de passe",
@@ -407,7 +406,6 @@
     }
   },
   "home": {
-    "greeting": "Bonjour {{name}}",
     "collected": "Encaissé ce mois-ci",
     "outstanding": "Impayés au {{date}}",
     "pay": "Encaisser un paiement",

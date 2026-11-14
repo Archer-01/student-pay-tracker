@@ -5,6 +5,7 @@ import { useAuth } from "../lib/authContext";
 import { useTheme, type ThemePreference } from "../lib/themeContext";
 import { SUPPORTED_LOCALES, type Locale } from "../i18n";
 import { ChevronRightIcon, SignOutIcon } from "../components/icons";
+import { Avatar } from "../components/people";
 
 /**
  * Everything set up once and rarely touched: classes, the price grid, language, appearance, and
@@ -21,12 +22,7 @@ export function Settings() {
 
       {user && (
         <section className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
-          <span
-            aria-hidden="true"
-            className="flex h-11 w-11 items-center justify-center rounded-full bg-brand-soft font-bold text-brand"
-          >
-            {user.display_name.slice(0, 1).toUpperCase()}
-          </span>
+          <Avatar name={user.display_name} />
           <span className="flex flex-col">
             <span className="font-bold">{user.display_name}</span>
             <span className="text-sm text-muted">{t("settings.signedIn")}</span>

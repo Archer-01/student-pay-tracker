@@ -368,7 +368,6 @@
     "password": "Password",
     "submit": "Sign in",
     "signOut": "Sign out",
-    "signedInAs": "Signed in as {{name}}",
     "checking": "Checking your session…",
     "usernameRequired": "Enter your username",
     "passwordRequired": "Enter your password",
@@ -407,7 +406,6 @@
     }
   },
   "home": {
-    "greeting": "Hello {{name}}",
     "collected": "Collected this month",
     "outstanding": "Owed as of {{date}}",
     "pay": "Record a payment",

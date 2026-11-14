@@ -8,6 +8,7 @@ import { PaymentSheetProvider } from "./PaymentSheet";
 import { OfflineBanner } from "./OfflineBanner";
 import { useReadOnly } from "../lib/connectivity";
 import { Logo } from "./Logo";
+import { Avatar } from "./people";
 
 /**
  * Four places, in the order the work happens: today, the students, the money, and the things set
@@ -79,10 +80,12 @@ function Shell() {
           <PlusIcon className="h-5 w-5" />
           {t("nav.pay")}
         </button>
+        {/* Who is signed in, said once: initials and a name, not a sentence. */}
         {user && (
-          <p className="mt-auto px-3 text-sm text-muted">
-            {t("auth.signedInAs", { name: user.display_name })}
-          </p>
+          <div className="mt-auto flex items-center gap-3 rounded-xl border border-line bg-ground p-3">
+            <Avatar name={user.display_name} />
+            <span className="min-w-0 truncate font-bold">{user.display_name}</span>
+          </div>
         )}
       </aside>
 
