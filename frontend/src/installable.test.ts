@@ -6,6 +6,7 @@ const manifest = JSON.parse(manifestText) as {
   start_url: string;
   scope: string;
   name: string;
+  theme_color: string;
   icons: { src: string; purpose?: string }[];
 };
 // What actually ships in public/, keyed "../public/<file>".
@@ -23,6 +24,13 @@ describe("installing Ardoise as an app", () => {
     expect(manifest.name).toBe("Ardoise");
     for (const icon of manifest.icons) expect(ships(icon.src), icon.src).toBe(true);
     expect(ships("/apple-touch-icon.png")).toBe(true);
+  });
+
+  it("colours Android's bottom bar brand green, which reads in both themes", () => {
+    // Chrome and Brave take the installed app's bottom (navigation) bar colour from the
+    // manifest, once, whatever the theme: the page's theme-color only reaches the top bar. The
+    // old light ground left a light strip under the dark theme's tab bar.
+    expect(manifest.theme_color).toBe("#1f4e4a");
   });
 
   it("has a maskable icon, so Android launchers can reshape it without a white border", () => {

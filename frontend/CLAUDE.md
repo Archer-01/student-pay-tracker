@@ -170,6 +170,11 @@ opens with no address bar or tabs. That changes a few things to keep in mind:
 - **The status bar is the page's top edge**, so its colour (`<meta name="theme-color">`) follows
   the theme actually showing: `lib/theme.tsx` sets it, and the pre-paint script in `index.html`
   sets it before React loads.
+- **The bottom (navigation) bar on Android can't follow the theme.** Chrome and Brave colour it
+  from the manifest's `theme_color`, fixed at install, and the meta tag only reaches the top bar.
+  It is the brand green, which reads under either theme's tab bar; the light ground it used to
+  be left a light strip under the dark theme. An installed app picks up a manifest change when
+  the browser next checks it (up to a day), or at once when reinstalled.
 - **There is no browser back or reload button.** Every page needs its own way back (the "‹"
   links), and screens refresh themselves after a change rather than relying on a reload.
 - **Offline, read only** (see "Offline" below): the installed app opens without a connection and
