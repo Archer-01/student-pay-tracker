@@ -231,8 +231,10 @@ def test_a_month_paid_in_advance_or_below_the_price_counts_what_was_paid(
     _pay(db_session, sid, 1, date(2026, 10, 25))
     _pay(db_session, sid, 2, date(2026, 11, 10), "150")  # November, early and a little short
 
+    # A paid month counts what was paid on both sides: a student who pays below their price
+    # is settled, and the bar reaches the end when everyone has paid.
     month = DashboardService(db_session).get_summary(_NOV_14).this_month
-    assert (month.expected, month.settled) == (Decimal("200"), Decimal("150"))
+    assert (month.expected, month.settled) == (Decimal("150"), Decimal("150"))
     assert month.students_settled == 1
 
 

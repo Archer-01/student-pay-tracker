@@ -45,7 +45,8 @@ class StudentDigest:
 
 @dataclass(frozen=True)
 class MonthProgress:
-    """This month's fees: what they come to, and what has been paid toward them."""
+    """This month's fees: what they come to (what was paid for a paid month, the price for an
+    unpaid one), and what has been paid toward them."""
 
     expected: Decimal
     settled: Decimal
@@ -185,8 +186,11 @@ class DashboardService:
             this_month = [e for e in owed if month_start <= e.expected_due_date <= month_end]
             if this_month:
                 paid = [e for e in this_month if e.paid_date is not None]
-                expected += price * len(this_month)
-                settled += sum((e.amount or Decimal("0") for e in paid), Decimal("0"))
+                paid_total = sum((e.amount or Decimal("0") for e in paid), Decimal("0"))
+                # A paid month counts what was paid, not today's price: several students pay
+                # below their listed price, and they are settled all the same.
+                expected += paid_total + price * (len(this_month) - len(paid))
+                settled += paid_total
                 students_expected += 1
                 if len(paid) == len(this_month):
                     students_settled += 1
