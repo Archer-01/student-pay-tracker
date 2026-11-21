@@ -94,9 +94,13 @@ describe("session handling", () => {
     // Patch the two statics onto the real URL rather than replacing the global: `buildUrl` needs
     // `new URL(...)`, and jsdom ships no object-URL support.
     Object.assign(URL, { createObjectURL: () => "blob:x", revokeObjectURL: () => {} });
+    // jsdom can't follow the synthetic anchor's click (it logs "navigation … not implemented").
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
     await downloadFile("/reports/annual.pdf", "annual.pdf");
     const [, init] = vi.mocked(fetch).mock.calls[0];
     expect(init?.credentials).toBe("include");
+    expect(click).toHaveBeenCalledOnce();
+    click.mockRestore();
   });
 
   it("notifies the unauthorized handler on a 401 so the app can show the login page", async () => {

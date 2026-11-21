@@ -7,14 +7,6 @@ const NOW = new Date("2026-11-21T10:00:00");
 const student = (id: number) => ({ id });
 
 beforeEach(() => {
-  // Node shadows jsdom's localStorage here (see Login.test.tsx): a small stand-in will do.
-  const store = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-    removeItem: (k: string) => void store.delete(k),
-    clear: () => store.clear(),
-  });
   vi.spyOn(endpoints, "getDashboardSummary").mockResolvedValue({} as never);
   vi.spyOn(endpoints, "listStudents").mockImplementation(async (params = {}) =>
     (params.status === "inactive" ? [student(9)] : params.class_id ? [] : [student(1), student(2)]) as never,

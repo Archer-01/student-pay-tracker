@@ -53,5 +53,11 @@ export default defineConfig({
     // tsconfig needs no extra `types` entry and an unimported helper is a type error.
     globals: false,
     css: false,
+    // Node 25+ has a localStorage of its own, which shadows jsdom's and, with no
+    // --localstorage-file, is missing and warns on every test file. Off, so jsdom's is the one.
+    poolOptions: {
+      forks: { execArgv: ["--no-experimental-webstorage"] },
+      threads: { execArgv: ["--no-experimental-webstorage"] },
+    },
   },
 });

@@ -21,20 +21,11 @@ function renderLogin(signIn: AuthContextValue["signIn"], sessionExpired = false)
 
 beforeEach(() => {
   vi.stubGlobal("fetch", vi.fn());
-  // ThemeProvider reads both of these to pick the initial theme, and this environment supplies
-  // neither (jsdom has no matchMedia; localStorage is absent here too — which is why no other
-  // test renders the theme controls).
+  // ThemeProvider reads matchMedia to pick the initial theme, and jsdom has none.
   vi.stubGlobal(
     "matchMedia",
     vi.fn().mockReturnValue({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }),
   );
-  const store = new Map<string, string>();
-  vi.stubGlobal("localStorage", {
-    getItem: (k: string) => store.get(k) ?? null,
-    setItem: (k: string, v: string) => void store.set(k, v),
-    removeItem: (k: string) => void store.delete(k),
-    clear: () => store.clear(),
-  });
 });
 afterEach(() => {
   vi.unstubAllGlobals();

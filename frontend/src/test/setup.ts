@@ -11,4 +11,9 @@ beforeEach(async () => {
   await i18n.changeLanguage("en");
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  // jsdom's storage lives as long as the test file: clear it so one test's theme, locale or
+  // offline-copy time doesn't reach the next.
+  localStorage.clear();
+});
