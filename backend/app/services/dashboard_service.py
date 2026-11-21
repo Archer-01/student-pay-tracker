@@ -11,15 +11,17 @@ Three questions, in the order they get asked:
   counts cash by paid date, back payments included, while this counts only this month's fees.
 - **What's quietly wrong?** Problems that produce no error and no bill: a student on no pack is
   charged nothing, month after month, and nothing else in the app says so.
+- **Did I type that right?** The payments recorded today, so a typo is caught the same day.
 """
 
 from dataclasses import dataclass
 from datetime import date, timedelta
 from decimal import Decimal
 
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Student, StudentStatus
+from app.models import Payment, Student, StudentStatus
 from app.repos import PaymentRepo, StudentRepo
 from app.services.debt_service import DebtService
 from app.services.enrollment_service import EnrollmentService
@@ -73,6 +75,23 @@ DueSoonList = list[DueSoon]
 
 
 @dataclass(frozen=True)
+class RecordedToday:
+    """A payment typed in today, whatever day it was paid and whichever month it settles."""
+
+    student_id: int
+    name: str
+    class_label: str | None
+    cycle_number: int
+    # The month it pays for, "YYYY-MM": the month its due date falls in.
+    for_month: str
+    paid_date: date
+    amount: Decimal
+
+
+RecordedTodayList = list[RecordedToday]
+
+
+@dataclass(frozen=True)
 class DashboardSummary:
     as_of: date
     total_collected_this_month: Decimal
@@ -98,6 +117,8 @@ class DashboardSummary:
     due_this_week: DueSoonList
     # Last month's share for the school, while any of it is still to hand over.
     school_share_pending: ShareMonth | None
+    # Newest first.
+    recorded_today: RecordedTodayList
 
 
 class DashboardService:
@@ -158,7 +179,33 @@ class DashboardService:
             school_share_pending=SchoolShareHandoverService(self.session).pending(
                 as_of, share_percent
             ),
+            recorded_today=self._recorded_on(as_of),
         )
+
+    def _recorded_on(self, day: date) -> RecordedTodayList:
+        """Payments typed in on ``day``, by when they were recorded, not when they were paid: a
+        back payment entered today is exactly the one worth a second look.
+
+        By ``date()`` of the stored timestamp rather than a datetime range, since SQLite's
+        ``CURRENT_TIMESTAMP`` has no fraction and would sort below a bound that has one.
+        """
+        stmt = (
+            select(Payment)
+            .where(func.date(Payment.created_at) == day.isoformat())
+            .order_by(Payment.created_at.desc(), Payment.id.desc())
+        )
+        return [
+            RecordedToday(
+                student_id=p.student_id,
+                name=p.student.full_name,
+                class_label=_class_label(p.student),
+                cycle_number=p.cycle_number,
+                for_month=p.expected_due_date.strftime("%Y-%m"),
+                paid_date=p.paid_date,
+                amount=p.amount,
+            )
+            for p in self.session.scalars(stmt)
+        ]
 
     def _month_and_week(
         self, students: list[Student], as_of: date

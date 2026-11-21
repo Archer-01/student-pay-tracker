@@ -830,6 +830,8 @@ export interface components {
             /** Due This Week */
             due_this_week: components["schemas"]["DueSoonOut"][];
             school_share_pending: components["schemas"]["SharePendingOut"] | null;
+            /** Recorded Today */
+            recorded_today: components["schemas"]["RecordedTodayOut"][];
         };
         /**
          * DebtStatusOut
@@ -1238,6 +1240,29 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /**
+         * RecordedTodayOut
+         * @description A payment typed in today, to check for typos; ``for_month`` is "YYYY-MM".
+         */
+        RecordedTodayOut: {
+            /** Student Id */
+            student_id: number;
+            /** Name */
+            name: string;
+            /** Class Label */
+            class_label: string | null;
+            /** Cycle Number */
+            cycle_number: number;
+            /** For Month */
+            for_month: string;
+            /**
+             * Paid Date
+             * Format: date
+             */
+            paid_date: string;
+            /** Amount */
+            amount: string;
         };
         /** ReturnRequest */
         ReturnRequest: {

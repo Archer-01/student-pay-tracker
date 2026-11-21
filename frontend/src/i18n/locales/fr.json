@@ -436,7 +436,11 @@
     "dueTomorrow": "Attendu demain",
     "dueOn": "Attendu {{day}}",
     "sharePending": "Part de l'école à remettre ({{month}}) : {{amount}}",
-    "handOver": "Remettre"
+    "handOver": "Remettre",
+    "owedToday": "Impayés aujourd'hui",
+    "recordedToday": "Encaissé aujourd'hui",
+    "paidOn": "payé le {{date}}",
+    "recordedTodayHint": "Touchez une ligne pour corriger une faute de frappe."
   },
   "owed": {
     "paidUp": "À jour",

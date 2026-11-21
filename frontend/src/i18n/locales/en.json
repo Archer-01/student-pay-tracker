@@ -436,7 +436,11 @@
     "dueTomorrow": "Due tomorrow",
     "dueOn": "Due {{day}}",
     "sharePending": "School's share to hand over ({{month}}): {{amount}}",
-    "handOver": "Hand over"
+    "handOver": "Hand over",
+    "owedToday": "Owed today",
+    "recordedToday": "Collected today",
+    "paidOn": "paid on {{date}}",
+    "recordedTodayHint": "Tap a line to fix a typo."
   },
   "owed": {
     "paidUp": "Up to date",

@@ -4,12 +4,13 @@ The ranking is by **money owed**, not drift: a student with plenty of drift who 
 someone to chase. Drift travels on every row and breaks ties.
 """
 
-from datetime import date
+from datetime import date, datetime, timedelta
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
 from app.models import StudentStatus
+from app.repos import PaymentRepo
 from app.services.class_service import ClassService
 from app.services.dashboard_service import DashboardService
 from app.services.enrollment_service import EnrollmentService
@@ -292,3 +293,55 @@ def test_the_home_page_reminds_of_last_months_share_until_handed_over(db_session
     pending = summary.school_share_pending
     assert pending is not None and (pending.month, pending.remaining) == (10, Decimal("60.00"))
     assert DashboardService(db_session).get_summary(_NOV_14).school_share_pending is None
+
+
+def _recorded_at(db_session: Session, sid: int, cycle: int, when: datetime) -> None:
+    """Pretend a payment was typed in at ``when``: ``created_at`` is otherwise the server's now."""
+    payment = PaymentRepo(db_session).get_by_student_cycle(sid, cycle)
+    assert payment is not None
+    payment.created_at = when
+    db_session.flush()
+
+
+def test_recorded_today_lists_what_was_typed_in_today_newest_first(db_session: Session) -> None:
+    from app.models import ClassLevel
+
+    school_class = ClassService(db_session).create(level=ClassLevel.TC, name="Groupe A")
+    amina = StudentService(db_session).enroll(
+        first_name="Amina", join_date=date(2026, 9, 5), custom_price=Decimal("240"),
+        class_id=school_class.id,
+    ).id
+    omar = _student(db_session, "Omar", date(2026, 9, 10))
+    # Back-dated: September's, paid on 5 September, only typed in today. That is the point.
+    _pay(db_session, amina, 0, date(2026, 9, 5), "240")
+    _pay(db_session, omar, 2, date(2026, 11, 21), "150")
+    # Typed in late yesterday: not today's to check.
+    _pay(db_session, omar, 1, date(2026, 10, 10))
+    _recorded_at(db_session, amina, 0, datetime(2026, 11, 21, 0, 0, 0))
+    _recorded_at(db_session, omar, 2, datetime(2026, 11, 21, 18, 40))
+    _recorded_at(db_session, omar, 1, datetime(2026, 11, 20, 23, 59, 59))
+
+    today = DashboardService(db_session).get_summary(date(2026, 11, 21)).recorded_today
+    assert [
+        (r.name, r.class_label, r.cycle_number, r.for_month, r.paid_date, r.amount)
+        for r in today
+    ] == [
+        ("Omar", None, 2, "2026-11", date(2026, 11, 21), Decimal("150")),
+        ("Amina", "TC — Groupe A", 0, "2026-09", date(2026, 9, 5), Decimal("240")),
+    ]
+    assert [r.student_id for r in today] == [omar, amina]
+
+
+def test_recorded_today_reads_the_servers_own_timestamp(db_session: Session) -> None:
+    # No timestamp set by hand: the row carries what the database wrote, in its own format.
+    sid = _student(db_session, "Now", date(2026, 9, 5))
+    _pay(db_session, sid, 0, date(2026, 9, 5))
+    payment = PaymentRepo(db_session).get_by_student_cycle(sid, 0)
+    assert payment is not None
+    db_session.refresh(payment)
+    # The database's day rather than date.today(): CURRENT_TIMESTAMP is UTC, the machine may not be.
+    recorded_on = payment.created_at.date()
+
+    service = DashboardService(db_session)
+    assert [r.name for r in service.get_summary(recorded_on).recorded_today] == ["Now"]
+    assert service.get_summary(recorded_on + timedelta(days=1)).recorded_today == []

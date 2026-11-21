@@ -6,11 +6,10 @@ import { useApi } from "../lib/useApi";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { formatMoney } from "../lib/money";
-import { formatDate, formatMonthTitle, formatWeekday } from "../lib/dates";
+import { formatDayMonth, formatMonthTitle, formatWeekday } from "../lib/dates";
 import { AsyncView, Button } from "../components/ui";
 import { OwedPill } from "../components/people";
 import { StudentRow, StudentRows } from "../components/StudentRow";
-import { useMoneyFacts } from "../lib/useMoneyFacts";
 import { CheckIcon, ChevronRightIcon, PlusIcon } from "../components/icons";
 import { Figure } from "../components/report";
 
@@ -25,7 +24,6 @@ export function Dashboard() {
   const { t } = useTranslation();
   const payments = usePaymentSheet();
   const readOnly = useReadOnly();
-  const moneyFacts = useMoneyFacts();
   const state = useApi(() => getDashboardSummary({ limit: 100 }), [payments.version]);
 
   return (
@@ -47,7 +45,7 @@ export function Dashboard() {
               }
             />
             <Figure
-              label={t("home.outstanding", { date: formatDate(data.as_of) })}
+              label={t("home.owedToday")}
               value={formatMoney(data.total_outstanding)}
               alarming={Number(data.total_outstanding) > 0}
             />
@@ -60,6 +58,8 @@ export function Dashboard() {
             <PlusIcon className="h-5 w-5" />
             {t("home.pay")}
           </Button>
+
+          <RecordedToday rows={data.recorded_today} asOf={data.as_of} />
 
           <Attention data={data} />
 
@@ -85,7 +85,9 @@ export function Dashboard() {
                     to={`/students/${d.student_id}`}
                     name={d.name}
                     facts={[
-                      ...moneyFacts({ monthsOverdue: d.months_overdue, drift: d.cumulative_drift }),
+                      // No lateness here: it pushed the class off a phone's line, and
+                      // Ponctualité on the student says it better.
+                      d.months_overdue > 0 && t("owed.monthsUnpaid", { count: d.months_overdue }),
                       d.class_label,
                     ]}
                     right={
@@ -180,15 +182,54 @@ function DueThisWeek({ rows, asOf }: { rows: DashboardSummary["due_this_week"]; 
             to={`/students/${d.student_id}`}
             name={d.name}
             facts={[when(d.due_date), d.class_label]}
-            right={
-              <span className="whitespace-nowrap rounded-full bg-brand-soft px-3 py-1 text-sm font-bold text-brand">
-                {formatMoney(d.amount)}
-              </span>
-            }
+            right={<AmountPill amount={d.amount} />}
           />
         ))}
       </StudentRows>
     </section>
+  );
+}
+
+/**
+ * Payments typed in today, newest first, so a typo is caught the same day: a back payment
+ * recorded today is here too. Each row opens the student on the month it paid for, where it
+ * can be corrected. Hidden when nothing was recorded.
+ */
+function RecordedToday({ rows, asOf }: { rows: DashboardSummary["recorded_today"]; asOf: string }) {
+  const { t } = useTranslation();
+  if (rows.length === 0) return null;
+  const label = t("home.recordedToday");
+  return (
+    <section className="flex flex-col gap-3">
+      <h2 className="text-lg font-bold">
+        {label} · {rows.length}
+      </h2>
+      <StudentRows label={label}>
+        {rows.map((p) => (
+          <StudentRow
+            key={`${p.student_id}-${p.cycle_number}`}
+            to={`/students/${p.student_id}?month=${p.for_month}`}
+            name={p.name}
+            facts={[
+              formatMonthTitle(p.for_month),
+              // Paid today goes without saying.
+              p.paid_date !== asOf && t("home.paidOn", { date: formatDayMonth(p.paid_date) }),
+            ]}
+            right={<AmountPill amount={p.amount} />}
+          />
+        ))}
+      </StudentRows>
+      <p className="text-sm text-muted">{t("home.recordedTodayHint")}</p>
+    </section>
+  );
+}
+
+/** An amount with no verdict attached, unlike `OwedPill`. */
+function AmountPill({ amount }: { amount: string }) {
+  return (
+    <span className="whitespace-nowrap rounded-full bg-brand-soft px-3 py-1 text-sm font-bold text-brand">
+      {formatMoney(amount)}
+    </span>
   );
 }
 

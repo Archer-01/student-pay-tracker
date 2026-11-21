@@ -45,6 +45,20 @@ class DueSoonOut(BaseModel):
     amount: Decimal
 
 
+class RecordedTodayOut(BaseModel):
+    """A payment typed in today, to check for typos; ``for_month`` is "YYYY-MM"."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    student_id: int
+    name: str
+    class_label: str | None
+    cycle_number: int
+    for_month: str
+    paid_date: date
+    amount: Decimal
+
+
 class SharePendingOut(BaseModel):
     """Last month's share for the school, still (partly) to hand over."""
 
@@ -74,3 +88,5 @@ class DashboardSummaryOut(BaseModel):
     # Soonest first: today and the six days after it.
     due_this_week: list[DueSoonOut]
     school_share_pending: SharePendingOut | None
+    # Payments recorded today (by when they were typed in, not paid), newest first.
+    recorded_today: list[RecordedTodayOut]

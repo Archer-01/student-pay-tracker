@@ -30,6 +30,7 @@ function summary(over: Partial<Record<string, unknown>> = {}) {
     this_month: { expected: "0", settled: "0", students_expected: 0, students_settled: 0 },
     due_this_week: [],
     school_share_pending: null,
+    recorded_today: [],
     ...over,
   };
 }
@@ -55,6 +56,8 @@ describe("Accueil", () => {
     expect(await screen.findByRole("heading", { level: 1, name: "November 2026" })).toBeInTheDocument();
     expect(screen.getByText("1,300 DH")).toBeInTheDocument();
     expect(screen.getByText("6,400 DH")).toBeInTheDocument();
+    // Short enough not to wrap on a phone: no date, the home page is always today.
+    expect(screen.getByText("Owed today")).toBeInTheDocument();
   });
 
   it("puts taking a payment one tap away", async () => {
@@ -67,8 +70,8 @@ describe("Accueil", () => {
     expect(screen.getByPlaceholderText(/search for a student/i)).toBeInTheDocument();
   });
 
-  it("ranks who to chase by money, one line each, keeping lateness visible", async () => {
-    // The biggest debtor may have almost no lateness; both facts stay on the row.
+  it("ranks who to chase by money, one short line each: months unpaid and class", async () => {
+    // Lateness is left to Ponctualité: on a phone it pushed the class off the end of the line.
     vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
       summary({
         top_debtors: [
@@ -82,12 +85,11 @@ describe("Accueil", () => {
     const rows = chaseList().getAllByRole("link");
     expect(rows[0]).toHaveTextContent("Youssef El Amrani");
     expect(rows[0]).toHaveTextContent("900 DH");
-    expect(rows[0]).toHaveTextContent("3 months unpaid");
-    expect(rows[0]).toHaveTextContent("1 day late");
+    expect(rows[0]).toHaveTextContent("3 months unpaid · 2BAC — Groupe A");
     expect(rows[0]).toHaveAttribute("href", "/students/2");
     expect(rows[1]).toHaveTextContent("240 DH");
-    expect(rows[1]).toHaveTextContent("1 month unpaid");
-    expect(rows[1]).toHaveTextContent("25 days late");
+    expect(rows[1]).toHaveTextContent("1 month unpaid · 2BAC — Groupe A");
+    expect(chaseList().queryByText(/late/)).toBeNull();
   });
 
   it("says so plainly when nobody owes anything", async () => {
@@ -224,5 +226,46 @@ describe("Accueil, the school's share", () => {
     renderHome();
     expect(await screen.findByText(/school's share to hand over \(October 2026\)/i)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /hand over/i })).toHaveAttribute("href", "/reports/school");
+  });
+});
+
+describe("Accueil, what was recorded today", () => {
+  const recorded = (over: Partial<Record<string, unknown>> = {}) => ({
+    student_id: 3, name: "Omar Tazi", class_label: "TC — Groupe A", cycle_number: 2,
+    for_month: "2026-11", paid_date: "2026-11-14", amount: "200.00", ...over,
+  });
+
+  it("lists today's payments right under the pay button, each opening its month", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
+      summary({
+        recorded_today: [
+          recorded(),
+          // Back-dated: September's, paid on 5 September, typed in today.
+          recorded({ student_id: 8, name: "Sara Idrissi", for_month: "2026-09", paid_date: "2026-09-05", amount: "240.00" }),
+        ],
+      }) as never,
+    );
+    renderHome();
+    const heading = await screen.findByRole("heading", { name: "Collected today · 2" });
+    const rows = within(screen.getByRole("list", { name: "Collected today" })).getAllByRole("link");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringMatching(/Omar Tazi.*November 2026.*200\sDH/),
+      expect.stringMatching(/Sara Idrissi.*September 2026 · paid on Sep 5.*240\sDH/),
+    ]);
+    // Paid today goes without saying.
+    expect(rows[0]).not.toHaveTextContent(/paid on/);
+    expect(rows[0]).toHaveAttribute("href", "/students/3?month=2026-11");
+    expect(rows[1]).toHaveAttribute("href", "/students/8?month=2026-09");
+    expect(screen.getByText("Tap a line to fix a typo.")).toBeInTheDocument();
+    // Straight after the pay button, before anything needing attention or the chase list.
+    expect(screen.getByRole("button", { name: /record a payment/i }).nextElementSibling).toContainElement(heading);
+  });
+
+  it("leaves the section out when nothing was recorded today", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(summary() as never);
+    renderHome();
+    await screen.findByText(/collected this month/i);
+    expect(screen.queryByText(/collected today/i)).toBeNull();
+    expect(screen.queryByText(/fix a typo/i)).toBeNull();
   });
 });
