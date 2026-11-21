@@ -423,7 +423,16 @@
     "fix": "Corriger",
     "leavers": "Partis sans régler",
     "leaversCount_one": "{{count}} ancien élève",
-    "leaversCount_other": "{{count}} anciens élèves"
+    "leaversCount_other": "{{count}} anciens élèves",
+    "monthFees": "Mensualités du mois",
+    "monthSettled_one": "{{count}} élève sur {{total}} a payé",
+    "monthSettled_other": "{{count}} élèves sur {{total}} ont payé",
+    "monthAmounts": "{{settled}} sur {{expected}}",
+    "week": "Cette semaine",
+    "weekHint": "Attendus dans les 7 jours",
+    "dueToday": "Attendu aujourd'hui",
+    "dueTomorrow": "Attendu demain",
+    "dueOn": "Attendu {{day}}"
   },
   "owed": {
     "paidUp": "À jour",

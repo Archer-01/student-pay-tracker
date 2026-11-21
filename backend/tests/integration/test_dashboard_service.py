@@ -13,6 +13,7 @@ from app.models import StudentStatus
 from app.services.class_service import ClassService
 from app.services.dashboard_service import DashboardService
 from app.services.enrollment_service import EnrollmentService
+from app.services.override_service import OverrideService
 from app.services.payment_service import PaymentService
 from app.services.student_service import StudentService
 
@@ -186,3 +187,96 @@ def test_a_paid_up_student_is_not_on_the_chase_list(db_session: Session) -> None
     summary = DashboardService(db_session).get_summary(as_of=date(2023, 4, 30))
     assert summary.top_debtors == []
     assert summary.active_students == 1
+
+
+# --------------------------------------------------------------------------- #
+# This month's dues, and who is due this week
+# --------------------------------------------------------------------------- #
+
+_NOV_14 = date(2026, 11, 14)
+
+
+def _student(db_session: Session, name: str, joined: date, price: str = "200") -> int:
+    return StudentService(db_session).enroll(
+        first_name=name, join_date=joined, custom_price=Decimal(price)
+    ).id
+
+
+def _pay(db_session: Session, sid: int, cycle: int, on: date, amount: str = "200") -> None:
+    PaymentService(db_session).record_payment(
+        student_id=sid, cycle_number=cycle, paid_date=on, amount=Decimal(amount)
+    )
+
+
+def test_this_months_dues_count_whoever_is_due_this_month(db_session: Session) -> None:
+    # Due on the 5th: November's 200 is paid. Due on the 25th: not yet, but it is this
+    # month's, so it counts toward what's expected.
+    early = _student(db_session, "Early", date(2026, 9, 5))
+    for cycle, day in ((0, date(2026, 9, 5)), (1, date(2026, 10, 5)), (2, date(2026, 11, 6))):
+        _pay(db_session, early, cycle, day)
+    late = _student(db_session, "Late", date(2026, 9, 25), price="300")
+    _pay(db_session, late, 0, date(2026, 9, 25), "300")
+    _pay(db_session, late, 1, date(2026, 10, 25), "300")
+
+    month = DashboardService(db_session).get_summary(_NOV_14).this_month
+    assert (month.expected, month.settled) == (Decimal("500"), Decimal("200"))
+    assert (month.students_expected, month.students_settled) == (2, 1)
+
+
+def test_a_month_paid_in_advance_or_below_the_price_counts_what_was_paid(
+    db_session: Session,
+) -> None:
+    sid = _student(db_session, "Ahead", date(2026, 9, 25))
+    _pay(db_session, sid, 0, date(2026, 9, 25))
+    _pay(db_session, sid, 1, date(2026, 10, 25))
+    _pay(db_session, sid, 2, date(2026, 11, 10), "150")  # November, early and a little short
+
+    month = DashboardService(db_session).get_summary(_NOV_14).this_month
+    assert (month.expected, month.settled) == (Decimal("200"), Decimal("150"))
+    assert month.students_settled == 1
+
+
+def test_months_away_and_students_not_billed_are_not_expected(db_session: Session) -> None:
+    # Away from 20 October to 10 November: the 5 November due falls in the gap.
+    away = _student(db_session, "Away", date(2026, 9, 5))
+    _pay(db_session, away, 0, date(2026, 9, 5))
+    _pay(db_session, away, 1, date(2026, 10, 5))
+    enrollment = EnrollmentService(db_session)
+    enrollment.leave(away, leave_date=date(2026, 10, 20))
+    enrollment.return_(away, entry_date=date(2026, 11, 10))
+    StudentService(db_session).enroll(first_name="Free", join_date=date(2026, 9, 5))
+
+    month = DashboardService(db_session).get_summary(_NOV_14).this_month
+    assert (month.expected, month.students_expected) == (Decimal("0"), 0)
+
+
+def test_due_this_week_runs_from_today_to_six_days_ahead(db_session: Session) -> None:
+    today = _student(db_session, "Today", date(2026, 9, 14))
+    in_six = _student(db_session, "InSix", date(2026, 9, 20), price="300")
+    _student(db_session, "InSeven", date(2026, 9, 21))
+    paid = _student(db_session, "PaidAhead", date(2026, 9, 16))
+    _pay(db_session, paid, 2, date(2026, 11, 12))
+    for sid, day in ((today, 14), (in_six, 20)):
+        _pay(db_session, sid, 0, date(2026, 9, day), "300" if sid == in_six else "200")
+        _pay(db_session, sid, 1, date(2026, 10, day), "300" if sid == in_six else "200")
+
+    soon = DashboardService(db_session).get_summary(_NOV_14).due_this_week
+    assert [(d.name, d.due_date, d.amount) for d in soon] == [
+        ("Today", date(2026, 11, 14), Decimal("200")),
+        ("InSix", date(2026, 11, 20), Decimal("300")),
+    ]
+
+
+def test_a_moved_payment_day_moves_the_due_into_the_right_week(db_session: Session) -> None:
+    sid = _student(db_session, "Moved", date(2026, 9, 5))
+    _pay(db_session, sid, 0, date(2026, 9, 5))
+    _pay(db_session, sid, 1, date(2026, 10, 5))
+    # From November the student pays on the 16th instead of the 5th.
+    OverrideService(db_session).create_override(
+        student_id=sid, new_due_date=date(2026, 11, 16), reason="Paie après le salaire"
+    )
+    summary = DashboardService(db_session).get_summary(_NOV_14)
+    assert [(d.name, d.due_date) for d in summary.due_this_week] == [
+        ("Moved", date(2026, 11, 16))
+    ]
+    assert summary.this_month.expected == Decimal("200")

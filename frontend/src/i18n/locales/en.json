@@ -423,7 +423,16 @@
     "fix": "Fix",
     "leavers": "Left owing",
     "leaversCount_one": "{{count}} former student",
-    "leaversCount_other": "{{count}} former students"
+    "leaversCount_other": "{{count}} former students",
+    "monthFees": "This month's fees",
+    "monthSettled_one": "{{count}} of {{total}} students paid",
+    "monthSettled_other": "{{count}} of {{total}} students paid",
+    "monthAmounts": "{{settled}} of {{expected}}",
+    "week": "This week",
+    "weekHint": "Due in the next 7 days",
+    "dueToday": "Due today",
+    "dueTomorrow": "Due tomorrow",
+    "dueOn": "Due {{day}}"
   },
   "owed": {
     "paidUp": "Up to date",

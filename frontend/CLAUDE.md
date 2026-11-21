@@ -271,6 +271,17 @@ The sheet opens filled in (`src/lib/paymentDefaults.ts`, with its own tests):
 Money stays a string throughout: `Number()` only compares, and the value sent is always one of
 the original strings (a French "199,5" is turned into "199.5" by a string edit).
 
+## Accueil
+
+Top to bottom: the month as a title; two figures, what came in this month (all cash, back
+payments included, with the teacher's part under it) and what is owed today; **Mensualités du
+mois**, this month's fees against what has been paid toward them, as a count of students and a
+bar (hidden in a month where nobody is due); the pay button; anything needing attention; **À
+relancer**; **Cette semaine**, the unpaid dues of the next seven days, soonest first, said as
+"aujourd'hui", "demain" or the day (hidden when empty); and the link to former students who left
+owing. The server computes both new lists (`this_month`, `due_this_week` on the dashboard
+summary), from the same override-aware schedule as the student page.
+
 ## The student page
 
 The school year is twelve tiles, September to August (`src/lib/schoolYear.ts`, with its own tests):

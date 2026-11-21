@@ -27,6 +27,8 @@ function summary(over: Partial<Record<string, unknown>> = {}) {
     top_debtors: [],
     unbilled_students: [],
     missing_leave_date: [],
+    this_month: { expected: "0", settled: "0", students_expected: 0, students_settled: 0 },
+    due_this_week: [],
     ...over,
   };
 }
@@ -162,5 +164,53 @@ describe("Accueil", () => {
     expect(screen.getByRole("button", { name: /record a payment/i })).toBeDisabled();
     act(() => resetConnectivity());
     expect(screen.getByRole("button", { name: /record a payment/i })).toBeEnabled();
+  });
+});
+
+describe("Accueil, this month's fees and the week ahead", () => {
+  it("shows how far along this month's fees are", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
+      summary({
+        this_month: { expected: "3200.00", settled: "2450.00", students_expected: 12, students_settled: 9 },
+      }) as never,
+    );
+    renderHome();
+    expect(await screen.findByText(/9 of 12 students paid/i)).toBeInTheDocument();
+    expect(screen.getByText(/2,450 DH of 3,200 DH/)).toBeInTheDocument();
+    expect(screen.getByRole("progressbar", { name: /this month's fees/i })).toHaveAttribute("aria-valuenow", "77");
+  });
+
+  it("leaves the fees out when nothing is due this month", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(summary() as never);
+    renderHome();
+    await screen.findByText(/collected this month/i);
+    expect(screen.queryByRole("progressbar")).toBeNull();
+  });
+
+  it("lists who is due this week, saying today and tomorrow in words", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
+      summary({
+        due_this_week: [
+          { student_id: 4, name: "Omar Tazi", class_label: "TC — Groupe A", due_date: "2026-11-14", amount: "200.00" },
+          { student_id: 7, name: "Sara Idrissi", class_label: null, due_date: "2026-11-15", amount: "220.00" },
+          { student_id: 9, name: "Ilyas Tahiri", class_label: null, due_date: "2026-11-18", amount: "150.00" },
+        ],
+      }) as never,
+    );
+    renderHome();
+    const week = within(await screen.findByRole("list", { name: /this week/i }));
+    const rows = week.getAllByRole("link");
+    expect(rows.map((r) => r.textContent)).toEqual([
+      expect.stringMatching(/Omar Tazi.*Due today.*200\sDH/),
+      expect.stringMatching(/Sara Idrissi.*Due tomorrow.*220\sDH/),
+      expect.stringMatching(/Ilyas Tahiri.*Due Wednesday.*150\sDH/),
+    ]);
+  });
+
+  it("leaves the week out when nobody is due", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(summary() as never);
+    renderHome();
+    await screen.findByText(/collected this month/i);
+    expect(screen.queryByRole("list", { name: /this week/i })).toBeNull();
   });
 });

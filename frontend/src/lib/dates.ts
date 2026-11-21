@@ -38,3 +38,10 @@ export function todayIso(): string {
   const pad = (n: number) => String(n).padStart(2, "0");
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+/** "2026-11-18" → "mercredi 18 nov." / "Wednesday, Nov 18": a day this week, said as a day. */
+export function formatWeekday(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat(i18n.language, { weekday: "long", day: "numeric", month: "short" }).format(d);
+}

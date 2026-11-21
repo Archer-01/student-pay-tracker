@@ -6,12 +6,15 @@ Three questions, in the order they get asked:
 - **Who owes me?** Students ranked by **money owed**, not by drift. Drift is the product's core
   metric and still travels on every row, but a student with 25 days of drift who is paid up is not
   someone to chase, while one with thirteen unpaid months is.
+- **How far along is the month?** This month's dues, at today's prices, against what has been
+  paid toward them, and who is due in the coming week. Not the same as "what came in": that
+  counts cash by paid date, back payments included, while this counts only this month's fees.
 - **What's quietly wrong?** Problems that produce no error and no bill: a student on no pack is
   charged nothing, month after month, and nothing else in the app says so.
 """
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -40,6 +43,34 @@ class StudentDigest:
 
 
 @dataclass(frozen=True)
+class MonthProgress:
+    """This month's fees: what they come to, and what has been paid toward them."""
+
+    expected: Decimal
+    settled: Decimal
+    students_expected: int
+    # Students with every one of this month's dues paid (usually one each).
+    students_settled: int
+
+
+@dataclass(frozen=True)
+class DueSoon:
+    """A payment that falls due in the coming week and isn't paid yet."""
+
+    student_id: int
+    name: str
+    class_label: str | None
+    due_date: date
+    amount: Decimal
+
+
+# How far ahead "this week" looks: today and the six days after it.
+DUE_SOON_DAYS = 7
+
+DueSoonList = list[DueSoon]
+
+
+@dataclass(frozen=True)
 class DashboardSummary:
     as_of: date
     total_collected_this_month: Decimal
@@ -60,6 +91,9 @@ class DashboardSummary:
     # 0006 leaves behind, because it refuses to invent a departure date. Their billing keeps
     # running until a real leave is recorded.
     missing_leave_date: list[StudentDigest]
+    this_month: MonthProgress
+    # Soonest first.
+    due_this_week: DueSoonList
 
 
 class DashboardService:
@@ -99,6 +133,7 @@ class DashboardService:
         debtors.sort(key=lambda d: (d.amount_owed, d.cumulative_drift), reverse=True)
 
         leavers = self.debts.leavers_with_debt()
+        this_month, due_soon = self._month_and_week(active, as_of)
         return DashboardSummary(
             as_of=as_of,
             total_collected_this_month=collected,
@@ -114,20 +149,72 @@ class DashboardService:
                 for student in self.students.list(status=StudentStatus.INACTIVE)
                 if self.enrollment.is_attending(student.id)
             ],
+            this_month=this_month,
+            due_this_week=due_soon,
         )
+
+    def _month_and_week(
+        self, students: list[Student], as_of: date
+    ) -> tuple[MonthProgress, DueSoonList]:
+        """This month's dues and the coming week's, from each billable student's schedule.
+
+        One ledger pass per student, up to whichever is later of the month's end and a week
+        ahead: the schedule there is override-aware, includes dues later this month, and marks
+        months the student was away (suspended, so not owed).
+        """
+        month_start = as_of.replace(day=1)
+        month_end = add_months(month_start, 1) - timedelta(days=1)
+        week_end = as_of + timedelta(days=DUE_SOON_DAYS - 1)
+        horizon = max(month_end, week_end)
+
+        expected = settled = Decimal("0")
+        students_expected = students_settled = 0
+        due_soon: DueSoonList = []
+        for student in students:
+            if not self.pricing.billable(student):
+                continue
+            price = self.pricing.price_of(student)
+            owed = [e for e in self.ledger.get_ledger(student.id, horizon) if not e.suspended]
+
+            this_month = [e for e in owed if month_start <= e.expected_due_date <= month_end]
+            if this_month:
+                paid = [e for e in this_month if e.paid_date is not None]
+                expected += price * len(this_month)
+                settled += sum((e.amount or Decimal("0") for e in paid), Decimal("0"))
+                students_expected += 1
+                if len(paid) == len(this_month):
+                    students_settled += 1
+
+            due_soon += [
+                DueSoon(
+                    student_id=student.id,
+                    name=student.full_name,
+                    class_label=_class_label(student),
+                    due_date=e.expected_due_date,
+                    amount=price,
+                )
+                for e in owed
+                if e.paid_date is None and as_of <= e.expected_due_date <= week_end
+            ]
+
+        due_soon.sort(key=lambda d: (d.due_date, d.name))
+        progress = MonthProgress(expected, settled, students_expected, students_settled)
+        return progress, due_soon
 
     def _digest(self, student: Student, as_of: date) -> StudentDigest:
         summary = self.ledger.student_summary(student.id, as_of)
         return StudentDigest(
             student_id=student.id,
             name=student.full_name,
-            class_label=(
-                None
-                if student.school_class is None
-                else f"{student.school_class.level.value} — {student.school_class.name}"
-            ),
+            class_label=_class_label(student),
             monthly_price=self.pricing.price_of(student),
             cumulative_drift=summary.cumulative_drift,
             months_overdue=summary.months_overdue,
             amount_owed=summary.amount_owed,
         )
+
+
+def _class_label(student: Student) -> str | None:
+    if student.school_class is None:
+        return None
+    return f"{student.school_class.level.value} — {student.school_class.name}"

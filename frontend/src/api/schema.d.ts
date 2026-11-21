@@ -788,6 +788,9 @@ export interface components {
             unbilled_students: components["schemas"]["StudentDigestOut"][];
             /** Missing Leave Date */
             missing_leave_date: components["schemas"]["StudentDigestOut"][];
+            this_month: components["schemas"]["MonthProgressOut"];
+            /** Due This Week */
+            due_this_week: components["schemas"]["DueSoonOut"][];
         };
         /**
          * DebtStatusOut
@@ -816,6 +819,25 @@ export interface components {
             as_of: string;
             /** Cumulative Drift */
             cumulative_drift: number;
+        };
+        /**
+         * DueSoonOut
+         * @description An unpaid payment falling due in the coming week.
+         */
+        DueSoonOut: {
+            /** Student Id */
+            student_id: number;
+            /** Name */
+            name: string;
+            /** Class Label */
+            class_label: string | null;
+            /**
+             * Due Date
+             * Format: date
+             */
+            due_date: string;
+            /** Amount */
+            amount: string;
         };
         /**
          * GridCellOut
@@ -903,6 +925,20 @@ export interface components {
             username: string;
             /** Password */
             password: string;
+        };
+        /**
+         * MonthProgressOut
+         * @description This month's fees, at today's prices, and what has been paid toward them.
+         */
+        MonthProgressOut: {
+            /** Expected */
+            expected: string;
+            /** Settled */
+            settled: string;
+            /** Students Expected */
+            students_expected: number;
+            /** Students Settled */
+            students_settled: number;
         };
         /** MonthlyReportOut */
         MonthlyReportOut: {

@@ -218,7 +218,7 @@ Read-only FastAPI endpoints under `/api/v1`, backed by the same services as the 
 | `GET /api/v1/students/{id}` | Student + summary (drift, months overdue, next expected date, payments count, total paid) |
 | `GET /api/v1/students/{id}/ledger` | Full cycle-by-cycle ledger (unpaid cycles as gaps) |
 | `GET /api/v1/students/{id}/drift` | Just the cumulative drift number |
-| `GET /api/v1/dashboard/summary` | `?as_of`, `?limit`: collected this month, total outstanding, top-N latecomers |
+| `GET /api/v1/dashboard/summary` | `?as_of`, `?limit`: collected this month, total outstanding, top-N latecomers, this month's fees (`this_month`: expected, settled, students), and the unpaid dues of the next seven days (`due_this_week`) |
 | `GET /health` | Liveness (outside `/api/v1`) |
 
 - **Dashboard math:** `total_collected_this_month` = payments whose *paid date* is in `as_of`'s month;
