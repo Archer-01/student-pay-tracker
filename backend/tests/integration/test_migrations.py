@@ -42,3 +42,18 @@ def test_upgrade_creates_all_tables_and_downgrade_removes_them(tmp_path: Path) -
             assert _APP_TABLES.isdisjoint(set(inspect(connection).get_table_names()))
     finally:
         engine.dispose()
+
+
+def test_0009_adds_and_removes_the_student_note(tmp_path: Path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'note.db'}")
+    cfg = Config(str(_ALEMBIC_INI))
+    try:
+        with engine.connect() as connection:
+            cfg.attributes["connection"] = connection
+            command.upgrade(cfg, "0009")
+            columns = {c["name"]: c for c in inspect(connection).get_columns("student")}
+            assert columns["note"]["nullable"] is True
+            command.downgrade(cfg, "0008")
+            assert "note" not in {c["name"] for c in inspect(connection).get_columns("student")}
+    finally:
+        engine.dispose()

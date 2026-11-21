@@ -185,6 +185,7 @@ async def create_student(payload: StudentCreate, db: Session = Depends(get_db)) 
         pack_id=payload.pack_id,
         custom_price=payload.custom_price,
         price_note=payload.price_note,
+        note=payload.note,
     )
     return StudentOut.model_validate(student)
 

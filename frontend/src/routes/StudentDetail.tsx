@@ -31,6 +31,7 @@ import {
   MoreIcon,
   PencilIcon,
   PhoneIcon,
+  PlusIcon,
   ReturnIcon,
   WhatsAppIcon,
 } from "../components/icons";
@@ -116,6 +117,8 @@ export function StudentDetail() {
                 onEdit={() => setOpenModal("edit")}
               />
 
+              <Note note={detail.note} readOnly={readOnly} onEdit={() => setOpenModal("edit")} />
+
               <YearTiles
                 detail={detail}
                 ledger={ledger}
@@ -184,6 +187,7 @@ export function StudentDetail() {
                       packId: detail.pack_id,
                       customPrice: detail.custom_price,
                       priceNote: detail.price_note,
+                      note: detail.note,
                     }}
                     onSuccess={handleSaved}
                     onCancel={close}
@@ -558,6 +562,40 @@ function TileDetails({
         </div>
       )}
     </Modal>
+  );
+}
+
+/**
+ * The teacher's own note on the student, private: it never goes on a PDF. Shown under the
+ * status so it's read before the money; with none, a quiet link to add one.
+ */
+function Note({ note, readOnly, onEdit }: { note: string | null; readOnly: boolean; onEdit: () => void }) {
+  const { t } = useTranslation();
+  if (!note) {
+    if (readOnly) return null;
+    return (
+      <button
+        type="button"
+        onClick={onEdit}
+        className="-my-2 flex min-h-11 items-center gap-1.5 self-start font-bold text-brand"
+      >
+        <PlusIcon className="h-4 w-4" />
+        {t("student.addNote")}
+      </button>
+    );
+  }
+  return (
+    <section className="flex flex-col gap-1 rounded-2xl border border-line bg-surface p-4">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-sm font-bold text-muted">{t("student.note")}</h2>
+        {!readOnly && (
+          <button type="button" onClick={onEdit} className="-my-2 min-h-11 px-1 text-sm font-bold text-brand">
+            {t("student.editNote")}
+          </button>
+        )}
+      </div>
+      <p className="whitespace-pre-line">{note}</p>
+    </section>
   );
 }
 

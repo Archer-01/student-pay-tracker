@@ -210,12 +210,15 @@
     "fields": {
       "phone": "Téléphone",
       "status": "Statut",
-      "class": "Classe"
+      "class": "Classe",
+      "note": "Note"
     },
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
       "firstNameRequired": "Le prénom est obligatoire"
-    }
+    },
+    "noteHint": "Visible seulement par vous. Elle n'apparaît pas sur les PDF.",
+    "notePlaceholder": "ex. : paie le samedi, père : Ahmed"
   },
   "notFound": {
     "title": "Page introuvable",
@@ -328,7 +331,10 @@
     "paymentsCount_other": "{{count}} paiements",
     "callNumber": "Appeler le {{phone}}",
     "whatsapp": "WhatsApp",
-    "whatsappNumber": "Écrire sur WhatsApp au {{phone}}"
+    "whatsappNumber": "Écrire sur WhatsApp au {{phone}}",
+    "note": "Note",
+    "editNote": "Modifier",
+    "addNote": "Ajouter une note"
   },
   "annual": {
     "year": "Année",

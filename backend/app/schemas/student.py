@@ -10,6 +10,17 @@ from app.schemas.money import Money
 from app.schemas.pack import PackBriefOut
 from app.schemas.school_class import ClassBriefOut
 
+# The teacher's private note: room for a few sentences, not an essay.
+NOTE_MAX_LENGTH = 500
+
+
+def _clean_note(value: str | None) -> str | None:
+    """Trim, and treat a blank note as no note at all."""
+    if value is None:
+        return None
+    value = value.strip()
+    return value or None
+
 
 class StudentCreate(BaseModel):
     first_name: str = Field(min_length=1)
@@ -26,6 +37,13 @@ class StudentCreate(BaseModel):
     # Set only when this student doesn't pay the pack price; `price_note` records why.
     custom_price: Money | None = Field(default=None, ge=0)
     price_note: str | None = None
+    # Private: shown on the student page only, never on a PDF.
+    note: str | None = Field(default=None, max_length=NOTE_MAX_LENGTH)
+
+    @field_validator("note")
+    @classmethod
+    def _note(cls, value: str | None) -> str | None:
+        return _clean_note(value)
 
     @field_validator("first_name")
     @classmethod
@@ -49,6 +67,13 @@ class StudentUpdate(BaseModel):
     pack_id: int | None = None
     custom_price: Money | None = Field(default=None, ge=0)
     price_note: str | None = None
+    # Explicit null (or a blank note) clears it, like the other optional fields.
+    note: str | None = Field(default=None, max_length=NOTE_MAX_LENGTH)
+
+    @field_validator("note")
+    @classmethod
+    def _note(cls, value: str | None) -> str | None:
+        return _clean_note(value)
 
 
 class StudentOut(BaseModel):
@@ -69,6 +94,7 @@ class StudentOut(BaseModel):
     pack: PackBriefOut | None
     custom_price: Decimal | None
     price_note: str | None
+    note: str | None
     created_at: datetime
 
 

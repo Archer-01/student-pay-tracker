@@ -61,6 +61,7 @@ class StudentService:
         pack_id: int | None = None,
         custom_price: Decimal | None = None,
         price_note: str | None = None,
+        note: str | None = None,
         is_repeating: bool = False,
     ) -> Student:
         self._require_class(class_id)
@@ -77,6 +78,7 @@ class StudentService:
             pack_id=pack_id,
             custom_price=custom_price,
             price_note=price_note,
+            note=note,
         )
         self.students.create(student)
         # Every student starts with an open period at their anchor, so "was they attending?" has
@@ -156,6 +158,7 @@ class StudentService:
         pack_id: int | None | _Unset = _UNSET,
         custom_price: Decimal | None | _Unset = _UNSET,
         price_note: str | None | _Unset = _UNSET,
+        note: str | None | _Unset = _UNSET,
     ) -> Student:
         """Apply only the provided fields (a single PATCH). ``join_date`` is never accepted.
 
@@ -185,5 +188,7 @@ class StudentService:
             student.custom_price = custom_price
         if not isinstance(price_note, _Unset):
             student.price_note = price_note
+        if not isinstance(note, _Unset):
+            student.note = note
         self.session.commit()
         return student

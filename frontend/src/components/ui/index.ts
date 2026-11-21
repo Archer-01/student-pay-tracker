@@ -9,6 +9,7 @@ export { Modal } from "./Modal";
 export { Field } from "./fields/Field";
 export { inputClass } from "./fields/inputClass";
 export { TextField } from "./fields/TextField";
+export { TextAreaField } from "./fields/TextAreaField";
 export { PasswordField } from "./fields/PasswordField";
 export type { FieldProps } from "./fields/TextField";
 export { MoneyField } from "./fields/MoneyField";

@@ -12,7 +12,7 @@ function student(over: Partial<Record<string, unknown>> = {}) {
   return {
     id: 5, first_name: "Fatima", last_name: "Zahra", full_name: "Fatima Zahra", phone: null,
     is_repeating: false, join_date: "2026-09-01", status: "active", class_id: null, school_class: null,
-    pack_id: null, pack: null, custom_price: "200.00", price_note: null, created_at: "2026-09-01T00:00:00",
+    pack_id: null, pack: null, custom_price: "200.00", price_note: null, note: null, created_at: "2026-09-01T00:00:00",
     cumulative_drift: 0, months_overdue: 0, amount_owed: "0.00", monthly_price: "200.00",
     next_expected_date: "2026-12-01", payments_count: 0, total_paid: "0.00", first_payment_date: null,
     as_of: "2026-11-14", ...over,
@@ -203,5 +203,24 @@ describe("StudentDetail correcting a payment", () => {
     expect(screen.queryByRole("button", { name: /edit this payment/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /delete this payment/i })).toBeNull();
     act(() => resetConnectivity());
+  });
+});
+
+describe("StudentDetail note", () => {
+  it("shows the teacher's note under the status", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ note: "Paie le samedi, en espèces." }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("Paie le samedi, en espèces.")).toBeInTheDocument();
+  });
+
+  it("offers to add a note when there is none, opening the edit form", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    vi.spyOn(endpoints, "listClasses").mockResolvedValue([] as never);
+    vi.spyOn(endpoints, "listPacks").mockResolvedValue([] as never);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: /add a note/i }));
+    expect(await screen.findByLabelText(/^note/i)).toBeInTheDocument();
   });
 });

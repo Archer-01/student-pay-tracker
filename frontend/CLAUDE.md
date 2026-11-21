@@ -287,6 +287,10 @@ confirmation says so. Both announce themselves through `usePaymentSheet().change
 which bumps the same `version` as a recorded payment, so every screen refreshes and the same
 toast appears.
 
+Under the status card sits the teacher's **note** on the student (`student.note`, up to 500
+characters, edited in `EditStudentForm`), or a quiet "Ajouter une note" link when there is none.
+It is private: it never goes on a PDF, since those are sent to parents.
+
 The departure/return action follows the **enrolment periods**, not `status`: a student set to
 inactive by hand still has an open period, and only "Marquer comme parti" fixes that. The edit form
 has no status field for the same reason.

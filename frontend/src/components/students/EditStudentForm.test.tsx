@@ -14,6 +14,7 @@ const initial = {
   packId: null,
   customPrice: "90",
   priceNote: "remise fratrie",
+  note: "Paie le samedi",
 };
 
 beforeEach(() => {
@@ -114,5 +115,24 @@ describe("EditStudentForm", () => {
     expect(screen.queryByLabelText(/status/i)).toBeNull();
     const body = await save();
     expect(body).not.toHaveProperty("status");
+  });
+
+  it("sends the note trimmed, and null once emptied", async () => {
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const note = screen.getByLabelText(/^note/i);
+    await userEvent.clear(note);
+    await userEvent.type(note, "  Père : Ahmed  ");
+    expect(await save()).toMatchObject({ note: "Père : Ahmed" });
+  });
+
+  it("clears an emptied note with an explicit null", async () => {
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    await userEvent.clear(screen.getByLabelText(/^note/i));
+    const body = await save();
+    expect("note" in body && body.note === null).toBe(true);
   });
 });

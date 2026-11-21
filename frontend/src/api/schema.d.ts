@@ -1237,6 +1237,8 @@ export interface components {
             custom_price?: (number | string) | null;
             /** Price Note */
             price_note?: string | null;
+            /** Note */
+            note?: string | null;
         };
         /** StudentDetailOut */
         StudentDetailOut: {
@@ -1268,6 +1270,8 @@ export interface components {
             custom_price: string | null;
             /** Price Note */
             price_note: string | null;
+            /** Note */
+            note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1348,6 +1352,8 @@ export interface components {
             custom_price: string | null;
             /** Price Note */
             price_note: string | null;
+            /** Note */
+            note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1392,6 +1398,8 @@ export interface components {
             custom_price: string | null;
             /** Price Note */
             price_note: string | null;
+            /** Note */
+            note: string | null;
             /**
              * Created At
              * Format: date-time
@@ -1428,6 +1436,8 @@ export interface components {
             custom_price?: (number | string) | null;
             /** Price Note */
             price_note?: string | null;
+            /** Note */
+            note?: string | null;
         };
         /** UserOut */
         UserOut: {

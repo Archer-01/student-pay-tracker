@@ -273,3 +273,55 @@ async def test_monthly_pdf_has_totals(client: AsyncClient, db_session: Session) 
     # Each student's class sits under their name.
     assert "amina benali 2bac — groupe a" in text
     assert "prof. teacher" in text
+
+
+# --------------------------------------------------------------------------- #
+# A private note on each student
+# --------------------------------------------------------------------------- #
+
+
+async def test_a_note_is_kept_changed_and_cleared(client: AsyncClient) -> None:
+    created = await client.post(
+        "/api/v1/students",
+        json={"first_name": "Omar", "join_date": _JOIN, "note": "Paie le samedi, en espèces."},
+    )
+    assert created.status_code == 201, created.text
+    sid = created.json()["id"]
+    note = (await client.get(f"/api/v1/students/{sid}")).json()["note"]
+    assert note == "Paie le samedi, en espèces."
+
+    changed = await client.patch(f"/api/v1/students/{sid}", json={"note": "Père : Ahmed"})
+    assert changed.json()["note"] == "Père : Ahmed"
+    # Leaving the key out leaves it alone; an explicit null clears it.
+    untouched = await client.patch(f"/api/v1/students/{sid}", json={"phone": "0611"})
+    assert untouched.json()["note"] == "Père : Ahmed"
+    cleared = await client.patch(f"/api/v1/students/{sid}", json={"note": None})
+    assert cleared.json()["note"] is None
+
+
+async def test_a_blank_note_is_no_note(client: AsyncClient) -> None:
+    created = await client.post(
+        "/api/v1/students", json={"first_name": "Omar", "join_date": _JOIN, "note": "  \n "}
+    )
+    assert created.json()["note"] is None
+    trimmed = await client.patch(
+        f"/api/v1/students/{created.json()['id']}", json={"note": "  père : Ahmed  "}
+    )
+    assert trimmed.json()["note"] == "père : Ahmed"
+
+
+async def test_a_note_has_a_length_limit(client: AsyncClient) -> None:
+    resp = await client.post(
+        "/api/v1/students", json={"first_name": "Omar", "join_date": _JOIN, "note": "x" * 501}
+    )
+    assert resp.status_code == 422
+
+
+async def test_the_note_stays_off_the_pdf_parents_receive(
+    client: AsyncClient, db_session: Session
+) -> None:
+    student_id = _seed(db_session)
+    await client.patch(f"/api/v1/students/{student_id}", json={"note": "Père difficile à joindre"})
+    text = pdf_text((await client.get(f"/api/v1/students/{student_id}/ledger.pdf")).content)
+    assert "amina benali" in text
+    assert "difficile" not in text

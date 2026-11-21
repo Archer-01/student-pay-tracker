@@ -210,12 +210,15 @@
     "fields": {
       "phone": "Phone",
       "status": "Status",
-      "class": "Class"
+      "class": "Class",
+      "note": "Note"
     },
     "validation": {
       "priceInvalid": "Agreed price must be a non-negative number",
       "firstNameRequired": "First name is required"
-    }
+    },
+    "noteHint": "Only you see it. It never appears on the PDFs.",
+    "notePlaceholder": "e.g. pays on Saturdays, father: Ahmed"
   },
   "notFound": {
     "title": "Page not found",
@@ -328,7 +331,10 @@
     "paymentsCount_other": "{{count}} payments",
     "callNumber": "Call {{phone}}",
     "whatsapp": "WhatsApp",
-    "whatsappNumber": "Message {{phone}} on WhatsApp"
+    "whatsappNumber": "Message {{phone}} on WhatsApp",
+    "note": "Note",
+    "editNote": "Edit",
+    "addNote": "Add a note"
   },
   "annual": {
     "year": "Year",

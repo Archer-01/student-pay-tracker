@@ -5,7 +5,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
-from sqlalchemy import CheckConstraint, Enum, ForeignKey, Numeric, func
+from sqlalchemy import CheckConstraint, Enum, ForeignKey, Numeric, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.db import Base
@@ -71,6 +71,9 @@ class Student(Base):
     # are shown together so an arrangement is visible rather than buried.
     custom_price: Mapped[Decimal | None] = mapped_column(Numeric(10, 2), nullable=True)
     price_note: Mapped[str | None] = mapped_column(nullable=True)
+    # The teacher's own note ("paie le samedi", "père : Ahmed"). Private: shown on the student
+    # page only, never on a PDF, since those go to parents. Length is limited by the schema.
+    note: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
 
     @property

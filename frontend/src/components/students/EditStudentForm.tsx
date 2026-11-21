@@ -7,7 +7,10 @@ import { fieldErrors, resolveErrorMessage } from "../../lib/errors";
 import { classLabel } from "../../lib/classes";
 import { NameFields } from "./NameFields";
 import { PricingFields } from "./PricingFields";
-import { Button, Select, TextField } from "../ui";
+import { Button, Select, TextAreaField, TextField } from "../ui";
+
+/** The server's limit on a note (backend `NOTE_MAX_LENGTH`). */
+const NOTE_MAX_LENGTH = 500;
 
 type Props = {
   studentId: number;
@@ -20,6 +23,7 @@ type Props = {
     packId: number | null;
     customPrice: string | null;
     priceNote: string | null;
+    note: string | null;
   };
   onSuccess: () => void;
   onCancel: () => void;
@@ -43,6 +47,7 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
   const [packId, setPackId] = useState(initial.packId === null ? "" : String(initial.packId));
   const [customPrice, setCustomPrice] = useState(initial.customPrice ?? "");
   const [priceNote, setPriceNote] = useState(initial.priceNote ?? "");
+  const [note, setNote] = useState(initial.note ?? "");
   // A failure here must not block editing phone/fee/status, so the options degrade to just
   // "no class" rather than surfacing as a form error.
   const classes = useApi(() => listClasses(), []);
@@ -81,6 +86,8 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         // An explicit null clears the arrangement and returns them to the pack price.
         custom_price: customPrice.trim() === "" ? null : customPrice,
         price_note: priceNote.trim() || null,
+        // Always sent, like the class: an explicit null is how a note is removed.
+        note: note.trim() || null,
       });
       onSuccess();
     } catch (err) {
@@ -134,6 +141,16 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         onPriceNote={setPriceNote}
         classLevel={(classes.data ?? []).find((c) => String(c.id) === classId)?.level}
         errors={errors}
+      />
+      <TextAreaField
+        id="edit-note"
+        label={t("edit.fields.note")}
+        value={note}
+        onChange={setNote}
+        hint={t("edit.noteHint")}
+        error={errors.note}
+        placeholder={t("edit.notePlaceholder")}
+        maxLength={NOTE_MAX_LENGTH}
       />
       {formError && <p className="text-sm text-rose-600">{formError}</p>}
       <div className="flex justify-end gap-2">
