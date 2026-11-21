@@ -5,6 +5,7 @@ from app.repos.enrollment_repo import EnrollmentRepo
 from app.repos.override_repo import OverrideRepo
 from app.repos.pack_repo import PackRepo, SubjectRepo
 from app.repos.payment_repo import PaymentRepo
+from app.repos.school_share_handover_repo import SchoolShareHandoverRepo
 from app.repos.student_repo import StudentRepo
 
 __all__ = [
@@ -13,6 +14,7 @@ __all__ = [
     "OverrideRepo",
     "PackRepo",
     "PaymentRepo",
+    "SchoolShareHandoverRepo",
     "StudentRepo",
     "SubjectRepo",
 ]

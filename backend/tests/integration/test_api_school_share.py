@@ -105,3 +105,42 @@ async def test_the_home_page_carries_the_months_dues_and_the_week_ahead(
     assert [(d["name"], d["due_date"], d["amount"]) for d in soon] == [
         ("Amina", "2026-11-05", "240.00")
     ]
+
+
+# --------------------------------------------------------------------------- #
+# Handing the school its share
+# --------------------------------------------------------------------------- #
+
+
+async def test_a_month_is_marked_handed_over_and_unmarked(
+    client: AsyncClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "school_share_percent", Decimal("25"))
+    _paid_in_october(db_session)
+    months = (await client.get("/api/v1/school-share")).json()
+    assert months["percent"] == "25"
+    october = next(m for m in months["months"] if (m["year"], m["month"]) == (2026, 10))
+    assert (october["due"], october["status"], october["remaining"]) == ("60.00", "due", "60.00")
+
+    marked = await client.put("/api/v1/school-share/2026/10", json={"handed_on": "2026-11-03"})
+    assert marked.status_code == 200, marked.text
+    october = next(m for m in marked.json()["months"] if m["month"] == 10)
+    assert (october["status"], october["handed_on"]) == ("handed", "2026-11-03")
+
+    assert (await client.delete("/api/v1/school-share/2026/10")).status_code == 204
+    assert (await client.delete("/api/v1/school-share/2026/10")).status_code == 404
+
+
+async def test_a_handover_that_makes_no_sense_is_refused_in_words(
+    client: AsyncClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "school_share_percent", Decimal("25"))
+    _paid_in_october(db_session)
+    resp = await client.put(
+        "/api/v1/school-share/2026/9?lang=fr", json={"handed_on": "2026-10-03"}
+    )
+    assert resp.status_code == 409
+    assert resp.json()["code"] == "nothing_to_hand_over"
+    assert resp.json()["detail"].startswith("Rien n'a été encaissé ce mois-là")
+    bad = await client.put("/api/v1/school-share/2026/13", json={"handed_on": "2026-10-03"})
+    assert bad.status_code == 422

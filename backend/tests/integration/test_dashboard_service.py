@@ -280,3 +280,13 @@ def test_a_moved_payment_day_moves_the_due_into_the_right_week(db_session: Sessi
         ("Moved", date(2026, 11, 16))
     ]
     assert summary.this_month.expected == Decimal("200")
+
+
+def test_the_home_page_reminds_of_last_months_share_until_handed_over(db_session: Session) -> None:
+    sid = _student(db_session, "Amina", date(2026, 9, 5), price="240")
+    _pay(db_session, sid, 1, date(2026, 10, 5), "240")
+    quarter = Decimal("25")
+    summary = DashboardService(db_session).get_summary(_NOV_14, share_percent=quarter)
+    pending = summary.school_share_pending
+    assert pending is not None and (pending.month, pending.remaining) == (10, Decimal("60.00"))
+    assert DashboardService(db_session).get_summary(_NOV_14).school_share_pending is None

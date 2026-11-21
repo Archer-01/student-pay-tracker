@@ -13,6 +13,7 @@ import { ClassesList } from "./routes/ClassesList";
 import { ClassDetail } from "./routes/ClassDetail";
 import { PacksList } from "./routes/PacksList";
 import { AnnualReport } from "./routes/AnnualReport";
+import { SchoolShare } from "./routes/SchoolShare";
 import { LeaversWithDebt } from "./routes/LeaversWithDebt";
 import { NotFound } from "./routes/NotFound";
 import { Settings } from "./routes/Settings";
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="reports" element={<Navigate to="/reports/monthly" replace />} />
         <Route path="reports/monthly" element={<MonthlyReport />} />
         <Route path="reports/annual" element={<AnnualReport />} />
+        <Route path="reports/school" element={<SchoolShare />} />
         <Route path="reports/leavers" element={<LeaversWithDebt />} />
 
         <Route path="settings" element={<Settings />} />

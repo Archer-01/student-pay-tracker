@@ -380,7 +380,8 @@
     "tabs": {
       "month": "Month",
       "year": "Year",
-      "leavers": "Left owing"
+      "leavers": "Left owing",
+      "school": "School"
     },
     "previousMonth": "Previous month",
     "nextMonth": "Next month",
@@ -433,7 +434,9 @@
     "weekHint": "Due in the next 7 days",
     "dueToday": "Due today",
     "dueTomorrow": "Due tomorrow",
-    "dueOn": "Due {{day}}"
+    "dueOn": "Due {{day}}",
+    "sharePending": "School's share to hand over ({{month}}): {{amount}}",
+    "handOver": "Hand over"
   },
   "owed": {
     "paidUp": "Up to date",
@@ -511,5 +514,32 @@
     "paysOnTime": "Pays on time",
     "average_one": "Usually {{count}} day late",
     "average_other": "Usually {{count}} days late"
+  },
+  "schoolShare": {
+    "title": "School's share",
+    "intro": "{{percent}} of every payment, handed to the school's owner each month.",
+    "toHandOver": "To hand over",
+    "toHandOverAmount": "{{amount}} to hand over",
+    "shortBy": "{{amount}} short",
+    "handedOn": "Handed over on {{date}}",
+    "nothing": "Nothing to hand over",
+    "running": "in progress, {{amount}} so far",
+    "collected": "Share {{due}} · collected {{collected}}",
+    "months": "Months",
+    "mark": "Mark as handed over",
+    "handedDate": "Handed over on",
+    "changeDate": "Change the date",
+    "undo": "Undo the handover",
+    "undoConfirm": "Undo the handover for {{month}}? The month will be to hand over again.",
+    "undoButton": "Undo",
+    "collectedLabel": "Collected",
+    "dueLabel": "School's share",
+    "handedLabel": "Handed over",
+    "empty": "No payments yet.",
+    "off": "The school's share is turned off.",
+    "validation": {
+      "dateRequired": "Choose the day it was handed over.",
+      "dateFuture": "The date can't be in the future."
+    }
   }
 }

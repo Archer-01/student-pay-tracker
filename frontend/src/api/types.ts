@@ -39,3 +39,5 @@ export type DebtStatus = components["schemas"]["DebtStatusOut"];
 export type Leavers = components["schemas"]["LeaversOut"];
 export type ReturnResult = components["schemas"]["ReturnResultOut"];
 export type Share = components["schemas"]["ShareOut"];
+export type SchoolShare = components["schemas"]["SchoolShareOut"];
+export type ShareMonth = components["schemas"]["ShareMonthOut"];

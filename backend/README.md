@@ -643,6 +643,15 @@ match the app, for the teacher and for parents who receive a student's history:
   bar chart and "Votre part" / "Part de l'école" columns, computed by the reports service.
 - **The class list** gives each student's situation as a coloured pill and the class's totals.
 
+## Handing the school its share
+
+`GET /api/v1/school-share` lists every month from the first payment to now, newest first, with
+what came in, the school's part (the same `SCHOOL_SHARE_PERCENT` split as the reports), whether
+it was handed over, and what is still to hand over (`status`: running / nothing / due / handed /
+short). `PUT /api/v1/school-share/{year}/{month}` with `{handed_on}` marks a month handed over
+(again, to replace the record); `DELETE` undoes it. The dashboard's `school_share_pending` names
+last month's share while any of it is still to hand over.
+
 ## Reloading the demo data
 
 `scripts/reset-demo-data.sh` wipes the database and reloads the seed. It is for **before launch

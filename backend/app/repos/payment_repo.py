@@ -7,7 +7,7 @@ duplicate payments; the rejection *decision* lives in the service, not here.
 from collections.abc import Sequence
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models import Payment
@@ -42,6 +42,10 @@ class PaymentRepo:
             select(Payment).where(Payment.student_id == student_id).order_by(Payment.cycle_number)
         )
         return list(self.session.scalars(stmt))
+
+    def earliest_paid_date(self) -> date | None:
+        """The day the first payment ever recorded was made, or None with no payment yet."""
+        return self.session.scalar(select(func.min(Payment.paid_date)))
 
     def list_paid_between(self, start: date, end: date) -> list[Payment]:
         """Payments whose paid_date is in the half-open range [start, end), ordered by date."""

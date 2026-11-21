@@ -652,6 +652,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/school-share": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Months */
+        get: operations["list_months_api_v1_school_share_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/school-share/{year}/{month}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Mark Handed Over
+         * @description Record that the month's share was handed over; marking again replaces the record.
+         */
+        put: operations["mark_handed_over_api_v1_school_share__year___month__put"];
+        post?: never;
+        /** Unmark Handed Over */
+        delete: operations["unmark_handed_over_api_v1_school_share__year___month__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -791,6 +829,7 @@ export interface components {
             this_month: components["schemas"]["MonthProgressOut"];
             /** Due This Week */
             due_this_week: components["schemas"]["DueSoonOut"][];
+            school_share_pending: components["schemas"]["SharePendingOut"] | null;
         };
         /**
          * DebtStatusOut
@@ -867,6 +906,14 @@ export interface components {
         HTTPValidationError: {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
+        };
+        /** HandoverIn */
+        HandoverIn: {
+            /**
+             * Handed On
+             * Format: date
+             */
+            handed_on: string;
         };
         /** LeaveRequest */
         LeaveRequest: {
@@ -1233,6 +1280,32 @@ export interface components {
             /** Debt Warning */
             debt_warning?: string | null;
         };
+        /** SchoolShareOut */
+        SchoolShareOut: {
+            /** Percent */
+            percent: string;
+            /** Months */
+            months: components["schemas"]["ShareMonthOut"][];
+        };
+        /** ShareMonthOut */
+        ShareMonthOut: {
+            /** Year */
+            year: number;
+            /** Month */
+            month: number;
+            /** Collected */
+            collected: string;
+            /** Due */
+            due: string;
+            /** Handed Amount */
+            handed_amount: string | null;
+            /** Handed On */
+            handed_on: string | null;
+            /** Status */
+            status: string;
+            /** Remaining */
+            remaining: string;
+        };
         /**
          * ShareOut
          * @description What came in, split between the school owner and the teacher (see services/school_share).
@@ -1244,6 +1317,18 @@ export interface components {
             school: string;
             /** Teacher */
             teacher: string;
+        };
+        /**
+         * SharePendingOut
+         * @description Last month's share for the school, still (partly) to hand over.
+         */
+        SharePendingOut: {
+            /** Year */
+            year: number;
+            /** Month */
+            month: number;
+            /** Remaining */
+            remaining: string;
         };
         /** StudentCreate */
         StudentCreate: {
@@ -3010,6 +3095,107 @@ export interface operations {
                 content: {
                     "application/json": unknown;
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_months_api_v1_school_share_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolShareOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    mark_handed_over_api_v1_school_share__year___month__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year: number;
+                month: number;
+            };
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HandoverIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolShareOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmark_handed_over_api_v1_school_share__year___month__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                year: number;
+                month: number;
+            };
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

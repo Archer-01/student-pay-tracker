@@ -15,7 +15,9 @@ from app.services.exceptions import (
     DuplicatePackError,
     DuplicatePaymentError,
     DuplicateUserError,
+    HandoverNotFoundError,
     InvalidCredentialsError,
+    InvalidHandoverError,
     InvalidPeriodError,
     InvalidWriteoffError,
     NotAuthenticatedError,
@@ -40,6 +42,7 @@ _STATUS_BY_ERROR: tuple[tuple[type[DomainError], int], ...] = (
     (PackNotFoundError, 404),
     (PaymentNotFoundError, 404),
     (UserNotFoundError, 404),
+    (HandoverNotFoundError, 404),
     (DuplicatePaymentError, 409),
     (DuplicateClassError, 409),
     (ClassNotEmptyError, 409),
@@ -48,6 +51,7 @@ _STATUS_BY_ERROR: tuple[tuple[type[DomainError], int], ...] = (
     (PackInUseError, 409),
     (InvalidPeriodError, 409),
     (InvalidWriteoffError, 409),
+    (InvalidHandoverError, 409),
     (TooManyAttemptsError, 429),
 )
 _FALLBACK_STATUS = 400

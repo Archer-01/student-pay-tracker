@@ -32,6 +32,16 @@ class InvalidWriteoffError(DomainError):
     """Bad debt write-off. ``code`` is one of: writeoff_reason_empty / nothing_to_write_off."""
 
 
+class InvalidHandoverError(DomainError):
+    """Bad school-share handover. ``code`` is one of: share_month_not_over / handover_in_future /
+    nothing_to_hand_over / school_share_off."""
+
+
+class HandoverNotFoundError(DomainError):
+    def __init__(self, year: int, month: int) -> None:
+        super().__init__("handover_not_found", year=year, month=month)
+
+
 class InvalidStudentError(DomainError):
     """Bad student data. ``code`` is one of: first_name_empty."""
 

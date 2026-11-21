@@ -212,6 +212,27 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "This student left owing {amount} for {count} months",
         "fr": "Cet élève est parti sans régler {amount} ({count}\u00a0mois)",
     },
+    # --- Handing the school its share ---
+    "error.share_month_not_over": {
+        "en": "This month isn't over yet: its share can be handed over once it ends.",
+        "fr": "Ce mois n'est pas terminé\u00a0: sa part pourra être remise une fois fini.",
+    },
+    "error.handover_in_future": {
+        "en": "The handover date can't be in the future.",
+        "fr": "La date de remise ne peut pas être dans le futur.",
+    },
+    "error.nothing_to_hand_over": {
+        "en": "Nothing came in that month, so there is no share to hand over.",
+        "fr": "Rien n'a été encaissé ce mois-là\u00a0: il n'y a pas de part à remettre.",
+    },
+    "error.school_share_off": {
+        "en": "The school's share is turned off.",
+        "fr": "La part de l'école est désactivée.",
+    },
+    "error.handover_not_found": {
+        "en": "That month's share was not marked as handed over.",
+        "fr": "La part de ce mois n'a pas été marquée comme remise.",
+    },
     # --- Month names: titles ("Octobre 2026") and table rows ---
     "month.1": {"en": "January", "fr": "Janvier"},
     "month.2": {"en": "February", "fr": "Février"},

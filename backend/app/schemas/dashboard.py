@@ -45,6 +45,16 @@ class DueSoonOut(BaseModel):
     amount: Decimal
 
 
+class SharePendingOut(BaseModel):
+    """Last month's share for the school, still (partly) to hand over."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    year: int
+    month: int
+    remaining: Decimal
+
+
 class DashboardSummaryOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
@@ -63,3 +73,4 @@ class DashboardSummaryOut(BaseModel):
     this_month: MonthProgressOut
     # Soonest first: today and the six days after it.
     due_this_week: list[DueSoonOut]
+    school_share_pending: SharePendingOut | None

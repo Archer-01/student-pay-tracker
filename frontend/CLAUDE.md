@@ -62,7 +62,7 @@ and the browser does the rest. Never send an `Authorization` header.
 
 **Routing (`src/App.tsx`)** — React Router. All pages render inside `Layout` (`src/components/Layout.tsx`),
 which has four places: Accueil `/`, Élèves `/students`, Bilan `/reports` (tabs: monthly, annual,
-`leavers`) and Réglages `/settings` (with `classes` and `prices` under it). Old paths (`/classes`,
+`school`, `leavers`) and Réglages `/settings` (with `classes` and `prices` under it). Old paths (`/classes`,
 `/packs`, `/debts`) redirect, so keep those routes. Pages live in `src/routes/`.
 
 **Data fetching (`src/lib/useApi.ts`)** — `useApi(fetcher, deps)` runs an async fetch on mount / when deps
@@ -281,6 +281,15 @@ relancer**; **Cette semaine**, the unpaid dues of the next seven days, soonest f
 "aujourd'hui", "demain" or the day (hidden when empty); and the link to former students who left
 owing. The server computes both new lists (`this_month`, `due_this_week` on the dashboard
 summary), from the same override-aware schedule as the student page.
+
+## Bilan › École
+
+The school's share of each month, and whether it was handed over (`routes/SchoolShare.tsx`). It
+leads with the latest month still to hand over and **Marquer comme remis** (today, or another
+day); below, every month in words: "Remis le 3 nov.", "Il manque 50 DH" (a payment recorded
+after the month was settled), "À remettre", "Rien à remettre". A handed-over month can have its
+date changed or the handover undone (asked first). While last month's share is outstanding, the
+Accueil's "À vérifier" box says so and links here.
 
 ## The student page
 

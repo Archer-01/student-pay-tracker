@@ -4,11 +4,13 @@ import { useTranslation } from "react-i18next";
 const tabs = [
   { to: "/reports/monthly", key: "month" },
   { to: "/reports/annual", key: "year" },
+  { to: "/reports/school", key: "school" },
   { to: "/reports/leavers", key: "leavers" },
 ] as const;
 
 /**
- * Bilan's three views of the money: this month, the year, and former students who left owing.
+ * Bilan's four views of the money: this month, the year, the school's share and whether it was
+ * handed over, and former students who left owing.
  * They are tabs rather than places in the bottom bar, which has room for four and no more.
  */
 export function ReportTabs() {

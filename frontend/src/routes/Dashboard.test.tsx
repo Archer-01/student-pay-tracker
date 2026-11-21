@@ -29,6 +29,7 @@ function summary(over: Partial<Record<string, unknown>> = {}) {
     missing_leave_date: [],
     this_month: { expected: "0", settled: "0", students_expected: 0, students_settled: 0 },
     due_this_week: [],
+    school_share_pending: null,
     ...over,
   };
 }
@@ -212,5 +213,16 @@ describe("Accueil, this month's fees and the week ahead", () => {
     renderHome();
     await screen.findByText(/collected this month/i);
     expect(screen.queryByRole("list", { name: /this week/i })).toBeNull();
+  });
+});
+
+describe("Accueil, the school's share", () => {
+  it("reminds that last month's share is still to hand over, with a link to do it", async () => {
+    vi.mocked(endpoints.getDashboardSummary).mockResolvedValue(
+      summary({ school_share_pending: { year: 2026, month: 10, remaining: "402.50" } }) as never,
+    );
+    renderHome();
+    expect(await screen.findByText(/school's share to hand over \(October 2026\)/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /hand over/i })).toHaveAttribute("href", "/reports/school");
   });
 });

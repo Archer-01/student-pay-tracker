@@ -57,3 +57,17 @@ def test_0009_adds_and_removes_the_student_note(tmp_path: Path) -> None:
             assert "note" not in {c["name"] for c in inspect(connection).get_columns("student")}
     finally:
         engine.dispose()
+
+
+def test_0010_adds_and_removes_the_school_share_handovers(tmp_path: Path) -> None:
+    engine = create_engine(f"sqlite:///{tmp_path / 'handover.db'}")
+    cfg = Config(str(_ALEMBIC_INI))
+    try:
+        with engine.connect() as connection:
+            cfg.attributes["connection"] = connection
+            command.upgrade(cfg, "0010")
+            assert "school_share_handover" in inspect(connection).get_table_names()
+            command.downgrade(cfg, "0009")
+            assert "school_share_handover" not in inspect(connection).get_table_names()
+    finally:
+        engine.dispose()

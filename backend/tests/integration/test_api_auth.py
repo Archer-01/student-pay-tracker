@@ -23,6 +23,7 @@ GATED_ROUTES = [
     "/api/v1/packs",
     "/api/v1/debts",
     "/api/v1/dashboard/summary",
+    "/api/v1/school-share",
     "/api/v1/reports/monthly?year=2026&month=1",
 ]
 

@@ -7,7 +7,17 @@ from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from app.api import auth, classes, dashboard, debts, health, packs, reports, students
+from app.api import (
+    auth,
+    classes,
+    dashboard,
+    debts,
+    health,
+    packs,
+    reports,
+    school_share,
+    students,
+)
 from app.api.deps import require_session
 from app.api.errors import register_error_handlers
 from app.core.logging import configure_logging
@@ -77,6 +87,7 @@ app.include_router(packs.router, prefix="/api/v1", dependencies=GATED)
 app.include_router(debts.router, prefix="/api/v1", dependencies=GATED)
 app.include_router(dashboard.router, prefix="/api/v1", dependencies=GATED)
 app.include_router(reports.router, prefix="/api/v1", dependencies=GATED)
+app.include_router(school_share.router, prefix="/api/v1", dependencies=GATED)
 
 # --- Docs, behind the same gate as the data -----------------------------------
 # `ardoise openapi` dumps the same schema from the CLI without a server or a session, which is

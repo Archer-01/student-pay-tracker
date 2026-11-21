@@ -206,14 +206,31 @@ function nextDay(iso: string): string {
  */
 function Attention({ data }: { data: DashboardSummary }) {
   const { t } = useTranslation();
+  const pending = data.school_share_pending;
   const items = [
+    // Last month's share for the school, until it is handed over (Bilan › École).
+    ...(pending
+      ? [
+          {
+            id: `share-${pending.year}-${pending.month}`,
+            to: "/reports/school",
+            text: t("home.sharePending", {
+              month: formatMonthTitle(`${pending.year}-${String(pending.month).padStart(2, "0")}`),
+              amount: formatMoney(pending.remaining),
+            }),
+            action: t("home.handOver"),
+          },
+        ]
+      : []),
     ...data.unbilled_students.map((s) => ({
-      id: s.student_id,
+      id: String(s.student_id),
+      to: `/students/${s.student_id}`,
       text: t("home.noPrice", { name: s.name }),
       action: t("home.choosePack"),
     })),
     ...data.missing_leave_date.map((s) => ({
-      id: s.student_id,
+      id: String(s.student_id),
+      to: `/students/${s.student_id}`,
       text: t("home.leftNoDate", { name: s.name }),
       action: t("home.fix"),
     })),
@@ -226,7 +243,7 @@ function Attention({ data }: { data: DashboardSummary }) {
         {items.map((item) => (
           <li key={`${item.id}-${item.action}`} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
             <span className="text-ink">{item.text}</span>
-            <Link to={`/students/${item.id}`} className="min-h-11 content-center font-bold underline">
+            <Link to={item.to} className="min-h-11 content-center font-bold underline">
               {item.action}
             </Link>
           </li>

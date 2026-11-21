@@ -380,7 +380,8 @@
     "tabs": {
       "month": "Mois",
       "year": "Année",
-      "leavers": "Partis sans régler"
+      "leavers": "Partis sans régler",
+      "school": "École"
     },
     "previousMonth": "Mois précédent",
     "nextMonth": "Mois suivant",
@@ -433,7 +434,9 @@
     "weekHint": "Attendus dans les 7 jours",
     "dueToday": "Attendu aujourd'hui",
     "dueTomorrow": "Attendu demain",
-    "dueOn": "Attendu {{day}}"
+    "dueOn": "Attendu {{day}}",
+    "sharePending": "Part de l'école à remettre ({{month}}) : {{amount}}",
+    "handOver": "Remettre"
   },
   "owed": {
     "paidUp": "À jour",
@@ -511,5 +514,32 @@
     "paysOnTime": "Paie à l'heure",
     "average_one": "Retard moyen : {{count}} j",
     "average_other": "Retard moyen : {{count}} j"
+  },
+  "schoolShare": {
+    "title": "Part de l'école",
+    "intro": "{{percent}} de chaque paiement, remis chaque mois au propriétaire de l'école.",
+    "toHandOver": "À remettre",
+    "toHandOverAmount": "{{amount}} à remettre",
+    "shortBy": "Il manque {{amount}}",
+    "handedOn": "Remis le {{date}}",
+    "nothing": "Rien à remettre",
+    "running": "en cours, {{amount}} jusqu'ici",
+    "collected": "Part {{due}} · encaissé {{collected}}",
+    "months": "Mois",
+    "mark": "Marquer comme remis",
+    "handedDate": "Remis le",
+    "changeDate": "Changer la date",
+    "undo": "Annuler la remise",
+    "undoConfirm": "Annuler la remise de {{month}} ? Le mois redeviendra à remettre.",
+    "undoButton": "Annuler la remise",
+    "collectedLabel": "Encaissé",
+    "dueLabel": "Part de l'école",
+    "handedLabel": "Remis",
+    "empty": "Aucun paiement pour l'instant.",
+    "off": "La part de l'école est désactivée.",
+    "validation": {
+      "dateRequired": "Choisissez le jour de la remise.",
+      "dateFuture": "La date ne peut pas être dans le futur."
+    }
   }
 }

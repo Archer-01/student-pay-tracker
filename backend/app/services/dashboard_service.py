@@ -27,6 +27,7 @@ from app.services.ledger_service import LedgerService
 from app.services.pricing_service import PricingService
 from app.services.schedule import add_months
 from app.services.school_share import ShareSplit, split
+from app.services.school_share_handover_service import SchoolShareHandoverService, ShareMonth
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,8 @@ class DashboardSummary:
     this_month: MonthProgress
     # Soonest first.
     due_this_week: DueSoonList
+    # Last month's share for the school, while any of it is still to hand over.
+    school_share_pending: ShareMonth | None
 
 
 class DashboardService:
@@ -151,6 +154,9 @@ class DashboardService:
             ],
             this_month=this_month,
             due_this_week=due_soon,
+            school_share_pending=SchoolShareHandoverService(self.session).pending(
+                as_of, share_percent
+            ),
         )
 
     def _month_and_week(

@@ -21,6 +21,7 @@ import type {
   PaymentCreate,
   PaymentOut,
   PaymentUpdate,
+  SchoolShare,
   StudentCreate,
   StudentDetailOut,
   StudentListItem,
@@ -86,6 +87,18 @@ export function getMonthlyReport(year: number, month: number) {
 }
 
 /** What came in over a year, month by month. Every month is present, including empty ones. */
+export function getSchoolShare() {
+  return apiRequest<SchoolShare>("/school-share");
+}
+
+export function markShareHandedOver(year: number, month: number, handedOn: string) {
+  return apiRequest<SchoolShare>(`/school-share/${year}/${month}`, { method: "PUT", body: { handed_on: handedOn } });
+}
+
+export function unmarkShareHandedOver(year: number, month: number) {
+  return apiRequest<void>(`/school-share/${year}/${month}`, { method: "DELETE" });
+}
+
 export function getAnnualReport(year: number) {
   return apiRequest<AnnualReport>("/reports/annual", { query: { year } });
 }

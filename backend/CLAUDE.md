@@ -243,6 +243,12 @@ the file that fails if privacy ever regresses.
   any is due. It never feeds drift or touches a payment.
 - **A student's `note` is private** (migration 0009). It is the teacher's own memo ("paie le
   samedi") and must never reach a PDF: the student history is sent to parents.
+- **A share handover records cash given to the school, nothing more** (migration 0010,
+  `services/school_share_handover_service.py`). The share of a month stays derived (`split` of
+  what came in, by paid date); a handover stores what was handed over and when, so a payment
+  recorded later for that month shows as "short" by the difference. Marking the month again
+  replaces the record. Only ended months can be marked, never with a future date, never a month
+  with nothing due, never at a 0 % share. It is never revenue, a payment or drift.
 - **A write-off is not a payment.** `debt_writeoff` forgives a departed student's balance; it must
   never appear in collected revenue, in the annual report, or in drift. The shortcut it exists to
   prevent is recording a fake payment to clear the leavers list.

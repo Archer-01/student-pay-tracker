@@ -45,3 +45,10 @@ export function formatWeekday(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso;
   return new Intl.DateTimeFormat(i18n.language, { weekday: "long", day: "numeric", month: "short" }).format(d);
 }
+
+/** "2026-11-03" → "3 nov." / "Nov 3": a recent day, where the year goes without saying. */
+export function formatDayMonth(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  if (Number.isNaN(d.getTime())) return iso;
+  return new Intl.DateTimeFormat(i18n.language, { day: "numeric", month: "short" }).format(d);
+}
