@@ -329,9 +329,6 @@
     "prevYear": "Previous year",
     "nextYear": "Next year",
     "details": "Details",
-    "totalLate": "Late in total",
-    "days_one": "{{count}} day",
-    "days_other": "{{count}} days",
     "paymentsCount_one": "{{count}} payment",
     "paymentsCount_other": "{{count}} payments",
     "callNumber": "Call {{phone}}",
@@ -394,7 +391,6 @@
     "nextMonth": "Next month",
     "previousYear": "Previous year",
     "nextYear": "Next year",
-    "byStudent": "By student",
     "paid": "Paid {{amount}}",
     "paidNothing": "Paid nothing",
     "unpaidGroup_one": "Not paid yet · {{count}}",
@@ -516,8 +512,7 @@
     "title": "Split",
     "yours": "Your share",
     "school": "School's share ({{percent}})",
-    "yoursOf": "of which {{amount}} is yours",
-    "yoursShort": "Your share: {{amount}}"
+    "yoursOf": "of which {{amount}} is yours"
   },
   "offline": {
     "stored": "Offline · read only · data from {{date}} at {{time}}",

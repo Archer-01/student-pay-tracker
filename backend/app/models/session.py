@@ -9,7 +9,8 @@ token is an opaque random string that means nothing outside this table. The cook
 HttpOnly, so page scripts can't read it.
 
 **Fixed expiry, refreshed on login** — ``expires_at`` is stamped once at creation and never slid
-forward, so a signed-in browser re-authenticates every 7 days regardless of activity. Logging in
+forward, so a signed-in browser re-authenticates every ``SESSION_TTL_DAYS`` (90) days whatever
+its activity. Logging in
 again simply creates a new row. That also means there is no per-request write on the hot path,
 which matters for a single-writer SQLite database.
 """

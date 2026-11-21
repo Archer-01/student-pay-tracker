@@ -329,9 +329,6 @@
     "prevYear": "Année précédente",
     "nextYear": "Année suivante",
     "details": "Détails",
-    "totalLate": "Retard au total",
-    "days_one": "{{count}} jour",
-    "days_other": "{{count}} jours",
     "paymentsCount_one": "{{count}} paiement",
     "paymentsCount_other": "{{count}} paiements",
     "callNumber": "Appeler le {{phone}}",
@@ -394,7 +391,6 @@
     "nextMonth": "Mois suivant",
     "previousYear": "Année précédente",
     "nextYear": "Année suivante",
-    "byStudent": "Par élève",
     "paid": "A payé {{amount}}",
     "paidNothing": "Rien payé",
     "unpaidGroup_one": "Pas encore payé · {{count}}",
@@ -516,8 +512,7 @@
     "title": "Répartition",
     "yours": "Votre part",
     "school": "Part de l'école ({{percent}})",
-    "yoursOf": "dont {{amount}} pour vous",
-    "yoursShort": "Votre part : {{amount}}"
+    "yoursOf": "dont {{amount}} pour vous"
   },
   "offline": {
     "stored": "Hors ligne · lecture seule · données du {{date}} à {{time}}",

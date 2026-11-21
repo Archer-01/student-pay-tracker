@@ -69,7 +69,7 @@ uv run ardoise users list
 
 Set `COOKIE_SECURE=false` for local HTTP dev (a `Secure` cookie is dropped over plain http, which
 looks like "login succeeds but never sticks"). Leave it at its default of `true` behind TLS.
-Sessions last `SESSION_TTL_DAYS` (7 by default), fixed from the moment you sign in.
+Sessions last `SESSION_TTL_DAYS` (90 by default), fixed from the moment you sign in.
 
 **Each account's data is private**, in its own SQLite file next to the central one:
 

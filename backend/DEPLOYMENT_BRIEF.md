@@ -72,7 +72,7 @@ required.**
 | `DATABASE_URL` | `sqlite:///./app.db` | The **central** (accounts) database. In Docker `sqlite:////data/app.db`. Each teacher's data goes in a `tenant-<id>.db` beside it. |
 | `ARDOISE_USER` | — | CLI only: which teacher's data to work on, instead of passing `--user`. |
 | `DEFAULT_LOCALE` | `en` | Fallback language (`en`/`fr`) when a request sets none. |
-| `SESSION_TTL_DAYS` | `7` | How long a sign-in lasts. Fixed from login, never slid forward. |
+| `SESSION_TTL_DAYS` | `90` | How long a sign-in lasts. Fixed from login, never slid forward. |
 | `COOKIE_SECURE` | `true` | `Secure` flag on the session cookie. **Only** set `false` for local http — over https, leaving it true is what keeps the session off the wire in the clear. |
 | `LOG_LEVEL` | `INFO` | Stdlib logging level. Logs go to stdout/stderr. |
 
@@ -85,8 +85,9 @@ required.**
   `ardoise users add`; there is no self-service signup and no password-reset flow, so a forgotten
   password is fixed with `ardoise users passwd <username>` on the host. `ardoise users deactivate`
   revokes an account and all of its live sessions immediately.
-- **Sessions are fixed 7-day (`SESSION_TTL_DAYS`), refreshed at login**, not sliding — everyone
-  re-authenticates at least weekly.
+- **Sessions are fixed 90-day (`SESSION_TTL_DAYS`), refreshed at login**, not sliding: the teacher
+  signs in again about once a season on his phone, and "Se déconnecter" or `ardoise users
+  deactivate` still end a session at once.
 - **`COOKIE_SECURE` must stay `true` in any real deployment** (the default). Setting it false over
   a public network would expose the session cookie to anyone on the path.
 - **Failed logins are throttled in-process**: 10 per (username, IP) per 15 minutes, then 429 for

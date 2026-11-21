@@ -201,7 +201,9 @@ saw, with a banner saying so and how old it is. Nothing is stored for later send
   `OfflineBanner` shows the time, and `useReadOnly()` switches off the buttons that would save
   something (payments, adding or editing students, classes, packs). A write that still finds no
   network fails with code `network` and a sentence saying nothing was saved. Screens refetch on
-  the browser's `online` event, which turns them live again.
+  the browser's `online` event, which turns them live again, and when the app comes back to the
+  front after more than 30 seconds (`visibilitychange` in `useApi`), so an installed app left in
+  the background for days doesn't show yesterday's figures.
 - **The stored data is wiped** on sign-in, sign-out and an expired session (`lib/offlineData.ts`,
   from `lib/auth.tsx`), so one account's students never show for another.
 - **Updates:** every build has a new id, so a deploy ships a new worker; it takes over at once and
@@ -268,19 +270,36 @@ The sheet opens filled in (`src/lib/paymentDefaults.ts`, with its own tests):
   price, and starting there invites the over-payment typo the backend cap exists for.
 - **Date**: today.
 
+The confirmation after a payment carries **Annuler** for about six seconds: it deletes the
+payment just recorded and announces "Paiement annulé" through `changed()`. Not offered offline.
+
 Money stays a string throughout: `Number()` only compares, and the value sent is always one of
 the original strings (a French "199,5" is turned into "199.5" by a string edit).
 
 ## Accueil
 
 Top to bottom: the month as a title; two figures, what came in this month (all cash, back
-payments included, with the teacher's part under it) and what is owed today; **Mensualités du
-mois**, this month's fees against what has been paid toward them, as a count of students and a
-bar (hidden in a month where nobody is due); the pay button; anything needing attention; **À
-relancer**; **Cette semaine**, the unpaid dues of the next seven days, soonest first, said as
+payments included, with the teacher's part under it) and what is owed today ("Impayés
+aujourd'hui"); **Mensualités du mois**, this month's fees against what has been paid toward them, as a count of students and a
+bar (hidden in a month where nobody is due); the pay button; **Encaissé aujourd'hui**, the
+payments recorded today (back-dated ones included, since those are the typos worth catching),
+each linking to the student page on that month (`?month=YYYY-MM`) so a typo is one tap from
+Modifier; anything needing attention; **À relancer** (months unpaid and class only); **Cette semaine**, the unpaid dues of the next seven days, soonest first, said as
 "aujourd'hui", "demain" or the day (hidden when empty); and the link to former students who left
 owing. The server computes both new lists (`this_month`, `due_this_week` on the dashboard
 summary), from the same override-aware schedule as the student page.
+
+## Bilan › Mois and Année, and the students list
+
+Mois lists students in two groups, **Pas encore payé** (most owed first) then **Ont payé**, each
+with its count. Année is one line per month: the month, the number of payments, the amount; the
+school share lives in the Répartition card and in Bilan › École.
+
+The students list's filters sit on wrapping rows, all visible on a phone: "Tous · n",
+"Impayés · n", "Ponctualité", then the classes and "Anciens". Active students are fetched once
+and filtered by class here, so the counts don't depend on the chip selected. Enrolling a student
+pre-selects the pack when the chosen class's level has exactly one offered pack ("Choisi d'après
+la classe"), until the teacher touches the pack field.
 
 ## Bilan › École
 
@@ -299,6 +318,10 @@ leaving). The ledger already holds every month that has come due plus any paid i
 month without an entry is either upcoming or not expected; whether the student is still enrolled
 decides which. Tapping an owed tile opens the payment sheet on that month.
 
+`/students/:id?month=YYYY-MM` opens that month's sheet directly (turning to its school year),
+then drops the parameter so a refresh doesn't reopen it; the home page's "Encaissé aujourd'hui"
+rows use it.
+
 Tapping a paid tile shows what was recorded and, online, lets a typo be fixed:
 **Modifier ce paiement** (`EditPaymentForm`: amount and date, sending only what changed) or
 **Supprimer ce paiement**, which asks first in the same sheet and says the month will be owed
@@ -307,13 +330,15 @@ confirmation says so. Both announce themselves through `usePaymentSheet().change
 which bumps the same `version` as a recorded payment, so every screen refreshes and the same
 toast appears.
 
-**Ponctualité** (in Détails, and as a chip on the students list, latest payers first): the
+**Ponctualité** (one row in Détails, and a chip on the students list, latest payers first): the
 server's `average_days_late` over the student's last six payments, read as À l'heure (0–2 days),
-Un peu tard (3–7) or Souvent tard (8+) by `lib/punctuality.ts`. Hidden until a first payment is
-due. It reads the frozen lateness of payments; it is not drift and changes nothing.
+Un peu tard (3–7) or Souvent tard (8+) by `lib/punctuality.ts`, with the cumulative total beside
+it ("Retard moyen 2 j · 34 j au total"). It reads the frozen lateness of payments; it is not drift
+and changes nothing.
 
 Under the status card sits the teacher's **note** on the student (`student.note`, up to 500
-characters, edited in `EditStudentForm`), or a quiet "Ajouter une note" link when there is none.
+characters), or a quiet "Ajouter une note" link when there is none; both open `NoteSheet`, a
+sheet with just the note (the full edit form keeps the field too).
 It is private: it never goes on a PDF, since those are sent to parents.
 
 The departure/return action follows the **enrolment periods**, not `status`: a student set to

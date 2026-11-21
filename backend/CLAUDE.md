@@ -128,7 +128,7 @@ databases" below. The pieces:
 - **Server-side sessions in an HttpOnly cookie**, not a JWT: revocable instantly, and the token is
   meaningless outside the table. `SameSite=Lax` + `Secure` (settings-driven; **must be off for
   local http dev**, or the cookie is silently dropped and login appears not to stick).
-- **Fixed 7-day expiry, refreshed on login** — never slid forward per request. That keeps the read
+- **Fixed expiry (`SESSION_TTL_DAYS`, 90 days), refreshed on login** — never slid forward per request. That keeps the read
   path free of writes, which matters on a single-writer SQLite database. Expired rows are purged
   at login, so there is no cron.
 - **Routers are gated wholesale** in `main.py` via `include_router(..., dependencies=GATED)`. Add a

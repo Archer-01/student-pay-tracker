@@ -11,7 +11,7 @@ carrying a column nothing reads would cost about as much as the migration it sav
 ``is_active`` is the column that does earn its place: it switches an account off without deleting
 the row, which matters because ``session`` rows point at it. Deactivation is enforced on *every*
 request (see ``app.api.deps.require_session``), not just at login, so revoking someone doesn't
-leave their existing cookie working for the rest of its 7 days.
+leave their existing cookie working for the rest of its lifetime.
 """
 
 from datetime import datetime
