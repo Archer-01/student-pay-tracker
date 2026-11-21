@@ -4,7 +4,6 @@
 duplicate payments; the rejection *decision* lives in the service, not here.
 """
 
-from collections.abc import Sequence
 from datetime import date
 
 from sqlalchemy import func, select
@@ -21,11 +20,6 @@ class PaymentRepo:
         self.session.add(payment)
         self.session.flush()
         return payment
-
-    def bulk_create(self, payments: Sequence[Payment]) -> list[Payment]:
-        self.session.add_all(payments)
-        self.session.flush()
-        return list(payments)
 
     def get(self, payment_id: int) -> Payment | None:
         return self.session.get(Payment, payment_id)

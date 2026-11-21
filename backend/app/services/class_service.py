@@ -72,18 +72,6 @@ class ClassService:
         self.session.commit()
         return school_class
 
-    def get_or_create(self, *, level: ClassLevel, name: str) -> SchoolClass:
-        """Return the class with this natural key, creating it if absent.
-
-        Idempotent counterpart to :meth:`create`, for callers that want the class to exist
-        rather than to assert it doesn't (the dev seed re-runs against a populated database).
-        """
-        cleaned = _clean_name(name)
-        existing = self.classes.find(level, cleaned)
-        if existing is not None:
-            return existing
-        return self.create(level=level, name=cleaned)
-
     def get(self, class_id: int) -> SchoolClass:
         school_class = self.classes.get(class_id)
         if school_class is None:

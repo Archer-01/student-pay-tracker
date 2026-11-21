@@ -116,11 +116,7 @@ export interface paths {
         get: operations["get_student_api_v1_students__student_id__get"];
         put?: never;
         post?: never;
-        /**
-         * Delete Student
-         * @description Hard-delete a student and cascade to their payments and overrides (admin/dev only).
-         */
-        delete: operations["delete_student_api_v1_students__student_id__delete"];
+        delete?: never;
         options?: never;
         head?: never;
         /** Update Student */
@@ -136,23 +132,6 @@ export interface paths {
         };
         /** Get Ledger */
         get: operations["get_ledger_api_v1_students__student_id__ledger_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/students/{student_id}/drift": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Drift */
-        get: operations["get_drift_api_v1_students__student_id__drift_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -305,26 +284,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/students/{student_id}/periods/{period_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Amend Period
-         * @description Correct a mistyped date. Every ordering rule is re-checked afterwards.
-         */
-        patch: operations["amend_period_api_v1_students__student_id__periods__period_id__patch"];
-        trace?: never;
-    };
     "/api/v1/classes": {
         parameters: {
             query?: never;
@@ -400,66 +359,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/packs/grid": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /**
-         * Get Grid
-         * @description The offerings x levels matrix. Missing cells mean "not offered at that level".
-         */
-        get: operations["get_grid_api_v1_packs_grid_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/packs/offerings": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /**
-         * Create Offering
-         * @description Create a whole grid row: one pack per priced level, sharing one subject set.
-         */
-        post: operations["create_offering_api_v1_packs_offerings_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/packs/offerings/{name}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        /**
-         * Update Offering
-         * @description Rename an offering and/or set its subjects, across every level-variant at once.
-         */
-        patch: operations["update_offering_api_v1_packs_offerings__name__patch"];
-        trace?: never;
-    };
     "/api/v1/packs/{pack_id}": {
         parameters: {
             query?: never;
@@ -467,8 +366,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Pack */
-        get: operations["get_pack_api_v1_packs__pack_id__get"];
+        get?: never;
         put?: never;
         post?: never;
         /**
@@ -517,23 +415,6 @@ export interface paths {
          *     Advisory only — real people share names.
          */
         get: operations["find_matches_api_v1_debts_matches_get"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/v1/debts/{student_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Get Debt */
-        get: operations["get_debt_api_v1_debts__student_id__get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -849,18 +730,6 @@ export interface components {
             left_with_debt: boolean;
             written_off: components["schemas"]["WriteoffOut"] | null;
         };
-        /** DriftOut */
-        DriftOut: {
-            /** Student Id */
-            student_id: number;
-            /**
-             * As Of
-             * Format: date
-             */
-            as_of: string;
-            /** Cumulative Drift */
-            cumulative_drift: number;
-        };
         /**
          * DueSoonOut
          * @description An unpaid payment falling due in the coming week.
@@ -879,30 +748,6 @@ export interface components {
             due_date: string;
             /** Amount */
             amount: string;
-        };
-        /**
-         * GridCellOut
-         * @description One (offering, level) cell. ``pack_id`` is null when the offering isn't sold at a level.
-         */
-        GridCellOut: {
-            level: components["schemas"]["ClassLevel"];
-            /** Pack Id */
-            pack_id: number | null;
-            /** Price */
-            price: string | null;
-            /** Is Active */
-            is_active: boolean | null;
-            /** Student Count */
-            student_count: number;
-        };
-        /** GridRowOut */
-        GridRowOut: {
-            /** Name */
-            name: string;
-            /** Subjects */
-            subjects: string[];
-            /** Cells */
-            cells: components["schemas"]["GridCellOut"][];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -1024,33 +869,6 @@ export interface components {
             /** Outstanding */
             outstanding: string;
         };
-        /**
-         * OfferingCreate
-         * @description Create every level-variant of an offering at once — one grid row.
-         *
-         *     Prices are keyed by level; a level omitted here simply isn't offered, which is legal (the
-         *     grid may legitimately have empty cells).
-         */
-        OfferingCreate: {
-            /** Name */
-            name: string;
-            /** Subjects */
-            subjects: string[];
-            /** Prices */
-            prices: {
-                [key: string]: number | string;
-            };
-        };
-        /**
-         * OfferingUpdate
-         * @description Rename an offering and/or change its subjects — applied to every level-variant.
-         */
-        OfferingUpdate: {
-            /** Name */
-            name?: string | null;
-            /** Subjects */
-            subjects?: string[] | null;
-        };
         /** OverrideCreate */
         OverrideCreate: {
             /**
@@ -1128,16 +946,6 @@ export interface components {
             student_count: number;
         };
         /**
-         * PackGridOut
-         * @description The offerings x levels price matrix — what the packs screen renders.
-         */
-        PackGridOut: {
-            /** Levels */
-            levels: components["schemas"]["ClassLevel"][];
-            /** Rows */
-            rows: components["schemas"]["GridRowOut"][];
-        };
-        /**
          * PackUpdate
          * @description Edit one pack: its name, level (only while no student is on it), subjects, price, and
          *     whether it's still offered. Only the fields sent are changed.
@@ -1210,15 +1018,6 @@ export interface components {
             amount?: number | string | null;
             /** Paid Date */
             paid_date?: string | null;
-        };
-        /** PeriodAmend */
-        PeriodAmend: {
-            /** Entry Date */
-            entry_date?: string | null;
-            /** Leave Date */
-            leave_date?: string | null;
-            /** Reason */
-            reason?: string | null;
         };
         /** PeriodOut */
         PeriodOut: {
@@ -1865,37 +1664,6 @@ export interface operations {
             };
         };
     };
-    delete_student_api_v1_students__student_id__delete: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                student_id: number;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     update_student_api_v1_students__student_id__patch: {
         parameters: {
             query?: never;
@@ -1955,41 +1723,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LedgerOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_drift_api_v1_students__student_id__drift_get: {
-        parameters: {
-            query?: {
-                as_of?: string | null;
-            };
-            header?: never;
-            path: {
-                student_id: number;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DriftOut"];
                 };
             };
             /** @description Validation Error */
@@ -2298,44 +2031,6 @@ export interface operations {
             };
         };
     };
-    amend_period_api_v1_students__student_id__periods__period_id__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                student_id: number;
-                period_id: number;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PeriodAmend"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PeriodOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     list_classes_api_v1_classes_get: {
         parameters: {
             query?: {
@@ -2616,142 +2311,6 @@ export interface operations {
             };
         };
     };
-    get_grid_api_v1_packs_grid_get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PackGridOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_offering_api_v1_packs_offerings_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OfferingCreate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PackDetailOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    update_offering_api_v1_packs_offerings__name__patch: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                name: string;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["OfferingUpdate"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PackDetailOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_pack_api_v1_packs__pack_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                pack_id: number;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PackDetailOut"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
     delete_pack_api_v1_packs__pack_id__delete: {
         parameters: {
             query?: never;
@@ -2873,39 +2432,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DebtStatusOut"][];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    get_debt_api_v1_debts__student_id__get: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                student_id: number;
-            };
-            cookie?: {
-                ardoise_session?: string | null;
-            };
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Successful Response */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DebtStatusOut"];
                 };
             };
             /** @description Validation Error */

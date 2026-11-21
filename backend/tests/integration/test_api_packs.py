@@ -1,4 +1,4 @@
-"""API tests for packs, the price grid, and student pack assignments."""
+"""API tests for packs and student pack assignments."""
 
 from datetime import date
 from decimal import Decimal
@@ -14,11 +14,9 @@ _JOIN = "2023-03-05"
 
 
 def _offering(db_session: Session, name: str = "Maths seul") -> None:
-    PackService(db_session).create_offering(
-        name=name,
-        subjects=["Maths"],
-        prices={ClassLevel.AC1: Decimal("100"), ClassLevel.BAC2: Decimal("150")},
-    )
+    service = PackService(db_session)
+    for level, price in {ClassLevel.AC1: Decimal("100"), ClassLevel.BAC2: Decimal("150")}.items():
+        service.create(name=name, level=level, price=price, subjects=["Maths"])
 
 
 def _student(db_session: Session, **kw: object):
@@ -63,12 +61,6 @@ async def test_duplicate_pack_is_409(client: AsyncClient, db_session: Session) -
     assert resp.json()["code"] == "duplicate_pack"
 
 
-async def test_unknown_pack_is_404(client: AsyncClient) -> None:
-    resp = await client.get("/api/v1/packs/999")
-    assert resp.status_code == 404
-    assert resp.json()["code"] == "pack_not_found"
-
-
 async def test_filter_by_level_and_active(client: AsyncClient, db_session: Session) -> None:
     _offering(db_session)
     by_level = (await client.get("/api/v1/packs", params={"level": "1AC"})).json()
@@ -76,66 +68,6 @@ async def test_filter_by_level_and_active(client: AsyncClient, db_session: Sessi
     await client.patch(f"/api/v1/packs/{by_level[0]['id']}", json={"is_active": False})
     active = (await client.get("/api/v1/packs", params={"active": True})).json()
     assert [p["level"] for p in active] == ["2BAC"]
-
-
-# --------------------------------------------------------------------------- #
-# offerings — the grid row
-# --------------------------------------------------------------------------- #
-
-
-async def test_create_offering_makes_one_pack_per_priced_level(client: AsyncClient) -> None:
-    resp = await client.post(
-        "/api/v1/packs/offerings",
-        json={
-            "name": "Pack complet",
-            "subjects": ["Maths", "Physique"],
-            "prices": {"1AC": "220", "2BAC": "300"},
-        },
-    )
-    assert resp.status_code == 201
-    assert {(p["level"], p["price"]) for p in resp.json()} == {
-        ("1AC", "220.00"),
-        ("2BAC", "300.00"),
-    }
-
-
-async def test_offering_subject_edit_hits_every_variant(
-    client: AsyncClient, db_session: Session
-) -> None:
-    _offering(db_session)
-    resp = await client.patch(
-        "/api/v1/packs/offerings/Maths seul", json={"subjects": ["Maths", "Physique"]}
-    )
-    assert resp.status_code == 200
-    assert all(p["subjects"] == ["Maths", "Physique"] for p in resp.json())
-
-
-async def test_offering_rename_hits_every_variant(client: AsyncClient, db_session: Session) -> None:
-    _offering(db_session)
-    resp = await client.patch(
-        "/api/v1/packs/offerings/Maths seul", json={"name": "Maths uniquement"}
-    )
-    assert {p["name"] for p in resp.json()} == {"Maths uniquement"}
-
-
-async def test_unknown_offering_is_400(client: AsyncClient) -> None:
-    resp = await client.patch("/api/v1/packs/offerings/nope", json={"subjects": ["Maths"]})
-    assert resp.status_code == 400
-    assert resp.json()["code"] == "pack_offering_unknown"
-
-
-async def test_grid_shape(client: AsyncClient, db_session: Session) -> None:
-    _offering(db_session)
-    grid = (await client.get("/api/v1/packs/grid")).json()
-    assert grid["levels"] == ["1AC", "2AC", "3AC", "TC", "1BAC", "2BAC"]
-    row = grid["rows"][0]
-    assert row["name"] == "Maths seul"
-    assert row["subjects"] == ["Maths"]
-    prices = {c["level"]: c["price"] for c in row["cells"]}
-    assert prices["1AC"] == "100.00"
-    assert prices["2BAC"] == "150.00"
-    # Levels the offering isn't sold at are present but empty — not invented.
-    assert prices["3AC"] is None
 
 
 # --------------------------------------------------------------------------- #

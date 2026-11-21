@@ -82,22 +82,6 @@ def test_same_name_at_a_different_level_is_allowed(db_session: Session) -> None:
     service.create(level=ClassLevel.AC1, name="Groupe A")  # must not raise
 
 
-def test_get_or_create_creates_when_absent(db_session: Session) -> None:
-    created = ClassService(db_session).get_or_create(level=ClassLevel.AC1, name="A")
-    assert created.id is not None
-
-
-def test_get_or_create_returns_the_existing_class(db_session: Session) -> None:
-    service = ClassService(db_session)
-    first = service.create(level=ClassLevel.AC1, name="A")
-    assert service.get_or_create(level=ClassLevel.AC1, name="  A ").id == first.id
-
-
-def test_get_or_create_rejects_a_blank_name(db_session: Session) -> None:
-    with pytest.raises(InvalidClassError):
-        ClassService(db_session).get_or_create(level=ClassLevel.AC1, name=" ")
-
-
 # --------------------------------------------------------------------------- #
 # get / list
 # --------------------------------------------------------------------------- #

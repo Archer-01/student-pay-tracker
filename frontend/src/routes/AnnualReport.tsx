@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAnnualReport } from "../api/endpoints";
-import { downloadFile } from "../api/client";
+import { getAnnualReport, downloadAnnualReportPdf } from "../api/endpoints";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
 import { formatMonthShort } from "../lib/dates";
@@ -34,7 +33,7 @@ export function AnnualReport() {
   async function handleDownload() {
     setDownloadError(null);
     try {
-      await downloadFile("/reports/annual.pdf", `annual-${year}.pdf`, { year });
+      await downloadAnnualReportPdf(year, `annual-${year}.pdf`);
     } catch (err) {
       setDownloadError(resolveErrorMessage(err, t));
     }

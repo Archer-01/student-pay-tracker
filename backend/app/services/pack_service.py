@@ -104,34 +104,6 @@ class PackService:
         self.session.commit()
         return pack
 
-    def create_offering(
-        self, *, name: str, subjects: SubjectNames, prices: dict[ClassLevel, Decimal]
-    ) -> Packs:
-        """Create every level-variant of an offering in one go, sharing one subject set.
-
-        This is how the price grid creates a row. Doing it per-level through :meth:`create` is
-        what lets the variants' subjects drift apart, so the UI never should.
-        """
-        cleaned_name = _clean_name(name)
-        cleaned_subjects = _clean_subjects(subjects)
-        if not prices:
-            raise InvalidPackError("pack_no_prices")
-        for level, price in prices.items():
-            if price < 0:
-                raise InvalidPackError("pack_price_negative")
-            if self.packs.find(cleaned_name, level) is not None:
-                raise DuplicatePackError(cleaned_name, level.value)
-
-        resolved = self._resolve_subjects(cleaned_subjects)
-        created = [
-            self.packs.create(
-                Pack(name=cleaned_name, level=level, price=price, subjects=list(resolved))
-            )
-            for level, price in prices.items()
-        ]
-        self.session.commit()
-        return created
-
     def update(
         self,
         pack_id: int,

@@ -3,7 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models import ClassLevel
 from app.schemas.money import Money
@@ -45,36 +45,6 @@ class PackCreate(BaseModel):
     subjects: list[str] = Field(min_length=1)
 
 
-class OfferingCreate(BaseModel):
-    """Create every level-variant of an offering at once — one grid row.
-
-    Prices are keyed by level; a level omitted here simply isn't offered, which is legal (the
-    grid may legitimately have empty cells).
-    """
-
-    name: str = Field(min_length=1)
-    subjects: list[str] = Field(min_length=1)
-    prices: dict[ClassLevel, Money]
-
-    @field_validator("prices")
-    @classmethod
-    def _prices_non_negative(cls, value: dict[ClassLevel, Decimal]) -> dict[ClassLevel, Decimal]:
-        if not value:
-            raise ValueError("at least one level price is required")
-        if any(price < 0 for price in value.values()):
-            raise ValueError("prices must not be negative")
-        return value
-
-
-class OfferingUpdate(BaseModel):
-    """Rename an offering and/or change its subjects — applied to every level-variant."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    name: str | None = Field(default=None, min_length=1)
-    subjects: list[str] | None = Field(default=None, min_length=1)
-
-
 class PackUpdate(BaseModel):
     """Edit one pack: its name, level (only while no student is on it), subjects, price, and
     whether it's still offered. Only the fields sent are changed."""
@@ -86,26 +56,3 @@ class PackUpdate(BaseModel):
     subjects: list[str] | None = Field(default=None, min_length=1)
     price: Money | None = Field(default=None, ge=0)
     is_active: bool | None = None
-
-
-class GridCellOut(BaseModel):
-    """One (offering, level) cell. ``pack_id`` is null when the offering isn't sold at a level."""
-
-    level: ClassLevel
-    pack_id: int | None
-    price: Decimal | None
-    is_active: bool | None
-    student_count: int
-
-
-class GridRowOut(BaseModel):
-    name: str
-    subjects: list[str]
-    cells: list[GridCellOut]
-
-
-class PackGridOut(BaseModel):
-    """The offerings x levels price matrix — what the packs screen renders."""
-
-    levels: list[ClassLevel]
-    rows: list[GridRowOut]

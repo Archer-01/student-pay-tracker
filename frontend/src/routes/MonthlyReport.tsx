@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAnnualReport, getMonthlyReport } from "../api/endpoints";
-import { downloadFile } from "../api/client";
+import { getAnnualReport, getMonthlyReport, downloadMonthlyReportPdf } from "../api/endpoints";
 import type { AnnualReport, MonthlyReport as MonthlyReportData } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
@@ -52,7 +51,7 @@ export function MonthlyReport() {
     setDownloadError(null);
     try {
       const filename = `${t("report.pdfFilename", { year, month })}.pdf`;
-      await downloadFile("/reports/monthly.pdf", filename, { year, month });
+      await downloadMonthlyReportPdf(year, month, filename);
     } catch (err) {
       setDownloadError(resolveErrorMessage(err, t));
     }

@@ -172,42 +172,6 @@ def test_unknown_student_raises(db_session: Session) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_amending_a_period(db_session: Session) -> None:
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    period = service.leave(student.id, leave_date=date(2023, 6, 30))
-    service.amend(student.id, period.id, leave_date=date(2023, 7, 31))
-    assert service.history(student.id)[0].leave_date == date(2023, 7, 31)
-
-
-def test_amending_cannot_break_the_ordering(db_session: Session) -> None:
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    first = service.leave(student.id, leave_date=date(2023, 6, 30))
-    service.return_(student.id, entry_date=date(2023, 10, 1))
-    # Pushing the first departure past the second arrival would overlap the two periods.
-    with pytest.raises(InvalidPeriodError) as exc:
-        service.amend(student.id, first.id, leave_date=date(2023, 12, 1))
-    assert exc.value.code == "periods_overlap"
-
-
-def test_amending_cannot_move_the_first_entry_off_the_anchor(db_session: Session) -> None:
-    """The first period starts at join_date by definition; moving it would fork the schedule."""
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    first = service.history(student.id)[0]
-    with pytest.raises(InvalidPeriodError) as exc:
-        service.amend(student.id, first.id, entry_date=date(2023, 5, 1))
-    assert exc.value.code == "first_entry_is_the_anchor"
-
-
-def test_amending_an_unknown_period_raises(db_session: Session) -> None:
-    student = _student(db_session)
-    with pytest.raises(InvalidPeriodError) as exc:
-        EnrollmentService(db_session).amend(student.id, 999, leave_date=_JOIN)
-    assert exc.value.code == "period_not_found"
-
-
 # --------------------------------------------------------------------------- #
 # What it does to the money
 # --------------------------------------------------------------------------- #
@@ -299,52 +263,6 @@ def test_no_absence_means_nothing_is_suspended(db_session: Session) -> None:
     student = _student(db_session)
     entries = LedgerService(db_session).get_ledger(student.id, date(2024, 6, 30))
     assert all(e.suspended is False for e in entries)
-
-
-def test_amending_a_later_period_entry_date(db_session: Session) -> None:
-    """Only the *first* entry is pinned to the anchor; a later return may be corrected."""
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    service.leave(student.id, leave_date=date(2023, 6, 30))
-    second = service.return_(student.id, entry_date=date(2023, 10, 1))
-    service.amend(student.id, second.id, entry_date=date(2023, 9, 1))
-    assert service.history(student.id)[1].entry_date == date(2023, 9, 1)
-
-
-def test_amending_the_first_entry_to_the_anchor_is_a_no_op(db_session: Session) -> None:
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    first = service.history(student.id)[0]
-    service.amend(student.id, first.id, entry_date=_JOIN)
-    assert service.history(student.id)[0].entry_date == _JOIN
-
-
-def test_amending_the_reason(db_session: Session) -> None:
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    period = service.leave(student.id, leave_date=date(2023, 6, 30), reason="typo")
-    service.amend(student.id, period.id, reason="moved away")
-    assert service.history(student.id)[0].leave_reason == "moved away"
-
-
-def test_amending_cannot_invert_a_period(db_session: Session) -> None:
-    """Pushing a departure before its own arrival is caught by the re-validation."""
-    student = _student(db_session)
-    service = EnrollmentService(db_session)
-    service.leave(student.id, leave_date=date(2023, 6, 30))
-    second = service.return_(student.id, entry_date=date(2023, 10, 1))
-    with pytest.raises(InvalidPeriodError) as exc:
-        service.amend(student.id, second.id, leave_date=date(2023, 9, 1))
-    assert exc.value.code == "leave_before_entry"
-
-
-def test_amending_a_period_of_another_student_raises(db_session: Session) -> None:
-    first = _student(db_session)
-    second = StudentService(db_session).enroll(first_name="Other", join_date=_JOIN)
-    period = EnrollmentService(db_session).history(second.id)[0]
-    with pytest.raises(InvalidPeriodError) as exc:
-        EnrollmentService(db_session).amend(first.id, period.id, reason="x")
-    assert exc.value.code == "period_not_found"
 
 
 def test_a_student_with_no_recorded_periods_is_billed_normally(db_session: Session) -> None:

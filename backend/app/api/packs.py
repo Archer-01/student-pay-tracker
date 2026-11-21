@@ -12,13 +12,8 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_db
 from app.models import ClassLevel, Pack
 from app.schemas.pack import (
-    GridCellOut,
-    GridRowOut,
-    OfferingCreate,
-    OfferingUpdate,
     PackCreate,
     PackDetailOut,
-    PackGridOut,
     PackOut,
     PackUpdate,
 )
@@ -45,39 +40,6 @@ async def list_packs(
     return [_detail(pack, service) for pack in service.list(level=level, active=active)]
 
 
-@router.get("/grid", response_model=PackGridOut)
-async def get_grid(db: Session = Depends(get_db)) -> PackGridOut:
-    """The offerings x levels matrix. Missing cells mean "not offered at that level"."""
-    service = PackService(db)
-    levels = list(ClassLevel)
-    by_offering: dict[str, dict[ClassLevel, Pack]] = {}
-    subjects: dict[str, list[str]] = {}
-    for pack in service.list():
-        by_offering.setdefault(pack.name, {})[pack.level] = pack
-        subjects.setdefault(pack.name, [s.name for s in pack.subjects])
-
-    rows = [
-        GridRowOut(
-            name=name,
-            subjects=subjects[name],
-            cells=[
-                GridCellOut(
-                    level=level,
-                    pack_id=variants[level].id if level in variants else None,
-                    price=variants[level].price if level in variants else None,
-                    is_active=variants[level].is_active if level in variants else None,
-                    student_count=(
-                        service.student_count(variants[level].id) if level in variants else 0
-                    ),
-                )
-                for level in levels
-            ],
-        )
-        for name, variants in by_offering.items()
-    ]
-    return PackGridOut(levels=levels, rows=rows)
-
-
 @router.post("", response_model=PackDetailOut, status_code=status.HTTP_201_CREATED)
 async def create_pack(payload: PackCreate, db: Session = Depends(get_db)) -> PackDetailOut:
     service = PackService(db)
@@ -88,37 +50,6 @@ async def create_pack(payload: PackCreate, db: Session = Depends(get_db)) -> Pac
         subjects=payload.subjects,
     )
     return _detail(pack, service)
-
-
-@router.post("/offerings", response_model=list[PackDetailOut], status_code=status.HTTP_201_CREATED)
-async def create_offering(
-    payload: OfferingCreate, db: Session = Depends(get_db)
-) -> list[PackDetailOut]:
-    """Create a whole grid row: one pack per priced level, sharing one subject set."""
-    service = PackService(db)
-    packs = service.create_offering(
-        name=payload.name, subjects=payload.subjects, prices=payload.prices
-    )
-    return [_detail(pack, service) for pack in packs]
-
-
-@router.patch("/offerings/{name}", response_model=list[PackDetailOut])
-async def update_offering(
-    name: str, payload: OfferingUpdate, db: Session = Depends(get_db)
-) -> list[PackDetailOut]:
-    """Rename an offering and/or set its subjects, across every level-variant at once."""
-    service = PackService(db)
-    fields = payload.model_dump(exclude_unset=True)
-    if "name" in fields:
-        fields["new_name"] = fields.pop("name")
-    packs = service.update_offering(name, **fields)
-    return [_detail(pack, service) for pack in packs]
-
-
-@router.get("/{pack_id}", response_model=PackDetailOut)
-async def get_pack(pack_id: int, db: Session = Depends(get_db)) -> PackDetailOut:
-    service = PackService(db)
-    return _detail(service.get(pack_id), service)
 
 
 @router.patch("/{pack_id}", response_model=PackDetailOut)

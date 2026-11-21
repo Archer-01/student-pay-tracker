@@ -95,10 +95,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "A pack must contain at least one subject",
         "fr": "Un pack doit comporter au moins une matière",
     },
-    "error.pack_no_prices": {
-        "en": "At least one level price is required",
-        "fr": "Indiquez un tarif pour au moins un niveau",
-    },
     "error.pack_price_negative": {
         "en": "Pack price must not be negative",
         "fr": "Le tarif du pack ne peut pas être négatif",
@@ -175,21 +171,6 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "A return ({entry_date}) cannot precede the last departure ({leave_date})",
         "fr": (
             "La date de retour ({entry_date}) ne peut pas précéder le dernier départ ({leave_date})"
-        ),
-    },
-    "error.periods_overlap": {
-        "en": "That change would make two attendance periods overlap",
-        "fr": "Cette modification ferait se chevaucher deux périodes d'inscription",
-    },
-    "error.period_not_found": {
-        "en": "No attendance period with id {period_id} for this student",
-        "fr": "Période d'inscription introuvable (n°\u00a0{period_id})",
-    },
-    "error.first_entry_is_the_anchor": {
-        "en": "The first arrival is the student's join date and cannot be moved",
-        "fr": (
-            "La première arrivée correspond à la date d'inscription de l'élève "
-            "et ne peut pas être déplacée"
         ),
     },
     # --- Debts ("ne plus réclamer", not the accountant's "abandon de créance") ---

@@ -105,31 +105,6 @@ async def test_create_student_validation_422(client: AsyncClient, body: dict) ->
     assert (await client.post("/api/v1/students", json=body)).status_code == 422
 
 
-async def test_delete_student(client: AsyncClient) -> None:
-    sid = await _create_student(client)
-    resp = await client.delete(f"/api/v1/students/{sid}")
-    assert resp.status_code == 204
-    assert (await client.get(f"/api/v1/students/{sid}")).status_code == 404
-
-
-async def test_delete_student_cascades_history(client: AsyncClient) -> None:
-    sid = await _create_student(client)
-    await client.post(
-        f"/api/v1/students/{sid}/payments",
-        json={"paid_date": "2023-04-10", "amount": "300", "cycle_number": 1},
-    )
-    await client.post(
-        f"/api/v1/students/{sid}/overrides",
-        json={"new_due_date": "2023-07-20", "reason": "agreed shift"},
-    )
-    assert (await client.delete(f"/api/v1/students/{sid}")).status_code == 204
-    assert (await client.get(f"/api/v1/students/{sid}")).status_code == 404
-
-
-async def test_delete_unknown_student_is_404(client: AsyncClient) -> None:
-    assert (await client.delete("/api/v1/students/999")).status_code == 404
-
-
 # --------------------------------------------------------------------------- #
 # Payments
 # --------------------------------------------------------------------------- #
@@ -228,7 +203,7 @@ async def test_a_mistyped_date_is_corrected_and_lateness_follows_it(client: Asyn
     assert resp.status_code == 200, resp.text
     # Due on the 5th, so paid on the 5th is on time; the due date itself never moves.
     assert (resp.json()["expected_due_date"], resp.json()["days_late"]) == ("2023-04-05", 0)
-    drift = await client.get(f"/api/v1/students/{sid}/drift", params={"as_of": "2023-04-30"})
+    drift = await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-04-30"})
     assert drift.json()["cumulative_drift"] == 0
 
 
@@ -346,7 +321,7 @@ async def test_full_flow_drift_15(client: AsyncClient) -> None:
             json={"paid_date": f"{month}-10", "amount": "300", "for_month": month},
         )
         assert resp.status_code == 201
-    drift = await client.get(f"/api/v1/students/{sid}/drift", params={"as_of": "2023-06-10"})
+    drift = await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-06-10"})
     assert drift.json()["cumulative_drift"] == 15
 
 
@@ -361,7 +336,7 @@ async def test_cli_and_api_agree(
             json={"paid_date": f"{month}-10", "amount": "300", "for_month": month},
         )
     api_drift = (
-        await client.get(f"/api/v1/students/{sid}/drift", params={"as_of": "2023-06-30"})
+        await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-06-30"})
     ).json()["cumulative_drift"]
 
     # --- Same flow through the CLI (separate temp-file DB) ---

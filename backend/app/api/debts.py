@@ -59,11 +59,6 @@ async def find_matches(
     return [_out(status) for status in matches]
 
 
-@router.get("/{student_id}", response_model=DebtStatusOut)
-async def get_debt(student_id: int, db: Session = Depends(get_db)) -> DebtStatusOut:
-    return _out(DebtService(db).status(student_id))
-
-
 @router.post("/{student_id}/write-off", response_model=WriteoffOut)
 async def write_off(
     student_id: int, payload: WriteoffCreate, db: Session = Depends(get_db)

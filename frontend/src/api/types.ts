@@ -18,7 +18,6 @@ export type PaymentUpdate = components["schemas"]["PaymentUpdate"];
 export type OverrideCreate = components["schemas"]["OverrideCreate"];
 export type OverrideOut = components["schemas"]["OverrideOut"];
 export type DashboardSummary = components["schemas"]["DashboardSummaryOut"];
-export type StudentDigest = components["schemas"]["StudentDigestOut"];
 /** Moroccan school levels, in school order — shared by classes and (later) pack pricing. */
 export type ClassLevel = components["schemas"]["ClassLevel"];
 export type ClassOut = components["schemas"]["ClassOut"];
@@ -32,7 +31,6 @@ export type MonthlyReport = components["schemas"]["MonthlyReportOut"];
 export type PackDetail = components["schemas"]["PackDetailOut"];
 export type PackCreate = components["schemas"]["PackCreate"];
 export type PackUpdate = components["schemas"]["PackUpdate"];
-export type PackBrief = components["schemas"]["PackBriefOut"];
 export type AnnualReport = components["schemas"]["AnnualReportOut"];
 export type EnrollmentPeriod = components["schemas"]["PeriodOut"];
 export type DebtStatus = components["schemas"]["DebtStatusOut"];

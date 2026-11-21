@@ -120,28 +120,6 @@ async def test_leaving_keeps_drift_already_accrued(
     assert after["cumulative_drift"] == before["cumulative_drift"] == 15
 
 
-async def test_amend_a_period(client: AsyncClient, db_session: Session) -> None:
-    student = _student(db_session)
-    left = await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-06-30"}
-    )
-    resp = await client.patch(
-        f"/api/v1/students/{student.id}/periods/{left.json()['id']}",
-        json={"leave_date": "2023-07-31"},
-    )
-    assert resp.status_code == 200
-    assert resp.json()["leave_date"] == "2023-07-31"
-
-
-async def test_amend_rejects_unknown_fields(client: AsyncClient, db_session: Session) -> None:
-    student = _student(db_session)
-    period_id = (await client.get(f"/api/v1/students/{student.id}/periods")).json()[0]["id"]
-    resp = await client.patch(
-        f"/api/v1/students/{student.id}/periods/{period_id}", json={"nope": 1}
-    )
-    assert resp.status_code == 422
-
-
 async def test_return_is_never_blocked_by_debt(client: AsyncClient, db_session: Session) -> None:
     """The teacher decides whether to re-admit someone who owes — the app doesn't gate it."""
     student = _student(db_session, price="300")

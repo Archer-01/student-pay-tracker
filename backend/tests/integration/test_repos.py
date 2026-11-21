@@ -92,14 +92,6 @@ def test_payment_get_by_student_cycle(db_session: Session) -> None:
     assert repo.get_by_student_cycle(student.id, 1) is created
 
 
-def test_payment_bulk_create(db_session: Session) -> None:
-    student = StudentRepo(db_session).create(_make_student())
-    repo = PaymentRepo(db_session)
-    payments = repo.bulk_create([_make_payment(student.id, cycle_number=c) for c in (1, 2, 3)])
-    assert all(p.id is not None for p in payments)
-    assert len(repo.list_for_student(student.id)) == 3
-
-
 def test_payment_list_paid_between(db_session: Session) -> None:
     student = StudentRepo(db_session).create(_make_student())
     repo = PaymentRepo(db_session)

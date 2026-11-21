@@ -43,13 +43,6 @@ async def test_the_list_carries_the_amount_and_total(
     assert Decimal(body["total_owed"]) == Decimal("1200")
 
 
-async def test_a_students_own_debt_status(client: AsyncClient, db_session: Session) -> None:
-    student = _left_owing(db_session)
-    body = (await client.get(f"/api/v1/debts/{student.id}")).json()
-    assert body["left_with_debt"] is True
-    assert body["written_off"] is None
-
-
 async def test_unknown_student_is_404(client: AsyncClient) -> None:
     assert (await client.get("/api/v1/debts/999")).status_code == 404
 

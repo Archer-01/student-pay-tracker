@@ -24,8 +24,7 @@ class StudentNotFoundError(DomainError):
 
 class InvalidPeriodError(DomainError):
     """Bad enrollment period. ``code`` is one of: period_not_open / period_already_open /
-    leave_before_entry / return_before_leave / periods_overlap / period_not_found /
-    first_entry_is_the_anchor."""
+    leave_before_entry / return_before_leave."""
 
 
 class InvalidWriteoffError(DomainError):
@@ -112,7 +111,7 @@ class PackInUseError(DomainError):
 
 class InvalidPackError(DomainError):
     """Bad pack data or pricing. ``code`` is one of: pack_name_empty / pack_no_subjects /
-    pack_no_prices / pack_price_negative / pack_offering_unknown / pack_inactive /
+    pack_price_negative / pack_offering_unknown / pack_inactive /
     pack_level_locked / custom_price_negative."""
 
 

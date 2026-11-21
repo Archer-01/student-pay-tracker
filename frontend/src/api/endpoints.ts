@@ -103,6 +103,20 @@ export function getAnnualReport(year: number) {
   return apiRequest<AnnualReport>("/reports/annual", { query: { year } });
 }
 
+// --- PDFs (saved by the browser; localized server-side via the `lang` the client attaches) --
+
+export function downloadMonthlyReportPdf(year: number, month: number, filename: string) {
+  return downloadFile("/reports/monthly.pdf", filename, { year, month });
+}
+
+export function downloadAnnualReportPdf(year: number, filename: string) {
+  return downloadFile("/reports/annual.pdf", filename, { year });
+}
+
+export function downloadLedgerPdf(studentId: number, filename: string) {
+  return downloadFile(`/students/${studentId}/ledger.pdf`, filename);
+}
+
 // --- classes ---------------------------------------------------------------
 
 export function listClasses(params: { level?: ClassLevel; as_of?: string } = {}) {
@@ -170,10 +184,6 @@ export function recordReturn(studentId: number, body: { entry_date: string }) {
 
 export function listLeaversWithDebt() {
   return apiRequest<Leavers>("/debts");
-}
-
-export function getDebtStatus(studentId: number) {
-  return apiRequest<DebtStatus>(`/debts/${studentId}`);
 }
 
 export function writeOffDebt(studentId: number, body: { reason: string }) {

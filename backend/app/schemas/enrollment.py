@@ -37,12 +37,3 @@ class LeaveRequest(BaseModel):
 
 class ReturnRequest(BaseModel):
     entry_date: date
-
-
-class PeriodAmend(BaseModel):
-    # extra="forbid" rejects typos with 422 rather than silently ignoring them.
-    model_config = ConfigDict(extra="forbid")
-
-    entry_date: date | None = None
-    leave_date: date | None = None
-    reason: str | None = None

@@ -121,9 +121,3 @@ class StudentDetailOut(StudentOut):
     # Average days late over their last six payments; None before their first one is due.
     average_days_late: int | None
     as_of: date
-
-
-class DriftOut(BaseModel):
-    student_id: int
-    as_of: date
-    cumulative_drift: int

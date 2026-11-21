@@ -16,7 +16,16 @@ frontend: schema
     cd frontend && npm run lint
     cd frontend && npm run test:coverage
 
-# Fails when src/api/schema.d.ts doesn't match the backend's schema (run `npm run gen:api`).
+# Fails when src/api/schema.d.ts didn't match the backend's schema. It compares the file before
+# and after regenerating it (not against the last commit, as CI does), so a schema regenerated
+# but not yet committed passes; a stale one is regenerated, and the check says so.
 schema:
-    cd frontend && npm run gen:api >/dev/null
-    git diff --exit-code -- frontend/src/api/schema.d.ts
+    #!/usr/bin/env bash
+    set -euo pipefail
+    cd frontend
+    before=$(shasum src/api/schema.d.ts)
+    npm run gen:api >/dev/null
+    if [[ "$before" != "$(shasum src/api/schema.d.ts)" ]]; then
+      echo "src/api/schema.d.ts was stale: regenerated it, review and commit it" >&2
+      exit 1
+    fi

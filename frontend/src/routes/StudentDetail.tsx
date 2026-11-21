@@ -1,8 +1,7 @@
 import { useEffect, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { deletePayment, getLedger, getStudent, listPeriods } from "../api/endpoints";
-import { downloadFile } from "../api/client";
+import { deletePayment, getLedger, getStudent, listPeriods, downloadLedgerPdf } from "../api/endpoints";
 import type { EnrollmentPeriod, LedgerOut, StudentDetailOut } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
@@ -770,7 +769,7 @@ function MoreActions({
     try {
       const slug = slugify(detail.full_name);
       const stem = t("detail.pdfFilename", { id: detail.id, name: slug ? `-${slug}` : "" });
-      await downloadFile(`/students/${detail.id}/ledger.pdf`, `${stem}.pdf`);
+      await downloadLedgerPdf(detail.id, `${stem}.pdf`);
     } catch (err) {
       setDownloadError(resolveErrorMessage(err, t));
     }

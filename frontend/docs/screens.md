@@ -111,5 +111,5 @@ Classes and packs (`/settings/classes`, `/settings/packs`), language, appearance
 **A pack is one name at one level**, listed and edited on its own (`routes/PacksList.tsx`).
 There is no grouping of packs across levels any more: the teacher names each pack for its level
 ("Pack TC Scientifique"), and an offer × level grid was mostly empty cells. A pack's level is
-locked once a student has it (the server refuses it too). The backend's offering and grid
-endpoints still exist for the CLI; the app doesn't call them.
+locked once a student has it (the server refuses it too). Renaming a pack across all its levels
+at once is left to the CLI (`ardoise packs edit-offering`).

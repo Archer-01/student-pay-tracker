@@ -122,7 +122,7 @@ async def test_student_detail(client: AsyncClient, db_session: Session) -> None:
     assert data["next_expected_date"] == "2023-07-05"  # next due after 2023-06-30
 
 
-@pytest.mark.parametrize("suffix", ["", "/ledger", "/drift"])
+@pytest.mark.parametrize("suffix", ["", "/ledger"])
 async def test_unknown_student_returns_404(client: AsyncClient, suffix: str) -> None:
     resp = await client.get(f"/api/v1/students/999{suffix}")
     assert resp.status_code == 404
@@ -138,13 +138,6 @@ async def test_ledger_endpoint(client: AsyncClient, db_session: Session) -> None
     entries = {e["cycle_number"]: e for e in data["entries"]}
     assert entries[0]["paid_date"] is None  # enrollment month is an unpaid gap
     assert entries[1]["days_late"] == 5
-
-
-async def test_drift_endpoint(client: AsyncClient, db_session: Session) -> None:
-    amina, _ = _seed(db_session)
-    resp = await client.get(f"/api/v1/students/{amina.id}/drift", params=_AS_OF)
-    assert resp.status_code == 200
-    assert resp.json()["cumulative_drift"] == 10
 
 
 async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Session) -> None:
@@ -211,5 +204,5 @@ async def test_openapi_and_docs_render(client: AsyncClient) -> None:
 async def test_api_drift_matches_service(client: AsyncClient, db_session: Session) -> None:
     amina, _ = _seed(db_session)
     service_drift = LedgerService(db_session).cumulative_drift(amina.id, date(2023, 6, 30))
-    resp = await client.get(f"/api/v1/students/{amina.id}/drift", params=_AS_OF)
+    resp = await client.get(f"/api/v1/students/{amina.id}/ledger", params=_AS_OF)
     assert resp.json()["cumulative_drift"] == service_drift

@@ -10,7 +10,7 @@ from decimal import Decimal
 import pytest
 from sqlalchemy.orm import Session
 
-from app.models import ClassLevel
+from app.models import ClassLevel, Pack
 from app.services.exceptions import (
     DuplicatePackError,
     InvalidPackError,
@@ -22,6 +22,14 @@ from app.services.student_service import StudentService
 
 _JOIN = date(2023, 3, 5)
 _GRID = {ClassLevel.AC1: Decimal("100"), ClassLevel.BAC2: Decimal("150")}
+
+
+def _offering(service: PackService, name: str) -> list[Pack]:
+    """One pack per level of `_GRID`, sharing a name and a subject: an offering, as the CLI
+    edits it with `update_offering`."""
+    return [
+        service.create(name=name, level=lv, price=p, subjects=["Maths"]) for lv, p in _GRID.items()
+    ]
 
 
 def _student(session: Session, name: str = "Amina", **kw: object):
@@ -91,38 +99,7 @@ def test_duplicate_subject_names_collapse(db_session: Session) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# create_offering — the grid row
 # --------------------------------------------------------------------------- #
-
-
-def test_create_offering_makes_one_pack_per_level(db_session: Session) -> None:
-    packs = PackService(db_session).create_offering(
-        name="Maths seul", subjects=["Maths"], prices=_GRID
-    )
-    assert {(p.level, p.price) for p in packs} == {
-        (ClassLevel.AC1, Decimal("100")),
-        (ClassLevel.BAC2, Decimal("150")),
-    }
-
-
-def test_create_offering_shares_one_subject_set(db_session: Session) -> None:
-    packs = PackService(db_session).create_offering(
-        name="Maths + Physique", subjects=["Maths", "Physique"], prices=_GRID
-    )
-    assert {tuple(sorted(s.name for s in p.subjects)) for p in packs} == {("Maths", "Physique")}
-
-
-def test_create_offering_rejects_a_collision(db_session: Session) -> None:
-    service = PackService(db_session)
-    service.create(name="Maths seul", level=ClassLevel.AC1, price=Decimal("1"), subjects=["M"])
-    with pytest.raises(DuplicatePackError):
-        service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
-
-
-def test_create_offering_requires_prices(db_session: Session) -> None:
-    with pytest.raises(InvalidPackError) as exc:
-        PackService(db_session).create_offering(name="X", subjects=["Maths"], prices={})
-    assert exc.value.code == "pack_no_prices"
 
 
 # --------------------------------------------------------------------------- #
@@ -132,7 +109,7 @@ def test_create_offering_requires_prices(db_session: Session) -> None:
 
 def test_editing_subjects_applies_to_every_level_variant(db_session: Session) -> None:
     service = PackService(db_session)
-    service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
+    _offering(service, "Maths seul")
     service.update_offering("Maths seul", subjects=["Maths", "Physique"])
     variants = service.list()
     assert len(variants) == 2
@@ -142,15 +119,15 @@ def test_editing_subjects_applies_to_every_level_variant(db_session: Session) ->
 
 def test_renaming_an_offering_renames_every_variant(db_session: Session) -> None:
     service = PackService(db_session)
-    service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
+    _offering(service, "Maths seul")
     service.update_offering("Maths seul", new_name="Maths uniquement")
     assert {p.name for p in service.list()} == {"Maths uniquement"}
 
 
 def test_renaming_onto_an_existing_offering_is_rejected(db_session: Session) -> None:
     service = PackService(db_session)
-    service.create_offering(name="A", subjects=["Maths"], prices=_GRID)
-    service.create_offering(name="B", subjects=["Maths"], prices=_GRID)
+    _offering(service, "A")
+    _offering(service, "B")
     with pytest.raises(DuplicatePackError):
         service.update_offering("B", new_name="A")
 
@@ -168,7 +145,7 @@ def test_updating_an_unknown_offering_raises(db_session: Session) -> None:
 
 def test_update_changes_one_cell_only(db_session: Session) -> None:
     service = PackService(db_session)
-    packs = service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
+    packs = _offering(service, "Maths seul")
     target = next(p for p in packs if p.level is ClassLevel.AC1)
     service.update(target.id, price=Decimal("111"))
     prices = {p.level: p.price for p in service.list()}
@@ -235,16 +212,6 @@ def test_student_count_for_a_pack(db_session: Session) -> None:
 # --------------------------------------------------------------------------- #
 
 
-def test_create_offering_rejects_a_negative_price_in_any_cell(db_session: Session) -> None:
-    with pytest.raises(InvalidPackError) as exc:
-        PackService(db_session).create_offering(
-            name="X",
-            subjects=["Maths"],
-            prices={ClassLevel.AC1: Decimal("100"), ClassLevel.BAC2: Decimal("-1")},
-        )
-    assert exc.value.code == "pack_price_negative"
-
-
 def test_update_rejects_a_negative_price(db_session: Session) -> None:
     service = PackService(db_session)
     pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
@@ -255,7 +222,7 @@ def test_update_rejects_a_negative_price(db_session: Session) -> None:
 
 def test_renaming_an_offering_to_its_own_name_is_a_no_op(db_session: Session) -> None:
     service = PackService(db_session)
-    service.create_offering(name="Maths seul", subjects=["Maths"], prices=_GRID)
+    _offering(service, "Maths seul")
     service.update_offering("Maths seul", new_name="Maths seul")
     assert {p.name for p in service.list()} == {"Maths seul"}
 

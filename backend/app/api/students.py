@@ -13,7 +13,6 @@ from app.core.i18n import translate
 from app.models import Student, StudentStatus, User
 from app.schemas.enrollment import (
     LeaveRequest,
-    PeriodAmend,
     PeriodOut,
     ReturnRequest,
     ReturnResultOut,
@@ -22,7 +21,6 @@ from app.schemas.ledger import LedgerEntryOut, LedgerOut
 from app.schemas.override import OverrideCreate, OverrideOut
 from app.schemas.payment import PaymentCreate, PaymentOut, PaymentUpdate
 from app.schemas.student import (
-    DriftOut,
     StudentCreate,
     StudentDetailOut,
     StudentListItemOut,
@@ -119,17 +117,6 @@ async def get_ledger(
     )
 
 
-@router.get("/{student_id}/drift", response_model=DriftOut)
-async def get_drift(
-    student_id: int,
-    db: Session = Depends(get_db),
-    as_of: date | None = Query(None),
-) -> DriftOut:
-    as_of_date = as_of or date.today()
-    drift = LedgerService(db).cumulative_drift(student_id, as_of_date)
-    return DriftOut(student_id=student_id, as_of=as_of_date, cumulative_drift=drift)
-
-
 def _ledger_filename(student: Student) -> str:
     """Download filename for a student's ledger PDF, including a slug of their name when usable."""
     slug = slugify_name(student.full_name)
@@ -199,13 +186,6 @@ async def update_student(
 ) -> StudentOut:
     student = StudentService(db).update(student_id, **payload.model_dump(exclude_unset=True))
     return StudentOut.model_validate(student)
-
-
-@router.delete("/{student_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_student(student_id: int, db: Session = Depends(get_db)) -> Response:
-    """Hard-delete a student and cascade to their payments and overrides (admin/dev only)."""
-    StudentService(db).delete(student_id)
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
@@ -329,17 +309,3 @@ async def record_return(
         months_owed=owed.months_owed,
         debt_warning=warning,
     )
-
-
-@router.patch("/{student_id}/periods/{period_id}", response_model=PeriodOut, tags=["enrollment"])
-async def amend_period(
-    student_id: int,
-    period_id: int,
-    payload: PeriodAmend,
-    db: Session = Depends(get_db),
-) -> PeriodOut:
-    """Correct a mistyped date. Every ordering rule is re-checked afterwards."""
-    period = EnrollmentService(db).amend(
-        student_id, period_id, **payload.model_dump(exclude_unset=True)
-    )
-    return PeriodOut.model_validate(period)
