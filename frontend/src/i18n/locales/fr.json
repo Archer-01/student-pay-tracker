@@ -465,7 +465,9 @@
     "otherDate": "Autre date",
     "submit": "Encaisser {{amount}}",
     "submitEmpty": "Encaisser",
-    "done": "Paiement enregistré : {{amount}} pour {{name}}"
+    "done": "Paiement enregistré : {{amount}} pour {{name}}",
+    "undo": "Annuler",
+    "undone": "Paiement annulé"
   },
   "tiles": {
     "late_one": "{{count}} j",

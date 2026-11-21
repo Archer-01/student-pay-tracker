@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, renderHook, waitFor } from "@testing-library/react";
 import { ApiError } from "../api/client";
 import { useApi } from "./useApi";
@@ -62,6 +62,73 @@ describe("useApi", () => {
       window.dispatchEvent(new Event("online"));
     });
     await waitFor(() => expect(fetcher).toHaveBeenCalledTimes(2));
+  });
+
+  describe("coming back to the app", () => {
+    // The installed app sits in the background between lessons; coming back to it should show
+    // today's figures, not those of whenever it was last opened.
+    let visibility: DocumentVisibilityState = "visible";
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => visibility });
+
+    afterEach(() => {
+      visibility = "visible";
+      vi.useRealTimers();
+    });
+
+    async function loadedAt(time: string) {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date(time));
+      let resolve!: (v: string) => void;
+      const fetcher = vi.fn().mockResolvedValueOnce("first").mockImplementation(
+        () => new Promise<string>((r) => (resolve = r)),
+      );
+      const hook = renderHook(() => useApi(fetcher, []));
+      await waitFor(() => expect(hook.result.current.data).toBe("first"));
+      return { ...hook, fetcher, resolve: (v: string) => resolve(v) };
+    }
+
+    function comeBack(at: string) {
+      vi.setSystemTime(new Date(at));
+      act(() => {
+        visibility = "hidden";
+        document.dispatchEvent(new Event("visibilitychange"));
+        visibility = "visible";
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+    }
+
+    it("refetches when shown again more than 30 seconds after the last load, keeping the data meanwhile", async () => {
+      const { result, fetcher, resolve } = await loadedAt("2026-11-21T10:00:00");
+      comeBack("2026-11-21T10:00:31");
+      expect(fetcher).toHaveBeenCalledTimes(2);
+      expect(result.current.status).toBe("success");
+      expect(result.current.data).toBe("first");
+      await act(async () => resolve("second"));
+      expect(result.current.data).toBe("second");
+    });
+
+    it("does not refetch when shown again within 30 seconds", async () => {
+      const { fetcher } = await loadedAt("2026-11-21T10:00:00");
+      comeBack("2026-11-21T10:00:20");
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it("does not refetch when the app is put away", async () => {
+      const { fetcher } = await loadedAt("2026-11-21T10:00:00");
+      vi.setSystemTime(new Date("2026-11-21T11:00:00"));
+      act(() => {
+        visibility = "hidden";
+        document.dispatchEvent(new Event("visibilitychange"));
+      });
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops listening once the screen is gone", async () => {
+      const { fetcher, unmount } = await loadedAt("2026-11-21T10:00:00");
+      unmount();
+      comeBack("2026-11-21T11:00:00");
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    });
   });
 
   it("refetches when a dependency changes", async () => {

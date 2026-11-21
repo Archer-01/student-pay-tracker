@@ -16,8 +16,11 @@ type Props = {
   studentId: number;
   /** Preselect this month (`YYYY-MM`) instead of the oldest owed, if it can be paid. */
   initialMonth?: string;
-  /** Called with the amount actually sent and the student's name, for the confirmation. */
-  onSuccess: (amount: string, studentName: string) => void;
+  /**
+   * Called with the amount actually sent and the student's name, for the confirmation, and the
+   * cycle the payment was recorded against, so it can be undone.
+   */
+  onSuccess: (amount: string, studentName: string, cycleNumber: number) => void;
   onCancel: () => void;
   /** Offered when the sheet started from the student picker: go back and pick someone else. */
   onChangeStudent?: () => void;
@@ -96,8 +99,8 @@ function PaymentFields({
     setErrors(clientErrors);
     if (Object.keys(clientErrors).length > 0) return;
     try {
-      await create.mutate(student.id, { paid_date: paidDate, amount: normalized, for_month: forMonth });
-      onSuccess(normalized, student.full_name);
+      const payment = await create.mutate(student.id, { paid_date: paidDate, amount: normalized, for_month: forMonth });
+      onSuccess(normalized, student.full_name, payment.cycle_number);
     } catch (err) {
       const fields = fieldErrors(err);
       if (Object.keys(fields).length > 0) setErrors(fields);

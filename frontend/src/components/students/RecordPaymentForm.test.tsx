@@ -31,7 +31,7 @@ const onSuccess = vi.fn();
 
 beforeEach(() => {
   onSuccess.mockReset();
-  vi.spyOn(endpoints, "recordPayment").mockResolvedValue({} as never);
+  vi.spyOn(endpoints, "recordPayment").mockResolvedValue({ student_id: 13, cycle_number: 1, amount: "200.00" } as never);
   vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
   vi.spyOn(endpoints, "getLedger").mockResolvedValue(ledger as never);
 });
@@ -61,7 +61,8 @@ describe("RecordPaymentForm", () => {
         for_month: "2026-10",
       }),
     );
-    expect(onSuccess).toHaveBeenCalledWith("200", "Amina Benali");
+    // The cycle comes back with it, so the confirmation can offer to undo exactly this payment.
+    expect(onSuccess).toHaveBeenCalledWith("200", "Amina Benali", 1);
   });
 
   it("offers the next month in advance, after the months owed", async () => {
