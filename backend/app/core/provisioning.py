@@ -26,6 +26,8 @@ _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 def _config(connection: object) -> Config:
     cfg = Config(str(_ALEMBIC_INI))
     cfg.attributes["connection"] = connection
+    # The caller's logging stays in charge (see alembic/env.py).
+    cfg.attributes["configure_logger"] = False
     return cfg
 
 

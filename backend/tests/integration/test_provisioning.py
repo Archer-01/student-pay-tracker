@@ -1,5 +1,6 @@
 """Creating and migrating per-teacher databases."""
 
+import logging
 from collections.abc import Iterator
 from pathlib import Path
 
@@ -141,3 +142,12 @@ def test_the_default_engine_follows_a_changed_url(
     get_engine()  # prime the cache against the fixture's URL
     monkeypatch.setattr(settings, "database_url", f"sqlite:///{tmp_path / 'other.db'}")
     assert str(get_engine().url).endswith("other.db")
+
+
+def test_migrating_leaves_the_apps_own_logging_alone(central: Path) -> None:
+    # alembic.ini's logging setup disables every logger that already exists. Run at startup, it
+    # silenced the app's own (`app.api` logs each handled error) for the life of the process.
+    app_logger = logging.getLogger("app.api")
+    app_logger.disabled = False  # a test that runs `alembic` the manual way may have disabled it
+    migrate(central_url())
+    assert not app_logger.disabled
