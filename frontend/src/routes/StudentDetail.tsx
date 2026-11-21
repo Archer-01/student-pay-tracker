@@ -1,7 +1,7 @@
 import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { getLedger, getStudent, listPeriods } from "../api/endpoints";
+import { deletePayment, getLedger, getStudent, listPeriods } from "../api/endpoints";
 import { downloadFile } from "../api/client";
 import type { EnrollmentPeriod, LedgerOut, StudentDetailOut } from "../api/types";
 import { useApi } from "../lib/useApi";
@@ -15,9 +15,11 @@ import { monthTiles, schoolYearStart, schoolYears, type MonthTile } from "../lib
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
+import { useMutation } from "../lib/useMutation";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
+import { EditPaymentForm } from "../components/students/EditPaymentForm";
 import { AsyncView, Button, Modal } from "../components/ui";
 import { Avatar } from "../components/people";
 import {
@@ -138,6 +140,9 @@ export function StudentDetail() {
               {typeof openModal === "object" && openModal !== null && (
                 <TileDetails
                   tile={openModal.tile}
+                  studentId={studentId}
+                  monthlyPrice={detail.monthly_price}
+                  readOnly={readOnly}
                   payable={!readOnly && payableMonths(ledger.entries, detail.next_expected_date).some(
                     (m) => m.month === openModal.tile.month,
                   )}
@@ -145,6 +150,11 @@ export function StudentDetail() {
                   onPay={() => {
                     close();
                     payments.open(studentId, openModal.tile.month);
+                  }}
+                  onChanged={(message) => {
+                    // `changed` bumps the shared version, which refreshes this page too.
+                    close();
+                    payments.changed(message);
                   }}
                 />
               )}
@@ -432,46 +442,121 @@ function YearArrow({
   );
 }
 
+/**
+ * One month, opened from its tile. A paid month shows what was recorded and, online, lets a typo
+ * be fixed (amount or date) or the payment removed; removing asks first, in the same sheet, and
+ * says what it does: the month is owed again. Moving a payment to another month is exactly that,
+ * followed by recording the right month.
+ */
 function TileDetails({
   tile,
+  studentId,
+  monthlyPrice,
+  readOnly,
   payable,
   onClose,
   onPay,
+  onChanged,
 }: {
   tile: MonthTile;
+  studentId: number;
+  monthlyPrice: string;
+  readOnly: boolean;
   payable: boolean;
   onClose: () => void;
   onPay: () => void;
+  onChanged: (message: string) => void;
 }) {
   const { t } = useTranslation();
+  const [mode, setMode] = useState<"view" | "edit" | "delete">("view");
+  const remove = useMutation(deletePayment);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const e = tile.entry;
+  const month = formatMonthTitle(tile.month);
+  const paid = e && e.paid_date !== null && e.amount !== null ? { ...e, paid_date: e.paid_date, amount: e.amount } : null;
+  // Offline, a correction couldn't be saved: back to the plain details.
+  const showing = readOnly ? "view" : mode;
+
+  async function confirmDelete() {
+    if (!paid) return;
+    setDeleteError(null);
+    try {
+      await remove.mutate(studentId, paid.cycle_number);
+      onChanged(t("payment.deleted", { month }));
+    } catch (err) {
+      setDeleteError(resolveErrorMessage(err, t));
+    }
+  }
+
   return (
-    <Modal title={formatMonthTitle(tile.month)} onClose={onClose}>
-      <div className="flex flex-col gap-4">
-        {e?.paid_date ? (
-          <dl className="divide-y divide-line rounded-2xl border border-line">
-            <Row label={t("tile.due")}>{formatDate(e.expected_due_date)}</Row>
-            <Row label={t("tile.paidOn")}>{formatDate(e.paid_date)}</Row>
-            <Row label={t("tile.amount")}>{e.amount ? formatMoney(e.amount) : "—"}</Row>
-            <Row label={t("tile.lateness")}>
-              {(e.days_late ?? 0) > 0 ? t("drift.late", { count: e.days_late ?? 0 }) : t("ledger.status.onTime")}
-            </Row>
-          </dl>
-        ) : (
-          <p>
-            {tile.state === "away"
-              ? t("tile.away")
-              : tile.state === "due" && e
-                ? t("tile.notPaid", { date: formatDate(e.expected_due_date) })
-                : t("tile.upcoming")}
-          </p>
-        )}
-        {payable && (
-          <Button onClick={onPay} className="min-h-12 text-lg">
-            {t("student.payMonth", { month: formatMonthTitle(tile.month) })}
-          </Button>
-        )}
-      </div>
+    <Modal title={month} onClose={onClose}>
+      {paid && showing === "edit" ? (
+        <EditPaymentForm
+          studentId={studentId}
+          entry={paid}
+          monthlyPrice={monthlyPrice}
+          onCancel={() => setMode("view")}
+          onSuccess={() => onChanged(t("payment.corrected", { month }))}
+        />
+      ) : (
+        <div className="flex flex-col gap-4">
+          {paid ? (
+            <dl className="divide-y divide-line rounded-2xl border border-line">
+              <Row label={t("tile.due")}>{formatDate(paid.expected_due_date)}</Row>
+              <Row label={t("tile.paidOn")}>{formatDate(paid.paid_date)}</Row>
+              <Row label={t("tile.amount")}>{formatMoney(paid.amount)}</Row>
+              <Row label={t("tile.lateness")}>
+                {(paid.days_late ?? 0) > 0 ? t("drift.late", { count: paid.days_late ?? 0 }) : t("ledger.status.onTime")}
+              </Row>
+            </dl>
+          ) : (
+            <p>
+              {tile.state === "away"
+                ? t("tile.away")
+                : tile.state === "due" && e
+                  ? t("tile.notPaid", { date: formatDate(e.expected_due_date) })
+                  : t("tile.upcoming")}
+            </p>
+          )}
+          {payable && (
+            <Button onClick={onPay} className="min-h-12 text-lg">
+              {t("student.payMonth", { month })}
+            </Button>
+          )}
+          {paid && !readOnly && showing === "view" && (
+            <div className="flex flex-col gap-1">
+              <Button variant="secondary" onClick={() => setMode("edit")}>
+                {t("tile.editPayment")}
+              </Button>
+              {/* Red words, no fill: destructive, but a step away from actually deleting. */}
+              <button
+                type="button"
+                onClick={() => setMode("delete")}
+                className="min-h-11 rounded-xl px-4 font-bold text-bad transition hover:bg-bad-soft active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                {t("tile.deletePayment")}
+              </button>
+            </div>
+          )}
+          {paid && showing === "delete" && (
+            <div className="flex flex-col gap-3 rounded-2xl bg-bad-soft p-4">
+              <p className="font-bold text-bad">
+                {t("tile.deleteConfirm", { month, amount: formatMoney(paid.amount) })}
+              </p>
+              <p className="text-sm text-ink">{t("tile.deleteMoveHint")}</p>
+              {deleteError && <p className="text-sm font-bold text-bad">{deleteError}</p>}
+              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <Button variant="ghost" onClick={() => setMode("view")}>
+                  {t("common.cancel")}
+                </Button>
+                <Button variant="danger" pending={remove.status === "pending"} onClick={() => void confirmDelete()}>
+                  {t("tile.deleteConfirmButton")}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </Modal>
   );
 }

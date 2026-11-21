@@ -195,6 +195,86 @@ async def test_payment_validation_422(client: AsyncClient, body: dict) -> None:
     assert (await client.post(f"/api/v1/students/{sid}/payments", json=body)).status_code == 422
 
 
+# --------------------------------------------------------------------------- #
+# Correcting a payment from the app
+# --------------------------------------------------------------------------- #
+
+
+async def _paid_april(client: AsyncClient, price: str = "300") -> int:
+    sid = await _create_student(client, price=price)
+    resp = await client.post(
+        f"/api/v1/students/{sid}/payments",
+        json={"paid_date": "2023-04-10", "amount": price, "for_month": "2023-04"},
+    )
+    assert resp.status_code == 201, resp.text
+    return sid
+
+
+async def test_a_mistyped_amount_is_corrected(client: AsyncClient) -> None:
+    sid = await _paid_april(client)
+    resp = await client.patch(f"/api/v1/students/{sid}/payments/1", json={"amount": "250"})
+    assert resp.status_code == 200, resp.text
+    body = resp.json()
+    assert Decimal(body["amount"]) == Decimal("250")
+    # The date was not touched, so neither is the lateness.
+    assert (body["paid_date"], body["days_late"]) == ("2023-04-10", 5)
+
+
+async def test_a_mistyped_date_is_corrected_and_lateness_follows_it(client: AsyncClient) -> None:
+    sid = await _paid_april(client)
+    resp = await client.patch(
+        f"/api/v1/students/{sid}/payments/1", json={"paid_date": "2023-04-05"}
+    )
+    assert resp.status_code == 200, resp.text
+    # Due on the 5th, so paid on the 5th is on time; the due date itself never moves.
+    assert (resp.json()["expected_due_date"], resp.json()["days_late"]) == ("2023-04-05", 0)
+    drift = await client.get(f"/api/v1/students/{sid}/drift", params={"as_of": "2023-04-30"})
+    assert drift.json()["cumulative_drift"] == 0
+
+
+async def test_a_correction_above_the_price_is_refused(client: AsyncClient) -> None:
+    sid = await _paid_april(client)
+    resp = await client.patch(f"/api/v1/students/{sid}/payments/1", json={"amount": "350"})
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "payment_exceeds_price"
+
+
+@pytest.mark.parametrize(
+    "body",
+    [
+        {},  # nothing to change
+        {"amount": "0"},
+        {"paid_date": "2999-01-01"},
+        {"cycle_number": 2},  # moving a payment is delete + record, never an edit
+    ],
+)
+async def test_a_bad_correction_is_422(client: AsyncClient, body: dict) -> None:
+    sid = await _paid_april(client)
+    resp = await client.patch(f"/api/v1/students/{sid}/payments/1", json=body)
+    assert resp.status_code == 422
+
+
+async def test_correcting_or_deleting_a_month_never_paid_is_404(client: AsyncClient) -> None:
+    sid = await _paid_april(client)
+    patch = await client.patch(f"/api/v1/students/{sid}/payments/2", json={"amount": "100"})
+    assert patch.status_code == 404
+    assert (await client.delete(f"/api/v1/students/{sid}/payments/2")).status_code == 404
+
+
+async def test_deleting_a_payment_makes_the_month_owed_again(client: AsyncClient) -> None:
+    sid = await _paid_april(client)
+    assert (await client.delete(f"/api/v1/students/{sid}/payments/1")).status_code == 204
+    ledger = await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-04-30"})
+    april = next(e for e in ledger.json()["entries"] if e["cycle_number"] == 1)
+    assert april["paid_date"] is None
+    # And the month can be recorded again, which is how a payment moves to another month.
+    again = await client.post(
+        f"/api/v1/students/{sid}/payments",
+        json={"paid_date": "2023-04-12", "amount": "300", "for_month": "2023-04"},
+    )
+    assert again.status_code == 201
+
+
 async def test_payment_month_before_schedule_is_422(client: AsyncClient) -> None:
     sid = await _create_student(client)  # join 2023-03
     resp = await client.post(

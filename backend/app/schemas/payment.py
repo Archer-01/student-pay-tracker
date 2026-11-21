@@ -40,6 +40,32 @@ class PaymentCreate(BaseModel):
         return self
 
 
+class PaymentUpdate(BaseModel):
+    """Correct a recorded payment's amount and/or paid date — a typo, not a recomputation.
+
+    The month it settles is not here on purpose: moving a payment to another month is delete +
+    record. ``extra="forbid"`` makes an attempt to send ``cycle_number`` a 422, not a no-op.
+    """
+
+    model_config = ConfigDict(extra="forbid")
+
+    amount: Decimal | None = Field(default=None, gt=0)
+    paid_date: date | None = None
+
+    @field_validator("paid_date")
+    @classmethod
+    def _not_in_future(cls, value: date | None) -> date | None:
+        if value is not None and value > date.today():
+            raise ValueError("paid_date must not be in the future")
+        return value
+
+    @model_validator(mode="after")
+    def _something_to_change(self) -> "PaymentUpdate":
+        if self.amount is None and self.paid_date is None:
+            raise ValueError("provide amount and/or paid_date")
+        return self
+
+
 class PaymentOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

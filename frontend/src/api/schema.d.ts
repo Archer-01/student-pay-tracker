@@ -168,7 +168,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Get Ledger Pdf */
+        /**
+         * Get Ledger Pdf
+         * @description A student's history on paper, for the teacher or a parent: the student page's status card
+         *     and month tiles, then every payment received.
+         */
         get: operations["get_ledger_pdf_api_v1_students__student_id__ledger_pdf_get"];
         put?: never;
         post?: never;
@@ -193,6 +197,31 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/students/{student_id}/payments/{cycle_number}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Payment
+         * @description Remove a payment: the month is owed again. Moving one to another month is this, then a
+         *     new payment for the right month.
+         */
+        delete: operations["delete_payment_api_v1_students__student_id__payments__cycle_number__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Update Payment
+         * @description Correct a payment's amount or paid date. The month it settles never changes here.
+         */
+        patch: operations["update_payment_api_v1_students__student_id__payments__cycle_number__patch"];
         trace?: never;
     };
     "/api/v1/students/{student_id}/overrides": {
@@ -1084,6 +1113,19 @@ export interface components {
              */
             created_at: string;
         };
+        /**
+         * PaymentUpdate
+         * @description Correct a recorded payment's amount and/or paid date — a typo, not a recomputation.
+         *
+         *     The month it settles is not here on purpose: moving a payment to another month is delete +
+         *     record. ``extra="forbid"`` makes an attempt to send ``cycle_number`` a 422, not a no-op.
+         */
+        PaymentUpdate: {
+            /** Amount */
+            amount?: number | string | null;
+            /** Paid Date */
+            paid_date?: string | null;
+        };
         /** PeriodAmend */
         PeriodAmend: {
             /** Entry Date */
@@ -1859,6 +1901,76 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PaymentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_payment_api_v1_students__student_id__payments__cycle_number__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+                cycle_number: number;
+            };
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_payment_api_v1_students__student_id__payments__cycle_number__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                student_id: number;
+                cycle_number: number;
+            };
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PaymentUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -138,3 +138,70 @@ describe("StudentDetail offline", () => {
     act(() => resetConnectivity());
   });
 });
+
+describe("StudentDetail correcting a payment", () => {
+  // October was paid on the 10th, 9 days late: the month a mistyped amount lives in.
+  const paidLedger = {
+    ...ledger,
+    entries: [
+      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
+      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false },
+    ],
+  };
+
+  async function openOctober() {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue(paidLedger as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: /^October 2026 · paid late/ }));
+  }
+
+  it("corrects a mistyped amount, sending only what changed", async () => {
+    const update = vi.spyOn(endpoints, "updatePayment").mockResolvedValue({} as never);
+    await openOctober();
+    await userEvent.click(screen.getByRole("button", { name: /edit this payment/i }));
+    const amount = screen.getByLabelText(/^amount/i);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "150");
+    await userEvent.click(screen.getByRole("button", { name: /^save/i }));
+    expect(update).toHaveBeenCalledWith(5, 1, { amount: "150" });
+    expect(await screen.findByText(/payment corrected: october 2026/i)).toBeInTheDocument();
+  });
+
+  it("reads a French decimal comma as a decimal point", async () => {
+    const update = vi.spyOn(endpoints, "updatePayment").mockResolvedValue({} as never);
+    await openOctober();
+    await userEvent.click(screen.getByRole("button", { name: /edit this payment/i }));
+    const amount = screen.getByLabelText(/^amount/i);
+    await userEvent.clear(amount);
+    await userEvent.type(amount, "150,5");
+    await userEvent.click(screen.getByRole("button", { name: /^save/i }));
+    expect(update).toHaveBeenCalledWith(5, 1, { amount: "150.5" });
+  });
+
+  it("can't save a correction that changes nothing", async () => {
+    await openOctober();
+    await userEvent.click(screen.getByRole("button", { name: /edit this payment/i }));
+    expect(screen.getByRole("button", { name: /^save/i })).toBeDisabled();
+  });
+
+  it("asks before deleting, and only deletes once confirmed", async () => {
+    const remove = vi.spyOn(endpoints, "deletePayment").mockResolvedValue(undefined as never);
+    await openOctober();
+    await userEvent.click(screen.getByRole("button", { name: /delete this payment/i }));
+    expect(screen.getByText(/the month will be owed again/i)).toBeInTheDocument();
+    expect(remove).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: /^delete$/i }));
+    expect(remove).toHaveBeenCalledWith(5, 1);
+    expect(await screen.findByText(/payment deleted: october 2026/i)).toBeInTheDocument();
+  });
+
+  it("offers no correction while offline", async () => {
+    await openOctober();
+    act(() => reportStored("2026-11-14T09:41:00"));
+    expect(screen.queryByRole("button", { name: /edit this payment/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /delete this payment/i })).toBeNull();
+    act(() => resetConnectivity());
+  });
+});

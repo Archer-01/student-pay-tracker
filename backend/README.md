@@ -253,6 +253,8 @@ The write endpoints.
 | `PATCH /api/v1/students/{id}` | phone?, fee?, status? | → **200**; sending `join_date` (or any unknown field) → **422** |
 | `DELETE /api/v1/students/{id}` | — | → **204**; cascades to the student's payments/overrides (admin/dev; not exposed in the frontend) |
 | `POST /api/v1/students/{id}/payments` | paid_date, amount (>0), and **exactly one** of `cycle_number` / `for_month` | → **201**; duplicate cycle → **409** |
+| `PATCH /api/v1/students/{id}/payments/{cycle}` | `amount` and/or `paid_date`; the month never moves | → **200**; above the price → **400**; unknown → **404** |
+| `DELETE /api/v1/students/{id}/payments/{cycle}` | — the month is owed again (moving a payment = delete + record) | → **204**; unknown → **404** |
 | `POST /api/v1/students/{id}/overrides` | new_due_date, reason | → **201** |
 
 - **Validation → 422:** negative fee, blank name, non-positive amount, future `paid_date`, blank

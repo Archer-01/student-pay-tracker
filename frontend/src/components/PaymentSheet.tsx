@@ -34,6 +34,10 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
     [],
   );
   const close = useCallback(() => setSheet({ open: false }), []);
+  const changed = useCallback((message: string) => {
+    setVersion((v) => v + 1);
+    setToast({ message, leaving: false });
+  }, []);
 
   useEffect(() => {
     if (!toast) return;
@@ -44,7 +48,7 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
     return () => clearTimeout(timer);
   }, [toast]);
 
-  const value = useMemo(() => ({ open, version }), [open, version]);
+  const value = useMemo(() => ({ open, version, changed }), [open, version, changed]);
 
   return (
     <PaymentSheetContext.Provider value={value}>
@@ -61,8 +65,7 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
               onChangeStudent={sheet.pickedHere ? () => setSheet({ open: true, pickedHere: true }) : undefined}
               onSuccess={(amount, name) => {
                 close();
-                setVersion((v) => v + 1);
-                setToast({ message: t("pay.done", { amount: formatMoney(amount), name }), leaving: false });
+                changed(t("pay.done", { amount: formatMoney(amount), name }));
               }}
             />
           )}

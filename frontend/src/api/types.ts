@@ -14,6 +14,7 @@ export type LedgerOut = components["schemas"]["LedgerOut"];
 export type LedgerEntry = components["schemas"]["LedgerEntryOut"];
 export type PaymentCreate = components["schemas"]["PaymentCreate"];
 export type PaymentOut = components["schemas"]["PaymentOut"];
+export type PaymentUpdate = components["schemas"]["PaymentUpdate"];
 export type OverrideCreate = components["schemas"]["OverrideCreate"];
 export type OverrideOut = components["schemas"]["OverrideOut"];
 export type DashboardSummary = components["schemas"]["DashboardSummaryOut"];

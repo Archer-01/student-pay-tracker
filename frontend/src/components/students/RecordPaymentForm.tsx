@@ -6,17 +6,11 @@ import { useApi } from "../../lib/useApi";
 import { useMutation } from "../../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../../lib/errors";
 import { formatMoney } from "../../lib/money";
-import { formatMonthTitle } from "../../lib/dates";
+import { formatMonthTitle, todayIso } from "../../lib/dates";
 import { defaultAmount, payableMonths } from "../../lib/paymentDefaults";
 import { AsyncView, Button, DateField, MoneyField } from "../ui";
 import { Avatar } from "../people";
-
-/** Today as `YYYY-MM-DD` in the teacher's own timezone, comparable with a date input's value. */
-function todayIso(): string {
-  const now = new Date();
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
-}
+import { Chip } from "./Chip";
 
 type Props = {
   studentId: number;
@@ -194,29 +188,5 @@ function PaymentFields({
         </Button>
       </div>
     </form>
-  );
-}
-
-/** A radio button that looks like a pill: easier to hit, and all choices visible at once. */
-function Chip({
-  name,
-  checked,
-  onChange,
-  children,
-}: {
-  name: string;
-  checked: boolean;
-  onChange: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <label
-      className={`flex min-h-11 cursor-pointer items-center rounded-full border-2 px-4 font-bold has-[:focus-visible]:outline has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2 has-[:focus-visible]:outline-brand ${
-        checked ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink"
-      }`}
-    >
-      <input type="radio" name={name} checked={checked} onChange={onChange} className="sr-only" />
-      {children}
-    </label>
   );
 }

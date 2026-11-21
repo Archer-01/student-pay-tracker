@@ -11,6 +11,11 @@ export type PaymentSheetValue = {
    * they refresh by themselves, wherever the sheet was opened from.
    */
   version: number;
+  /**
+   * Announce a change to payments made outside the sheet (a correction, a deletion): bumps
+   * `version`, so every screen refreshes as after a payment, and shows `message` as the toast.
+   */
+  changed: (message: string) => void;
 };
 
 export const PaymentSheetContext = createContext<PaymentSheetValue | null>(null);

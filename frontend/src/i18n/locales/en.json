@@ -190,7 +190,9 @@
     },
     "hints": {
       "amountUpTo": "Up to {{price}}, this student's monthly price."
-    }
+    },
+    "corrected": "Payment corrected: {{month}}",
+    "deleted": "Payment deleted: {{month}}"
   },
   "override": {
     "title": "Change the payment day",
@@ -467,7 +469,12 @@
     "lateness": "Lateness",
     "notPaid": "Not paid yet. This month was due on {{date}}.",
     "away": "The student wasn't enrolled that month: nothing is owed.",
-    "upcoming": "This month isn't due yet."
+    "upcoming": "This month isn't due yet.",
+    "editPayment": "Edit this payment",
+    "deletePayment": "Delete this payment",
+    "deleteConfirm": "Delete this payment ({{month}}, {{amount}})? The month will be owed again.",
+    "deleteMoveHint": "To move it to another month, delete it, then record the right month.",
+    "deleteConfirmButton": "Delete"
   },
   "share": {
     "title": "Split",

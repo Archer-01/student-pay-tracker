@@ -20,6 +20,7 @@ import type {
   OverrideOut,
   PaymentCreate,
   PaymentOut,
+  PaymentUpdate,
   StudentCreate,
   StudentDetailOut,
   StudentListItem,
@@ -62,6 +63,14 @@ export function updateStudent(id: number, body: StudentUpdate) {
 
 export function recordPayment(studentId: number, body: PaymentCreate) {
   return apiRequest<PaymentOut>(`/students/${studentId}/payments`, { method: "POST", body });
+}
+
+export function updatePayment(studentId: number, cycleNumber: number, body: PaymentUpdate) {
+  return apiRequest<PaymentOut>(`/students/${studentId}/payments/${cycleNumber}`, { method: "PATCH", body });
+}
+
+export function deletePayment(studentId: number, cycleNumber: number) {
+  return apiRequest<void>(`/students/${studentId}/payments/${cycleNumber}`, { method: "DELETE" });
 }
 
 export function createOverride(studentId: number, body: OverrideCreate) {

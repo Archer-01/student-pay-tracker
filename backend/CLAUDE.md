@@ -206,8 +206,9 @@ the file that fails if privacy ever regresses.
 - **Recorded payments are frozen truth.** `payment.amount`, `expected_due_date`, and `days_late` are
   written once by the service layer and never recomputed — not by a fee change, not by a schema
   change, not by anything in `../BACKLOG.md`.
-  A **correction** is not a recomputation: `PaymentService.update_payment` (CLI `payments edit`)
-  fixes an amount or paid date the teacher typed wrong. `expected_due_date` never moves, even
+  A **correction** is not a recomputation: `PaymentService.update_payment` (CLI `payments edit`,
+  API `PATCH /students/{id}/payments/{cycle}`, the app's "Modifier ce paiement") fixes an amount
+  or paid date the teacher typed wrong. `expected_due_date` never moves, even
   then; `days_late` is re-derived from it only when the paid date itself was the mistake. Moving
   a payment to another month is delete + record, never an edit of `cycle_number`.
 - **A payment is at most the student's monthly price** (`PricingService.price_of`), and positive.

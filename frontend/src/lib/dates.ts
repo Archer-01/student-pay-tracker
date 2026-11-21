@@ -31,3 +31,10 @@ export function formatMonthShort(ym: string): string {
   const text = new Intl.DateTimeFormat(i18n.language, { month: "short" }).format(d).replace(/\.$/, "");
   return text.charAt(0).toLocaleUpperCase(i18n.language) + text.slice(1);
 }
+
+/** Today as `YYYY-MM-DD` in the teacher's own timezone, comparable with a date input's value. */
+export function todayIso(): string {
+  const now = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}

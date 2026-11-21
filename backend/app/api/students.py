@@ -20,7 +20,7 @@ from app.schemas.enrollment import (
 )
 from app.schemas.ledger import LedgerEntryOut, LedgerOut
 from app.schemas.override import OverrideCreate, OverrideOut
-from app.schemas.payment import PaymentCreate, PaymentOut
+from app.schemas.payment import PaymentCreate, PaymentOut, PaymentUpdate
 from app.schemas.student import (
     DriftOut,
     StudentCreate,
@@ -230,6 +230,36 @@ async def record_payment(
         amount=payload.amount,
     )
     return PaymentOut.model_validate(payment)
+
+
+@router.patch(
+    "/{student_id}/payments/{cycle_number}", response_model=PaymentOut, tags=["payments"]
+)
+async def update_payment(
+    student_id: int, cycle_number: int, payload: PaymentUpdate, db: Session = Depends(get_db)
+) -> PaymentOut:
+    """Correct a payment's amount or paid date. The month it settles never changes here."""
+    payment = PaymentService(db).update_payment(
+        student_id=student_id,
+        cycle_number=cycle_number,
+        amount=payload.amount,
+        paid_date=payload.paid_date,
+    )
+    return PaymentOut.model_validate(payment)
+
+
+@router.delete(
+    "/{student_id}/payments/{cycle_number}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    tags=["payments"],
+)
+async def delete_payment(
+    student_id: int, cycle_number: int, db: Session = Depends(get_db)
+) -> Response:
+    """Remove a payment: the month is owed again. Moving one to another month is this, then a
+    new payment for the right month."""
+    PaymentService(db).delete_payment(student_id=student_id, cycle_number=cycle_number)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(

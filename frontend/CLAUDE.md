@@ -279,6 +279,14 @@ leaving). The ledger already holds every month that has come due plus any paid i
 month without an entry is either upcoming or not expected; whether the student is still enrolled
 decides which. Tapping an owed tile opens the payment sheet on that month.
 
+Tapping a paid tile shows what was recorded and, online, lets a typo be fixed:
+**Modifier ce paiement** (`EditPaymentForm`: amount and date, sending only what changed) or
+**Supprimer ce paiement**, which asks first in the same sheet and says the month will be owed
+again. There is no "move to another month": that is delete, then record the right month, and the
+confirmation says so. Both announce themselves through `usePaymentSheet().changed(message)`,
+which bumps the same `version` as a recorded payment, so every screen refreshes and the same
+toast appears.
+
 The departure/return action follows the **enrolment periods**, not `status`: a student set to
 inactive by hand still has an open period, and only "Marquer comme parti" fixes that. The edit form
 has no status field for the same reason.

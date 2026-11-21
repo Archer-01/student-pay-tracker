@@ -190,7 +190,9 @@
     },
     "hints": {
       "amountUpTo": "Maximum {{price}} (tarif mensuel de l'élève)."
-    }
+    },
+    "corrected": "Paiement modifié : {{month}}",
+    "deleted": "Paiement supprimé : {{month}}"
   },
   "override": {
     "title": "Changer le jour de paiement",
@@ -467,7 +469,12 @@
     "lateness": "Retard",
     "notPaid": "Pas encore payé. Ce mois était dû le {{date}}.",
     "away": "L'élève n'était pas inscrit ce mois-là : rien n'est dû.",
-    "upcoming": "Ce mois n'est pas encore arrivé à échéance."
+    "upcoming": "Ce mois n'est pas encore arrivé à échéance.",
+    "editPayment": "Modifier ce paiement",
+    "deletePayment": "Supprimer ce paiement",
+    "deleteConfirm": "Supprimer ce paiement ({{month}}, {{amount}}) ? Le mois redeviendra à payer.",
+    "deleteMoveHint": "Pour le déplacer vers un autre mois, supprimez-le puis encaissez le bon mois.",
+    "deleteConfirmButton": "Supprimer"
   },
   "share": {
     "title": "Répartition",
