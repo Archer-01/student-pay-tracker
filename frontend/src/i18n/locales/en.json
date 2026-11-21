@@ -11,15 +11,9 @@
     "pay": "Record payment"
   },
   "pages": {
-    "dashboard": "Dashboard",
     "students": "Students",
-    "studentDetail": "Student detail",
     "enroll": "Enroll student",
-    "report": "Monthly report",
     "classes": "Classes",
-    "classDetail": "Class",
-    "packs": "Packs",
-    "annual": "Annual revenue",
     "debts": "Left owing money"
   },
   "drift": {
@@ -27,31 +21,9 @@
     "late_one": "{{count}} day late",
     "late_other": "{{count}} days late"
   },
-  "overdue": {
-    "paidUp": "Paid up",
-    "monthsBehind_one": "{{count}} month behind",
-    "monthsBehind_other": "{{count}} months behind"
-  },
-  "status": {
-    "active": "Active",
-    "inactive": "Inactive"
-  },
   "students": {
-    "columns": {
-      "name": "Name",
-      "status": "Status",
-      "drift": "Drift",
-      "overdue": "Overdue",
-      "class": "Class",
-      "price": "Price",
-      "owed": "Owed"
-    },
-    "filterLabel": "Status",
-    "filterAll": "All",
     "empty": "No students found.",
-    "filterClassAll": "All classes",
     "search": "Search",
-    "searchPlaceholder": "Name…",
     "add": "Add student",
     "filters": {
       "label": "Show",
@@ -67,39 +39,14 @@
     "addShort": "Student"
   },
   "dashboard": {
-    "collectedThisMonth": "Collected this month",
-    "totalOutstanding": "Total outstanding",
-    "asOf": "As of {{date}}",
-    "empty": "Nobody owes anything.",
-    "whoToChase": "Who to chase",
-    "rankedByOwed": "Most owed first",
-    "attention": "Needs attention",
     "activeStudents_one": "{{count}} student",
-    "activeStudents_other": "{{count}} students",
-    "monthsBehind_one": "{{count}} month behind",
-    "monthsBehind_other": "{{count}} months behind",
-    "unbilled_one": "{{count}} student has no pack and is being charged nothing:",
-    "unbilled_other": "{{count}} students have no pack and are being charged nothing:",
-    "missingLeaveDate_one": "{{count}} student is marked as gone but has no departure date, so their billing is still running:",
-    "missingLeaveDate_other": "{{count}} students are marked as gone but have no departure date, so their billing is still running:"
+    "activeStudents_other": "{{count}} students"
   },
   "report": {
-    "monthLabel": "Month",
-    "yearLabel": "Year",
     "downloadPdf": "Download PDF",
     "pdfFilename": "monthly-report-{{year}}-{{month}}",
-    "asOf": "As of {{date}}",
     "totalCollected": "Total collected",
-    "totalOutstanding": "Total outstanding",
-    "empty": "No students for this month.",
-    "columns": {
-      "name": "Name",
-      "status": "Status",
-      "fee": "Fee",
-      "collected": "Collected",
-      "drift": "Drift",
-      "outstanding": "Outstanding"
-    }
+    "empty": "No students for this month."
   },
   "enroll": {
     "fields": {
@@ -115,58 +62,27 @@
     }
   },
   "detail": {
-    "back": "Back to students",
     "downloadPdf": "Download ledger PDF",
     "pdfFilename": "ledger-student-{{id}}{{name}}",
     "actions": {
-      "recordPayment": "Record payment",
       "addOverride": "Change the payment day",
       "edit": "Edit details"
     },
     "fields": {
-      "status": "Status",
       "joinDate": "Join date",
-      "drift": "Drift",
-      "overdue": "Overdue",
-      "nextExpected": "Next expected",
-      "paymentsCount": "Payments",
       "totalPaid": "Total paid",
       "phone": "Phone",
       "class": "Class",
-      "monthlyPrice": "Monthly price",
-      "amountOwed": "Amount owed",
-      "firstPayment": "First payment",
-      "repeating": "Repeating the year"
-    },
-    "sections": {
-      "enrolment": "Enrolment",
-      "money": "Money"
+      "monthlyPrice": "Monthly price"
     }
   },
   "ledger": {
-    "title": "Ledger",
-    "columns": {
-      "cycle": "Cycle",
-      "due": "Due date",
-      "paid": "Paid date",
-      "status": "Status",
-      "amount": "Amount",
-      "drift": "Drift"
-    },
     "status": {
-      "unpaid": "Unpaid",
-      "onTime": "On time",
-      "away": "Away"
+      "onTime": "On time"
     }
   },
   "language": {
     "label": "Language"
-  },
-  "theme": {
-    "switchTo": {
-      "light": "Switch to light mode",
-      "dark": "Switch to dark mode"
-    }
   },
   "common": {
     "loading": "Loading…",
@@ -175,19 +91,14 @@
     "retry": "Retry",
     "cancel": "Cancel",
     "save": "Save",
-    "yes": "Yes",
-    "no": "No",
     "close": "Close"
   },
   "payment": {
-    "title": "Record payment",
     "fields": {
-      "forMonth": "For month",
       "paidDate": "Paid date",
       "amount": "Amount"
     },
     "validation": {
-      "monthRequired": "Choose the month this payment settles.",
       "paidDateRequired": "Paid date is required.",
       "amountInvalid": "Enter an amount greater than 0.",
       "amountAbovePrice": "That's more than this student's monthly price of {{price}}.",
@@ -214,7 +125,6 @@
     "title": "Edit details",
     "fields": {
       "phone": "Phone",
-      "status": "Status",
       "class": "Class",
       "note": "Note"
     },
@@ -241,10 +151,6 @@
     "level": "Level",
     "name": "Name",
     "namePlaceholder": "e.g. Groupe A",
-    "students": "Students",
-    "drift": "Total drift",
-    "filterLevel": "Level",
-    "filterAll": "All levels",
     "addStudent": "Add student",
     "rosterEmpty": "No students in this class yet.",
     "downloadRoster": "Download roster (PDF)",
@@ -304,9 +210,6 @@
     "repeatingShort": "Repeating",
     "levelMismatch": "This pack is for {{packLevel}} but the class is {{classLevel}}.",
     "attendance": "Attendance",
-    "from": "From",
-    "until": "Until",
-    "reason": "Reason",
     "stillHere": "Still attending",
     "markLeft": "Mark as left",
     "markReturned": "Mark as returned",
@@ -341,10 +244,7 @@
     "packFromClass": "Picked from the class"
   },
   "annual": {
-    "year": "Year",
-    "collected": "Collected",
     "payments": "Payments",
-    "month": "Month",
     "total": "Total collected",
     "average": "Monthly average",
     "averageHint": "Averaged over the months that earned, not over twelve",
@@ -356,9 +256,6 @@
   "debts": {
     "empty": "Nobody has left owing money.",
     "totalOwed": "Total owed",
-    "leftOn": "Left on",
-    "months": "Months",
-    "owed": "Owed",
     "writeOff": "Write off",
     "writeOffTitle": "Write off {{name}}'s balance",
     "writeOffReason": "Reason",
@@ -366,7 +263,6 @@
     "writeOffConfirm": "Write off {{amount}}",
     "returnedWithDebt": "This student left owing money",
     "duplicateWarning": "A former student with this name or number left owing {{amount}}.",
-    "onDashboard": "Left owing",
     "leftOnDate": "Left on {{date}}"
   },
   "auth": {

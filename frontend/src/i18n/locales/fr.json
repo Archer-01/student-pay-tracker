@@ -11,15 +11,9 @@
     "pay": "Encaisser"
   },
   "pages": {
-    "dashboard": "Tableau de bord",
     "students": "Élèves",
-    "studentDetail": "Fiche élève",
     "enroll": "Inscrire un élève",
-    "report": "Rapport mensuel",
     "classes": "Classes",
-    "classDetail": "Classe",
-    "packs": "Packs",
-    "annual": "Bilan annuel",
     "debts": "Anciens élèves avec impayés"
   },
   "drift": {
@@ -27,31 +21,9 @@
     "late_one": "{{count}} jour de retard",
     "late_other": "{{count}} jours de retard"
   },
-  "overdue": {
-    "paidUp": "À jour",
-    "monthsBehind_one": "{{count}} mois impayé",
-    "monthsBehind_other": "{{count}} mois impayés"
-  },
-  "status": {
-    "active": "Actif",
-    "inactive": "Inactif"
-  },
   "students": {
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "drift": "Retard",
-      "overdue": "Impayés",
-      "class": "Classe",
-      "price": "Tarif",
-      "owed": "Reste dû"
-    },
-    "filterLabel": "Statut",
-    "filterAll": "Tous",
     "empty": "Aucun élève trouvé.",
-    "filterClassAll": "Toutes les classes",
     "search": "Rechercher",
-    "searchPlaceholder": "Nom…",
     "add": "Ajouter un élève",
     "filters": {
       "label": "Afficher",
@@ -67,39 +39,14 @@
     "addShort": "Élève"
   },
   "dashboard": {
-    "collectedThisMonth": "Encaissé ce mois-ci",
-    "totalOutstanding": "Total des impayés",
-    "asOf": "Au {{date}}",
-    "empty": "Aucun impayé.",
-    "whoToChase": "À relancer",
-    "rankedByOwed": "Les plus gros montants en premier",
-    "attention": "À vérifier",
     "activeStudents_one": "{{count}} élève",
-    "activeStudents_other": "{{count}} élèves",
-    "monthsBehind_one": "{{count}} mois impayé",
-    "monthsBehind_other": "{{count}} mois impayés",
-    "unbilled_one": "{{count}} élève n'a pas de pack et n'est donc pas facturé :",
-    "unbilled_other": "{{count}} élèves n'ont pas de pack et ne sont donc pas facturés :",
-    "missingLeaveDate_one": "{{count}} élève est indiqué comme parti sans date de départ, et reste donc facturé :",
-    "missingLeaveDate_other": "{{count}} élèves sont indiqués comme partis sans date de départ, et restent donc facturés :"
+    "activeStudents_other": "{{count}} élèves"
   },
   "report": {
-    "monthLabel": "Mois",
-    "yearLabel": "Année",
     "downloadPdf": "Télécharger le PDF",
     "pdfFilename": "rapport-mensuel-{{year}}-{{month}}",
-    "asOf": "Au {{date}}",
     "totalCollected": "Total encaissé",
-    "totalOutstanding": "Total des impayés",
-    "empty": "Aucun élève ce mois-ci.",
-    "columns": {
-      "name": "Nom",
-      "status": "Statut",
-      "fee": "Tarif",
-      "collected": "Encaissé",
-      "drift": "Retard",
-      "outstanding": "Reste dû"
-    }
+    "empty": "Aucun élève ce mois-ci."
   },
   "enroll": {
     "fields": {
@@ -115,58 +62,27 @@
     }
   },
   "detail": {
-    "back": "Retour aux élèves",
     "downloadPdf": "Télécharger l'historique (PDF)",
     "pdfFilename": "historique-eleve-{{id}}{{name}}",
     "actions": {
-      "recordPayment": "Enregistrer un paiement",
       "addOverride": "Changer le jour de paiement",
       "edit": "Modifier la fiche"
     },
     "fields": {
-      "status": "Statut",
       "joinDate": "Date d'inscription",
-      "drift": "Retard",
-      "overdue": "Impayés",
-      "nextExpected": "Prochaine échéance",
-      "paymentsCount": "Paiements",
       "totalPaid": "Total payé",
       "phone": "Téléphone",
       "class": "Classe",
-      "monthlyPrice": "Tarif mensuel",
-      "amountOwed": "Montant dû",
-      "firstPayment": "Premier paiement",
-      "repeating": "Redoublant"
-    },
-    "sections": {
-      "enrolment": "Inscription",
-      "money": "Finances"
+      "monthlyPrice": "Tarif mensuel"
     }
   },
   "ledger": {
-    "title": "Historique des paiements",
-    "columns": {
-      "cycle": "N°",
-      "due": "Échéance",
-      "paid": "Payé le",
-      "status": "Statut",
-      "amount": "Montant",
-      "drift": "Retard cumulé"
-    },
     "status": {
-      "unpaid": "Impayé",
-      "onTime": "À l'heure",
-      "away": "Non facturé"
+      "onTime": "À l'heure"
     }
   },
   "language": {
     "label": "Langue"
-  },
-  "theme": {
-    "switchTo": {
-      "light": "Passer en mode clair",
-      "dark": "Passer en mode sombre"
-    }
   },
   "common": {
     "loading": "Chargement…",
@@ -175,19 +91,14 @@
     "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "yes": "Oui",
-    "no": "Non",
     "close": "Fermer"
   },
   "payment": {
-    "title": "Enregistrer un paiement",
     "fields": {
-      "forMonth": "Mois réglé",
       "paidDate": "Date de paiement",
       "amount": "Montant"
     },
     "validation": {
-      "monthRequired": "Choisissez le mois correspondant à ce paiement.",
       "paidDateRequired": "La date de paiement est obligatoire.",
       "amountInvalid": "Saisissez un montant supérieur à 0.",
       "amountAbovePrice": "Le montant dépasse le tarif mensuel de l'élève ({{price}}).",
@@ -214,7 +125,6 @@
     "title": "Modifier la fiche",
     "fields": {
       "phone": "Téléphone",
-      "status": "Statut",
       "class": "Classe",
       "note": "Note"
     },
@@ -241,10 +151,6 @@
     "level": "Niveau",
     "name": "Nom",
     "namePlaceholder": "ex. : Groupe A",
-    "students": "Élèves",
-    "drift": "Retard cumulé",
-    "filterLevel": "Niveau",
-    "filterAll": "Tous les niveaux",
     "addStudent": "Ajouter un élève",
     "rosterEmpty": "Aucun élève dans cette classe pour l'instant.",
     "downloadRoster": "Télécharger la liste (PDF)",
@@ -304,9 +210,6 @@
     "repeatingShort": "Redoublant",
     "levelMismatch": "Ce pack est prévu pour le niveau {{packLevel}}, mais l'élève est en {{classLevel}}.",
     "attendance": "Périodes d'inscription",
-    "from": "Du",
-    "until": "Au",
-    "reason": "Motif",
     "stillHere": "Toujours inscrit",
     "markLeft": "Marquer comme parti",
     "markReturned": "Réinscrire",
@@ -341,10 +244,7 @@
     "packFromClass": "Choisi d'après la classe"
   },
   "annual": {
-    "year": "Année",
-    "collected": "Encaissé",
     "payments": "Paiements",
-    "month": "Mois",
     "total": "Total encaissé",
     "average": "Moyenne mensuelle",
     "averageHint": "Calculée sur les mois avec des encaissements, pas sur douze",
@@ -356,9 +256,6 @@
   "debts": {
     "empty": "Aucun ancien élève n'a laissé d'impayés.",
     "totalOwed": "Total dû",
-    "leftOn": "Parti le",
-    "months": "Mois",
-    "owed": "Dû",
     "writeOff": "Ne plus réclamer",
     "writeOffTitle": "Ne plus rien réclamer à {{name}}",
     "writeOffReason": "Motif",
@@ -366,7 +263,6 @@
     "writeOffConfirm": "Ne plus réclamer {{amount}}",
     "returnedWithDebt": "Cet élève est parti sans régler ses impayés",
     "duplicateWarning": "Un ancien élève avec ce nom ou ce numéro est parti sans régler {{amount}}.",
-    "onDashboard": "Partis sans régler",
     "leftOnDate": "Parti le {{date}}"
   },
   "auth": {
