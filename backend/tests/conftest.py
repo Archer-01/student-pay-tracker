@@ -103,6 +103,16 @@ def db_session(db_engine: Engine) -> Iterator[Session]:
 
 
 @pytest.fixture(scope="session", autouse=True)
+def _plain_cli_output() -> Iterator[None]:
+    """The CLI's tests read its output as text. Typer forces colours when `GITHUB_ACTIONS` is set,
+    and the codes split words (`--amount` came out wrapped in ANSI codes in CI); a dumb terminal
+    gets plain text everywhere."""
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv("TERM", "dumb")
+        yield
+
+
+@pytest.fixture(scope="session", autouse=True)
 def _cheap_password_hashing() -> Iterator[None]:
     """argon2id at production cost takes ~25 ms by design, and the signed-in `client` pays it
     twice per test (create the account, then sign in). The tests check what hashing does, not

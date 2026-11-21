@@ -319,7 +319,8 @@ describe("StudentDetail opened on a month", () => {
     renderPage("/students/5?month=2026-10");
     const sheet = await screen.findByRole("dialog", { name: "October 2026" });
     expect(sheet).toHaveTextContent(/Lateness\s*9 days/);
-    expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/);
+    // The address is cleaned up just after the sheet opens: wait for it, a slower machine is later.
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/));
   });
 
   it("doesn't open it again once closed and the page refreshes", async () => {
