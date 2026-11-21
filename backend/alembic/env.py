@@ -22,6 +22,22 @@ from app.models import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
+# Foreign keys whose ON DELETE rule SQLite can't report back. 0002 and 0004 wrote these as inline
+# `REFERENCES ... ON DELETE ...` on the column, and SQLAlchemy reads ON DELETE only from
+# table-level `FOREIGN KEY(...)` clauses, so `alembic check` and autogenerate saw "no rule" and
+# proposed dropping and re-adding them: a rebuild of `student` for nothing. The database does
+# enforce both rules; `tests/integration/test_migrations.py` pins them through
+# `PRAGMA foreign_key_list`, which reads SQLite's own view.
+_INLINE_FKS = {("student", "class_id"), ("student", "pack_id")}
+
+
+def include_object(obj, name, type_, reflected, compare_to):
+    if type_ == "foreign_key_constraint":
+        table = obj.table.name
+        return not any((table, column) in _INLINE_FKS for column in obj.column_keys)
+    return True
+
+
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
@@ -47,6 +63,7 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         render_as_batch=True,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -69,7 +86,10 @@ def _run_migrations(connection: Connection) -> None:
     try:
         # render_as_batch lets SQLite ALTER-heavy migrations work.
         context.configure(
-            connection=connection, target_metadata=target_metadata, render_as_batch=True
+            connection=connection,
+            target_metadata=target_metadata,
+            render_as_batch=True,
+            include_object=include_object,
         )
         with context.begin_transaction():
             context.run_migrations()

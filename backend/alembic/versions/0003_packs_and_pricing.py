@@ -13,7 +13,8 @@ Two hunks were removed from the autogenerate output by hand:
   autogenerate sees the model's constraint as "different" and proposes dropping and re-adding it.
   It would emit a ``batch_alter_table`` on ``student``, i.e. a table rebuild — which fails against
   any populated database (``DROP TABLE student`` vs. ``foreign_keys=ON``; see 0002's docstring).
-  **Expect this phantom diff on every future autogenerate against `student`, and delete it.**
+  ``alembic/env.py`` now filters it out (``_INLINE_FKS``), so autogenerate and ``alembic check``
+  no longer propose it; ``test_migrations.py`` pins the real rules through SQLite's own pragma.
 
 Revision ID: 0003
 Revises: 0002
