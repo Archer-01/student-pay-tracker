@@ -10,7 +10,7 @@ import pytest
 from argon2 import PasswordHasher
 from sqlalchemy.orm import Session
 
-from app.core.settings import settings
+from app.core.settings import Settings, settings
 from app.models import AuthSession, User
 from app.services.auth_service import AuthService
 from app.services.exceptions import (
@@ -104,6 +104,21 @@ def test_login_accepts_a_differently_cased_username(service: AuthService, user: 
 def test_login_expiry_matches_the_configured_ttl(service: AuthService, user: User) -> None:
     issued = service.login(username="aymen", password=PASSWORD)
     expected = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=settings.session_ttl_days)
+    assert abs((issued.expires_at - expected).total_seconds()) < 60
+
+
+def test_a_sign_in_lasts_ninety_days_by_default() -> None:
+    """Long enough that the teacher, on his own phone, is not asked for his password every week.
+    Read from the field rather than ``Settings()`` so a local ``.env`` can't change the answer."""
+    assert Settings.model_fields["session_ttl_days"].default == 90
+
+
+def test_login_reads_the_lifetime_from_settings(
+    service: AuthService, user: User, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "session_ttl_days", 3)
+    issued = service.login(username="aymen", password=PASSWORD)
+    expected = datetime.now(UTC).replace(tzinfo=None) + timedelta(days=3)
     assert abs((issued.expires_at - expected).total_seconds()) < 60
 
 

@@ -1,18 +1,32 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { listStudents } from "../api/endpoints";
+import { deletePayment, listStudents } from "../api/endpoints";
 import type { StudentListItem } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { useDebounced } from "../lib/useDebounced";
 import { formatMoney } from "../lib/money";
 import { PaymentSheetContext } from "../lib/paymentSheetContext";
-import { connectivity } from "../lib/connectivity";
+import { connectivity, useReadOnly } from "../lib/connectivity";
+import { resolveErrorMessage } from "../lib/errors";
 import { AsyncView, Modal } from "./ui";
 import { Avatar, OwedPill } from "./people";
 import { SearchIcon } from "./icons";
 import { RecordPaymentForm } from "./students/RecordPaymentForm";
 
 type Sheet = { open: false } | { open: true; studentId?: number; month?: string; pickedHere: boolean };
+
+type Toast = {
+  /** New for every message, so one replacing another slides in rather than just swapping text. */
+  id: number;
+  message: string;
+  /** An error is said plainly, without the check mark. */
+  failed?: boolean;
+  /** The payment just recorded, while it can still be taken back. */
+  undo?: { studentId: number; cycleNumber: number };
+  /** The undo is on its way: the message stays until the server has answered. */
+  undoing?: boolean;
+  leaving: boolean;
+};
 
 /**
  * Taking a payment is the app's most frequent job, so it is one sheet reachable from anywhere:
@@ -23,7 +37,14 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
   const [sheet, setSheet] = useState<Sheet>({ open: false });
   const [version, setVersion] = useState(0);
-  const [toast, setToast] = useState<{ message: string; leaving: boolean } | null>(null);
+  const [toast, setToast] = useState<Toast | null>(null);
+  const toastId = useRef(0);
+  const readOnly = useReadOnly();
+
+  const show = useCallback((next: Omit<Toast, "id" | "leaving">) => {
+    toastId.current += 1;
+    setToast({ ...next, id: toastId.current, leaving: false });
+  }, []);
 
   const open = useCallback(
     (studentId?: number, month?: string) => {
@@ -34,17 +55,39 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
     [],
   );
   const close = useCallback(() => setSheet({ open: false }), []);
-  const changed = useCallback((message: string) => {
-    setVersion((v) => v + 1);
-    setToast({ message, leaving: false });
-  }, []);
+  const announce = useCallback(
+    (message: string, undo?: Toast["undo"]) => {
+      setVersion((v) => v + 1);
+      show({ message, undo });
+    },
+    [show],
+  );
+  const changed = useCallback((message: string) => announce(message), [announce]);
+
+  // A payment taken by mistake (wrong student, wrong month) is taken back from its confirmation,
+  // rather than by finding the month on the student's page.
+  const undo = useCallback(
+    async ({ studentId, cycleNumber }: NonNullable<Toast["undo"]>) => {
+      if (connectivity().mode !== "live") return;
+      setToast((current) => current && { ...current, undoing: true, leaving: false });
+      try {
+        await deletePayment(studentId, cycleNumber);
+        changed(t("pay.undone"));
+      } catch (err) {
+        // Nothing changed, so nothing to refresh: just say why.
+        show({ message: resolveErrorMessage(err, t), failed: true });
+      }
+    },
+    [changed, show, t],
+  );
 
   useEffect(() => {
-    if (!toast) return;
-    // Fade out for the last 200ms rather than vanishing.
+    if (!toast || toast.undoing) return;
+    // Fade out for the last 200ms rather than vanishing. A second longer with an undo on offer:
+    // time to read the message and still reach the button.
     const timer = toast.leaving
       ? setTimeout(() => setToast(null), 200)
-      : setTimeout(() => setToast({ ...toast, leaving: true }), 4800);
+      : setTimeout(() => setToast({ ...toast, leaving: true }), toast.undo ? 5800 : 4800);
     return () => clearTimeout(timer);
   }, [toast]);
 
@@ -63,9 +106,10 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
               initialMonth={sheet.month}
               onCancel={close}
               onChangeStudent={sheet.pickedHere ? () => setSheet({ open: true, pickedHere: true }) : undefined}
-              onSuccess={(amount, name) => {
+              onSuccess={(amount, name, cycleNumber) => {
+                const studentId = sheet.studentId!;
                 close();
-                changed(t("pay.done", { amount: formatMoney(amount), name }));
+                announce(t("pay.done", { amount: formatMoney(amount), name }), { studentId, cycleNumber });
               }}
             />
           )}
@@ -78,14 +122,27 @@ export function PaymentSheetProvider({ children }: { children: ReactNode }) {
         className="pointer-events-none fixed inset-x-4 bottom-[calc(5.5rem+env(safe-area-inset-bottom))] z-50 flex justify-center lg:inset-x-auto lg:bottom-6 lg:right-6"
       >
         {toast && (
-          <p
+          <div
+            key={toast.id}
             className={`flex items-center gap-2 rounded-2xl bg-ink px-4 py-3 font-bold text-ground shadow-xl ${
               toast.leaving ? "animate-toast-out" : "animate-toast-in"
             }`}
           >
-            <DrawnCheck />
-            {toast.message}
-          </p>
+            {!toast.failed && <DrawnCheck />}
+            <p>{toast.message}</p>
+            {/* Taking a payment back is a write, so not while read only. The container lets taps
+                through to the page beneath; only the button catches them. */}
+            {toast.undo && !readOnly && (
+              <button
+                type="button"
+                onClick={() => undo(toast.undo!)}
+                disabled={toast.undoing}
+                className="pointer-events-auto -my-2 -mr-2 min-h-11 shrink-0 rounded-xl px-3 font-bold text-ground underline underline-offset-4 transition active:scale-[0.97] disabled:opacity-50"
+              >
+                {t("pay.undo")}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </PaymentSheetContext.Provider>

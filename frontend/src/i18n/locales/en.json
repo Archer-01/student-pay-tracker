@@ -461,7 +461,9 @@
     "otherDate": "Another date",
     "submit": "Record {{amount}}",
     "submitEmpty": "Record",
-    "done": "Payment recorded: {{amount}} for {{name}}"
+    "done": "Payment recorded: {{amount}} for {{name}}",
+    "undo": "Undo",
+    "undone": "Payment undone"
   },
   "tiles": {
     "late_one": "{{count}} d",
