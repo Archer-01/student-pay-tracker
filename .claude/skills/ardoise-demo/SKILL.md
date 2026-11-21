@@ -19,9 +19,26 @@ S=<your scratchpad>/demo                         # one folder per demo
 ```
 
 - Sign in as **aymen / demo-pass-123**. The first start migrates a fresh database, creates the
-  account and seeds about twelve students (`scripts/seed.py`), all dated relative to today: on
-  time, a little late, often late, owing one or two months, a custom price, a note, one due this
-  week, one who left owing. Delete the folder to reseed.
+  account and seeds twelve students (`scripts/seed.py`), all dated relative to today. Delete the
+  folder to reseed. Who's who (ids in creation order):
+
+  | id | student | situation |
+  |---|---|---|
+  | 1 | Youssef El Amrani | a year of history, some months late; up to date |
+  | 2 | Salma Ouazzani | always about 8 days late (« Un peu tard ») |
+  | 3 | Amina Benali | owes two months; first month paid late |
+  | 4 | Karim Bennis | always on time |
+  | 5 | Nora Chraibi | on time |
+  | 6 | Omar Tazi | owes one month |
+  | 7 | Sara Idrissi | 14–20 days late (« Souvent tard »), owes one month |
+  | 8 | Ilyas Tahiri | custom price 150 DH, « Remise fratrie » |
+  | 9 | Imane Zerouali | has a private note |
+  | 10 | Hamza Berrada | joined in October |
+  | 11 | Lina Fassi | due within the week (Accueil › Cette semaine) |
+  | 12 | Mehdi Alaoui | left owing (Bilan › Partis sans régler) |
+
+  Bilan › École shows all three states: the latest ended month « À remettre », the one before
+  « Il manque … » (Amina's late payment), older ones « Remis le … ».
 - **dev** runs the current source (restart the web side after editing `vite.config.ts`); **prod**
   builds into `$S/dist` first, and is what offline checks need: serve it, load every screen, then
   stop the API (`demo.sh stop` stops both; kill `$(cat $S/api.pid)` for the API alone). Browser
@@ -40,7 +57,10 @@ uv run --no-project --with playwright==1.58.0 python shoot.py "$S/shots" / /stud
 
 One PNG per path × size × theme (`students-phone-dark.png`). Phone is 390×844 at 2× with touch,
 like the teacher's iPhone; desktop 1280×800. Reduced motion, French unless `--lang en`. The theme
-comes from the browser's colour scheme, as the app follows the device.
+comes from the browser's colour scheme, as the app follows the device. The address follows
+`WEB_PORT` (default 5174), so export the same ports for `demo.sh` and `shoot.py`. With `--full`,
+the fixed bottom bar is drawn where the screen ended, over the page: that's the capture, not a
+bug.
 
 For a flow (opening a sheet, tapping a tile, a toast), write a short script next to your output
 that reuses the signed-in page:

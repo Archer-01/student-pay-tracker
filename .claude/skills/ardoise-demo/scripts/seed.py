@@ -105,7 +105,8 @@ def student(
 # A full year behind them: the annual report and the school-year tiles have history.
 student("Youssef", "El Amrani", "2BAC", "2bac", joined(-12, 5), "300", [0, 3, 0, 12, 0, 6])
 student("Salma", "Ouazzani", "2BAC", "2bac", joined(0, 5), "300", [8, 9, 7])  # "Un peu tard"
-student("Amina", "Benali", "2BAC", "maths", joined(0, 10), "150", [0], owing=2)
+amina_joined = joined(0, 10)
+amina = student("Amina", "Benali", "2BAC", "maths", amina_joined, "150", [0], owing=3)
 student("Karim", "Bennis", "TC", "tc", joined(0, 8), "200", [0])
 student("Nora", "Chraibi", "1BAC", "1bac", joined(0, 12), "220", [0, 1])
 student("Omar", "Tazi", "TC", "tc", joined(0, 15), "200", [2], owing=1)
@@ -125,4 +126,22 @@ student("Lina", "Fassi", "1BAC", "1bac", add_months(TODAY + timedelta(days=3), -
 mehdi = student("Mehdi", "Alaoui", "TC", "tc", joined(0, 5), "200", [0], paid_months=1)
 if TODAY > joined(1, 20):
     call("POST", f"/students/{mehdi}/leave", {"leave_date": joined(1, 20).isoformat()})
+
+# The school's share: every ended month handed over except the latest ("À remettre"), each
+# a few days after the month ended ("Remis le …"). Then Amina pays her first month late, dated
+# inside the latest handed-over month, which leaves that month short ("Il manque …").
+share = call("GET", "/school-share")["months"]  # newest first
+ended = [
+    m for m in share
+    if (m["year"], m["month"]) < (TODAY.year, TODAY.month) and float(m["due"]) > 0
+]  # fmt: skip
+for m in ended[1:]:
+    handed = min(add_months(date(m["year"], m["month"], 1), 1) + timedelta(days=2), TODAY)
+    call("PUT", f"/school-share/{m['year']}/{m['month']}", {"handed_on": handed.isoformat()})
+if len(ended) > 1:
+    latest = ended[1]
+    paid = date(latest["year"], latest["month"], 25)
+    if amina_joined <= paid <= TODAY:
+        late = {"for_month": amina_joined.strftime("%Y-%m"), "paid_date": paid.isoformat()}
+        call("POST", f"/students/{amina}/payments", late | {"amount": "150"})
 print("seeded 12 students")

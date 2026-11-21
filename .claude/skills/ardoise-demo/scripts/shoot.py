@@ -1,7 +1,7 @@
 """Screenshots of a running demo (see demo.sh), signed in, the way the teacher sees it.
 
     uv run --with playwright==1.58.0 python shoot.py OUT_DIR / /students /reports/monthly \
-        [--base http://127.0.0.1:5174] [--size phone,desktop] [--theme light,dark] [--lang fr] [--full]
+        [--base http://127.0.0.1:$WEB_PORT] [--size phone,desktop] [--theme light,dark] [--lang fr] [--full]
 
 One PNG per path × size × theme: `<path-slug>-<size>-<theme>.png` (e.g. `students-phone-dark.png`).
 Phone is 390×844 at 2×, touch, like an iPhone; desktop is 1280×800. Motion is reduced so nothing is
@@ -17,6 +17,7 @@ For a flow (open a sheet, tap a tile), import it instead:
 """
 
 import argparse
+import os
 import re
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -30,11 +31,13 @@ SIZES = {
     "desktop": {"viewport": {"width": 1280, "height": 800}},
 }  # fmt: skip
 USER, PASSWORD = "aymen", "demo-pass-123"
+# The demo's app, on the same port demo.sh used (WEB_PORT, else the dev default).
+BASE = f"http://127.0.0.1:{os.environ.get('WEB_PORT', '5174')}"
 
 
 @contextmanager
 def app(
-    base: str = "http://127.0.0.1:5174",
+    base: str = BASE,
     size: str = "phone",
     theme: str = "light",
     lang: str = "fr",
@@ -79,7 +82,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     parser.add_argument("out", type=Path)
     parser.add_argument("paths", nargs="+")
-    parser.add_argument("--base", default="http://127.0.0.1:5174")
+    parser.add_argument("--base", default=BASE)
     parser.add_argument("--size", default="phone")
     parser.add_argument("--theme", default="light")
     parser.add_argument("--lang", default="fr")
