@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { act, screen } from "@testing-library/react";
-import { Route, Routes } from "react-router-dom";
+import { act, screen, waitFor } from "@testing-library/react";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { PaymentSheetProvider } from "../components/PaymentSheet";
@@ -28,14 +28,21 @@ async function openMenu() {
   await userEvent.click(await screen.findByRole("button", { name: /more actions/i }));
 }
 
-function renderPage() {
+/** The address bar, as text, so a test can see what the page did to the URL. */
+function Location() {
+  const { pathname, search } = useLocation();
+  return <output data-testid="location">{pathname + search}</output>;
+}
+
+function renderPage(route = "/students/5") {
   renderWithProviders(
     <PaymentSheetProvider>
       <Routes>
         <Route path="/students/:id" element={<StudentDetail />} />
       </Routes>
+      <Location />
     </PaymentSheetProvider>,
-    { route: "/students/5" },
+    { route },
   );
 }
 
@@ -215,31 +222,145 @@ describe("StudentDetail note", () => {
     expect(await screen.findByText("Paie le samedi, en espèces.")).toBeInTheDocument();
   });
 
-  it("offers to add a note when there is none, opening the edit form", async () => {
-    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+  it("adds a note in its own small sheet, not the whole edit form, then refreshes the page", async () => {
+    const getStudent = vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
-    vi.spyOn(endpoints, "listClasses").mockResolvedValue([] as never);
-    vi.spyOn(endpoints, "listPacks").mockResolvedValue([] as never);
+    const listClasses = vi.spyOn(endpoints, "listClasses").mockResolvedValue([] as never);
+    const update = vi.spyOn(endpoints, "updateStudent").mockResolvedValue({} as never);
     renderPage();
     await userEvent.click(await screen.findByRole("button", { name: /add a note/i }));
-    expect(await screen.findByLabelText(/^note/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/first name/i)).toBeNull();
+    expect(listClasses).not.toHaveBeenCalled();
+    getStudent.mockResolvedValue(student({ note: "Père : Ahmed" }) as never);
+    await userEvent.type(screen.getByRole("textbox", { name: /^note$/i }), "Père : Ahmed");
+    await userEvent.click(screen.getByRole("button", { name: /^save/i }));
+    expect(update).toHaveBeenCalledWith(5, { note: "Père : Ahmed" });
+    expect(await screen.findByText("Père : Ahmed")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).toBeNull();
+    expect(getStudent).toHaveBeenCalledTimes(2);
+  });
+
+  it("edits an existing note in the same sheet, filled in", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ note: "Paie le samedi" }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: /^edit$/i }));
+    expect(screen.getByRole("dialog", { name: "Note on Fatima" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: /^note$/i })).toHaveValue("Paie le samedi");
+  });
+
+  it("can't be changed offline", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ note: "Paie le samedi" }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await screen.findByText("Paie le samedi");
+    act(() => reportStored("2026-11-14T09:41:00"));
+    expect(screen.queryByRole("button", { name: /^edit$/i })).toBeNull();
+    act(() => resetConnectivity());
   });
 });
 
 describe("StudentDetail punctuality", () => {
-  it("says how late the student usually pays, in a group and in days", async () => {
-    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ average_days_late: 4 }) as never);
+  it("puts the usual lateness and the total in one row", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ average_days_late: 4, cumulative_drift: 34 }) as never,
+    );
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
     renderPage();
     expect(await screen.findByText("A little late")).toBeInTheDocument();
-    expect(screen.getByText("Usually 4 days late")).toBeInTheDocument();
+    expect(screen.getByText("Usually 4 days late · 34 days in total")).toBeInTheDocument();
+    expect(screen.queryByText("Late in total")).toBeNull();
   });
 
-  it("says nothing before the first payment is due", async () => {
+  it("says a student who pays on time does, without a 0-day average", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ average_days_late: 0, cumulative_drift: 3 }) as never,
+    );
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("On time")).toBeInTheDocument();
+    expect(screen.getByText("Pays on time · 3 days in total")).toBeInTheDocument();
+  });
+
+  it("keeps the total visible before any average exists", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ cumulative_drift: 6 }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("6 days in total")).toBeInTheDocument();
+    expect(screen.queryByText("On time")).toBeNull();
+  });
+
+  it("shows no group before the first payment is due, just that nothing is late", async () => {
     vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
     renderPage();
+    expect(await screen.findByText("On track")).toBeInTheDocument();
+    expect(screen.queryByText("On time")).toBeNull();
+  });
+});
+
+describe("StudentDetail opened on a month", () => {
+  // September paid on time, October 9 days late.
+  const paidLedger = {
+    ...ledger,
+    entries: [
+      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
+      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false },
+    ],
+  };
+
+  beforeEach(() => {
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue(paidLedger as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+  });
+
+  it("opens that month's details, then takes the month out of the address", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    renderPage("/students/5?month=2026-10");
+    const sheet = await screen.findByRole("dialog", { name: "October 2026" });
+    expect(sheet).toHaveTextContent(/9 days late/);
+    expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/);
+  });
+
+  it("doesn't open it again once closed and the page refreshes", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    renderPage("/students/5?month=2026-10");
+    await screen.findByRole("dialog", { name: "October 2026" });
+    await userEvent.click(screen.getByRole("button", { name: /close/i }));
+    act(() => window.dispatchEvent(new Event("online")));
+    await waitFor(() => expect(endpoints.getStudent).toHaveBeenCalledTimes(2));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("turns to the school year the month is in", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ join_date: "2025-09-01" }) as never);
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue({
+      ...paidLedger,
+      entries: [
+        { cycle_number: 6, expected_due_date: "2026-03-01", paid_date: "2026-03-02", days_late: 1, amount: "200.00", cumulative_drift: 1, suspended: false },
+        ...paidLedger.entries,
+      ],
+    } as never);
+    renderPage("/students/5?month=2026-03");
+    expect(await screen.findByRole("dialog", { name: "March 2026" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "2025–2026 school year" })).toBeInTheDocument();
+  });
+
+  it("ignores a month before the student joined, whose tile can't be opened either", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ join_date: "2026-10-01" }) as never);
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue({ ...paidLedger, entries: paidLedger.entries.slice(1) } as never);
+    renderPage("/students/5?month=2026-09");
+    expect(await screen.findByRole("button", { name: /September 2026 · not enrolled/ })).toBeDisabled();
+    // The month leaves the address in the same step that would have opened the sheet.
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/));
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it.each(["2026-13", "octobre", "2020-01", "2026-07"])("ignores a month it can't show (%s)", async (month) => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    renderPage(`/students/5?month=${month}`);
     await screen.findByText("Fatima Zahra");
-    expect(screen.queryByText("Punctuality")).toBeNull();
+    await waitFor(() => expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/));
+    expect(screen.queryByRole("dialog")).toBeNull();
   });
 });

@@ -334,6 +334,7 @@
     "whatsapp": "WhatsApp",
     "whatsappNumber": "Message {{phone}} on WhatsApp",
     "note": "Note",
+    "noteTitle": "Note on {{name}}",
     "editNote": "Edit",
     "addNote": "Add a note"
   },
@@ -519,7 +520,11 @@
     "often_late": "Often late",
     "paysOnTime": "Pays on time",
     "average_one": "Usually {{count}} day late",
-    "average_other": "Usually {{count}} days late"
+    "average_other": "Usually {{count}} days late",
+    "averageShort_one": "Usually {{count}} day late",
+    "averageShort_other": "Usually {{count}} days late",
+    "total_one": "{{count}} day in total",
+    "total_other": "{{count}} days in total"
   },
   "schoolShare": {
     "title": "School's share",

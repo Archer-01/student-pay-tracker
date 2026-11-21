@@ -1,5 +1,5 @@
-import { useState, type ComponentType, type ReactNode, type SVGProps } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useEffect, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { deletePayment, getLedger, getStudent, listPeriods } from "../api/endpoints";
 import { downloadFile } from "../api/client";
@@ -16,11 +16,11 @@ import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
 import { useMutation } from "../lib/useMutation";
-import { usePunctualityText } from "../lib/punctuality";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
 import { EditPaymentForm } from "../components/students/EditPaymentForm";
+import { NoteSheet } from "../components/students/NoteSheet";
 import { AsyncView, Button, Modal } from "../components/ui";
 import { Avatar, PunctualityPill } from "../components/people";
 import {
@@ -38,7 +38,7 @@ import {
 } from "../components/icons";
 import { whatsappLink } from "../lib/phone";
 
-type OpenModal = null | "more" | "override" | "edit" | "leave" | "return" | { tile: MonthTile };
+type OpenModal = null | "more" | "override" | "edit" | "note" | "leave" | "return" | { tile: MonthTile };
 
 /**
  * One student, read top to bottom the way the teacher asks about them: who is this, are they up
@@ -58,8 +58,35 @@ export function StudentDetail() {
     [studentId, payments.version],
   );
   const [openModal, setOpenModal] = useState<OpenModal>(null);
+  // The school year the tiles show; null until the teacher (or a link) picks one.
+  const [shownYear, setShownYear] = useState<number | null>(null);
   // Offline, the page is read only: the buttons that would save something are switched off.
   const readOnly = useReadOnly();
+
+  // A link to one month (`?month=2026-10`, from the home page's rows) opens that month's tile
+  // once the ledger is in, on the right school year. The month then leaves the address, so
+  // closing the sheet and refreshing the page doesn't bring it back. A month the page can't show
+  // is simply ignored.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const linkedMonth = searchParams.get("month");
+  const loaded = state.status === "success" ? state.data : undefined;
+  useEffect(() => {
+    if (linkedMonth === null || !loaded) return;
+    const [detail, ledger, periods] = loaded;
+    const linked = linkedTile(linkedMonth, detail, ledger, isEnrolled(periods));
+    if (linked) {
+      setShownYear(linked.year);
+      setOpenModal({ tile: linked.tile });
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("month");
+        return next;
+      },
+      { replace: true },
+    );
+  }, [linkedMonth, loaded, setSearchParams]);
 
   const close = () => setOpenModal(null);
   const handleSaved = () => {
@@ -118,12 +145,14 @@ export function StudentDetail() {
                 onEdit={() => setOpenModal("edit")}
               />
 
-              <Note note={detail.note} readOnly={readOnly} onEdit={() => setOpenModal("edit")} />
+              <Note note={detail.note} readOnly={readOnly} onEdit={() => setOpenModal("note")} />
 
               <YearTiles
                 detail={detail}
                 ledger={ledger}
                 enrolled={enrolled}
+                shownYear={shownYear}
+                onYear={setShownYear}
                 onTile={(tile) => setOpenModal({ tile })}
               />
 
@@ -174,6 +203,15 @@ export function StudentDetail() {
                 >
                   <AttendanceForm studentId={studentId} mode={openModal} onSuccess={handleSaved} onCancel={close} />
                 </Modal>
+              )}
+              {openModal === "note" && (
+                <NoteSheet
+                  studentId={studentId}
+                  name={detail.first_name}
+                  note={detail.note}
+                  onSaved={handleSaved}
+                  onClose={close}
+                />
               )}
               {openModal === "edit" && (
                 <Modal title={t("edit.title")} onClose={close}>
@@ -330,24 +368,34 @@ const tileStyles: Record<MonthTile["state"], string> = {
   none: "border-transparent bg-transparent text-placeholder",
 };
 
-/** The school year as twelve tiles, with arrows to earlier (or prepaid later) years. */
+/**
+ * The school year as twelve tiles, with arrows to earlier (or prepaid later) years. Opens on the
+ * current year; the page holds the year shown, so a link to a month can turn to its year.
+ */
 function YearTiles({
   detail,
   ledger,
   enrolled,
+  shownYear,
+  onYear: setYear,
   onTile,
 }: {
   detail: StudentDetailOut;
   ledger: LedgerOut;
   enrolled: boolean;
+  shownYear: number | null;
+  onYear: (year: number) => void;
   onTile: (tile: MonthTile) => void;
 }) {
   const { t, i18n } = useTranslation();
   const years = schoolYears(ledger.entries, detail.join_date, ledger.as_of);
-  const [year, setYear] = useState(() => {
-    const current = schoolYearStart(ledger.as_of);
-    return years.includes(current) ? current : years[years.length - 1]!;
-  });
+  const current = schoolYearStart(ledger.as_of);
+  const year =
+    shownYear !== null && years.includes(shownYear)
+      ? shownYear
+      : years.includes(current)
+        ? current
+        : years[years.length - 1]!;
   const tiles = monthTiles(ledger.entries, year, {
     joinDate: detail.join_date,
     today: ledger.as_of,
@@ -602,22 +650,29 @@ function Note({ note, readOnly, onEdit }: { note: string | null; readOnly: boole
 
 function Facts({ detail }: { detail: StudentDetailOut }) {
   const { t } = useTranslation();
-  const punctualityText = usePunctualityText();
+  const average = detail.average_days_late;
+  // Two numbers read together in one row, so they don't seem to disagree: how late the student
+  // usually pays (their last six payments) and the days late added up since joining (drift).
+  const total = detail.cumulative_drift > 0 ? t("punctuality.total", { count: detail.cumulative_drift }) : null;
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-bold">{t("student.details")}</h2>
       <dl className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
-        <Row label={t("student.totalLate")}>
-          {detail.cumulative_drift > 0 ? t("student.days", { count: detail.cumulative_drift }) : t("drift.onTrack")}
-        </Row>
-        {detail.average_days_late !== null && (
-          <Row label={t("punctuality.label")}>
+        <Row label={t("punctuality.label")}>
+          {average === null ? (
+            // No payment has come due to judge by yet: the total alone.
+            (total ?? t("drift.onTrack"))
+          ) : (
             <span className="flex flex-col items-end gap-1">
-              <PunctualityPill averageDaysLate={detail.average_days_late} />
-              <span className="text-sm font-normal text-muted">{punctualityText(detail.average_days_late)}</span>
+              <PunctualityPill averageDaysLate={average} />
+              <span className="text-sm font-normal text-muted">
+                {[average === 0 ? t("punctuality.paysOnTime") : t("punctuality.averageShort", { count: average }), total]
+                  .filter(Boolean)
+                  .join(" · ")}
+              </span>
             </span>
-          </Row>
-        )}
+          )}
+        </Row>
         <Row label={t("detail.fields.monthlyPrice")}>
           {formatMoney(detail.monthly_price)}
           {/* An agreed price is shown against the pack's, so the exception is visible. */}
@@ -748,6 +803,26 @@ function MoreActions({
       {downloadError && <p className="mt-2 text-sm font-bold text-bad">{downloadError}</p>}
     </Modal>
   );
+}
+
+/**
+ * The tile a `?month=YYYY-MM` link points at, with its school year, or null when the page has no
+ * such tile to open: not a month, a year outside the student's, or a month nothing was expected
+ * in (before joining, after leaving), whose tile can't be tapped either.
+ */
+function linkedTile(
+  month: string,
+  detail: StudentDetailOut,
+  ledger: LedgerOut,
+  enrolled: boolean,
+): { tile: MonthTile; year: number } | null {
+  if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
+  const year = schoolYearStart(`${month}-01`);
+  if (!schoolYears(ledger.entries, detail.join_date, ledger.as_of).includes(year)) return null;
+  const tile = monthTiles(ledger.entries, year, { joinDate: detail.join_date, today: ledger.as_of, enrolled }).find(
+    (t) => t.month === month,
+  );
+  return tile && tile.state !== "none" ? { tile, year } : null;
 }
 
 /**
