@@ -45,7 +45,7 @@ plenty).
   — migrations run on startup and are idempotent.
 - **Health check:** `GET /health` runs a real `SELECT 1` → `200 {"status":"ok","database":"ok"}` or
   **503** if the DB is unreachable. Unauthenticated. Use it for platform/orchestrator health probes.
-- **Endpoints:** everything under `/api/v1` (students, payments, overrides, dashboard, reports, CSV
+- **Endpoints:** everything under `/api/v1` (students, payments, overrides, dashboard, reports, PDF
   exports) + `/health`, `/docs`, `/openapi.json`.
 
 ## 3. Hard constraints (these decide the platform)

@@ -42,7 +42,7 @@ title, a sentence on a PDF sent to parents.
    « la remise »; « Annuler » is the cancel button, so an action that undoes something needs
    another verb when both sit side by side.
 3. **Typography**: a no-break space (U+00A0) before `: ; ? !` and inside `« »`; in the backend
-   it's written ` `. Numbers keep their unit on the same line (« 6 j »). French
+   it's written `\u00a0`. Numbers keep their unit on the same line (« 6 j »). French
    capitalises only the first word of a title or button (« Encaisser un paiement », not
    « Encaisser Un Paiement »). Months and days are lowercase in a sentence, and elide
    (« d'octobre », not « de Octobre »). A month put into a sentence comes from code

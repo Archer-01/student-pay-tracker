@@ -60,11 +60,11 @@ tests/
 
 ## i18n
 
-User-facing text (API errors, CSV, PDFs) is translated by `app/core/i18n.translate`, English and
+User-facing text (API errors, PDFs) is translated by `app/core/i18n.translate`, English and
 French, per request from `Accept-Language` or `?lang=`. The CLI speaks English.
 `tests/unit/test_i18n.py` enforces the first two rules:
 
-- **French typography**: ` ` (written as the escape) before `: ; ? !` and inside `« »`.
+- **French typography**: `\u00a0` (written as the escape) before `: ; ? !` and inside `« »`.
   U+00A0, never U+202F: the PDFs' font has no glyph for it.
 - **Plurals in pairs** (`<key>_one` / `<key>_other`, chosen by `count`; French counts 0 as one).
 - **Pass values, not strings**: `translate` formats `date` and `Decimal` params for the locale.

@@ -29,12 +29,12 @@ One deployable image serving a **FastAPI** API and a **built Vite/React SPA** fr
 ## Build & run (single image)
 
 ```bash
-docker build -t tracker .
-docker run --rm -p 8000:8000 -v tracker-data:/data tracker
+docker build -t ardoise .
+docker run --rm -p 8000:8000 -v ardoise-data:/data ardoise
 ```
 
 Then: `http://localhost:8000/` (the app), `/health`, `/docs`, `/api/v1/...`. Data persists in the
-`tracker-data` volume mounted at `/data` (`DATABASE_URL=sqlite:////data/app.db`).
+`ardoise-data` volume mounted at `/data` (`DATABASE_URL=sqlite:////data/app.db`).
 
 ## Local dev (two processes)
 

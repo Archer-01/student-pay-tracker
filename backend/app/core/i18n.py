@@ -2,7 +2,7 @@
 
 Right-sized for a single-teacher tool: a flat message catalog and two helpers, no gettext/babel.
 The **service layer never translates** — it raises structured error *codes*; only the presentation
-edges (API error handler, CSV exports, CLI) call :func:`translate`. English is the dev default,
+edges (API error handler, PDFs, CLI) call :func:`translate`. English is the dev default,
 French is for the teacher. A request picks a locale via ``Accept-Language`` or ``?lang=``
 (see ``app/api/deps.py``).
 """

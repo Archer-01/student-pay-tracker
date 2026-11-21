@@ -71,7 +71,7 @@ consulted. Tests run in English (the setup resets it).
 - **Counts get `_one`/`_other` pairs**; never `{n} {t("students")}` ("1 élèves").
 - **No `defaultValue` in `t()`**: it hides a missing key from the tests (how an English "Close"
   once shipped in the French UI).
-- The backend localizes its own error `detail`, CSV and PDFs from the `Accept-Language` /
+- The backend localizes its own error `detail` and PDFs from the `Accept-Language` /
   `?lang=` that `client.ts` sends. Non-React modules read the locale from the `i18n` singleton.
 
 ## Domain rules the UI must respect

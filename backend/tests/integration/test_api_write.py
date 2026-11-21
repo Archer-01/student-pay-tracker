@@ -1,5 +1,5 @@
 """Write endpoints: validation (422), domain errors (404/409/400), the full happy path,
-and CLI<->API parity. (The API is open — no auth.)"""
+and CLI<->API parity, through the signed-in `client`."""
 
 import re
 from decimal import Decimal

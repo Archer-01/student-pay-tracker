@@ -42,11 +42,11 @@ recognised by their prefix. Grep before deleting one that might be built another
 
 ## Backend: `app/core/i18n.py`
 
-API error messages, CSV headers and PDF text live in `MESSAGES`, a Python dict
+API error messages and PDF text live in `MESSAGES`, a Python dict
 `key -> {"en": …, "fr": …}` with `str.format` params (`{student_id}`, not `{{…}}`). Edit it
 directly:
 
-- write the no-break space as the escape ` ` so it stays visible in the source;
+- write the no-break space as the escape `\u00a0` so it stays visible in the source;
 - plurals as `<key>_one` / `<key>_other`, called with the bare key and a `count` param;
 - pass `date` and `Decimal` values as params, never pre-formatted strings: `translate` formats
   them for the locale;

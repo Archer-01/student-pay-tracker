@@ -34,7 +34,7 @@ description: Use when a SQLAlchemy model in app/models changes (new table, colum
      say so in the migration's docstring rather than writing a downgrade that silently invents values.
    - Prefer an explicit hand-written mapping over a clever heuristic when the row count is small
      enough to enumerate. A regex that splits names on the first space looks fine until it meets a
-     compound given name like "Fatima Zahra", already present in the seed data.
+     compound given name like "Fatima Zahra", a real case in the teacher's data.
 8. After the migration lands, grep `app/models` and `app/repos` for date/day arithmetic — it should find nothing. If you find yourself adding a computed property or default that does date math, that logic belongs in `app/services` instead.
 9. Add a focused up/down test to `tests/integration/test_migrations.py` (see `test_0010_…`); the
    stairway test there already walks every revision up, down one and up again.

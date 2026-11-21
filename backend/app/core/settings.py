@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    # extra="ignore": tolerate unknown keys in the environment / .env (e.g. a leftover
-    # TEACHER_API_TOKEN) instead of failing to start.
+    # extra="ignore": tolerate unknown keys in the environment / .env (a variable from an older
+    # version, another tool's) instead of failing to start.
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     database_url: str = "sqlite:///./app.db"
