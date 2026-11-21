@@ -47,5 +47,6 @@ cd frontend && npm run gen:api # after any backend schema change; CI fails on a 
 ## Harness
 
 `.claude/settings.json` wires the hooks (`guard-bash.sh` before Bash, `format-python.sh` after
-edits); shared skills live in `.claude/skills/`. CI is `.github/workflows/ci.yml`, one job per
+edits); shared skills live in `.claude/skills/`. To see a change in the running app, or take
+phone/desktop screenshots, use the `ardoise-demo` skill (demo data on scratch ports). CI is `.github/workflows/ci.yml`, one job per
 app, and `.pre-commit-config.yaml` is an optional local gate with the same tools.
