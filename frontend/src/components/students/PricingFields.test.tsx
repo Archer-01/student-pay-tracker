@@ -60,6 +60,20 @@ describe("PricingFields", () => {
     expect(screen.queryByText(/but the class is/i)).not.toBeInTheDocument();
   });
 
+  it("never picks a pack on its own unless asked to (the edit form doesn't)", async () => {
+    const onPackId = vi.fn();
+    setup({ classLevel: "2BAC", onPackId });
+    await waitFor(() => expect(endpoints.listPacks).toHaveBeenCalled());
+    await screen.findByRole("option", { name: /Maths seul/ });
+    expect(onPackId).not.toHaveBeenCalled();
+  });
+
+  it("picks the only pack at the class's level when asked to", async () => {
+    const onPackId = vi.fn();
+    setup({ classLevel: "2BAC", onPackId, pickFromClass: true });
+    await waitFor(() => expect(onPackId).toHaveBeenCalledWith("2"));
+  });
+
   it("hides the reason field until there is an agreed price to explain", async () => {
     const { rerender } = setup();
     await waitFor(() => expect(endpoints.listPacks).toHaveBeenCalled());

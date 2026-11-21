@@ -93,23 +93,22 @@ export function AnnualReport() {
                       }))}
                     />
                   </section>
-                  <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface">
+                  {/* One line a month. The teacher's part isn't repeated here: it is in the
+                      Répartition card above, and month by month in Bilan › École. */}
+                  <ul
+                    aria-label={t("annual.months")}
+                    className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+                  >
                     {report.months.map((m) => (
-                      <li key={m.month} className="flex min-h-14 items-center justify-between gap-3 px-4 py-2">
-                        <span className="font-bold">{capitalized(m.month)}</span>
-                        <span className="text-right">
-                          <span className={`block font-bold tabular-nums ${Number(m.collected) > 0 ? "" : "text-muted"}`}>
-                            {formatMoney(m.collected)}
-                          </span>
-                          <span className="block text-sm text-muted">
-                            {t("student.paymentsCount", { count: m.payments_count })}
-                          </span>
-                          {Number(m.share.percent) > 0 && Number(m.collected) > 0 && (
-                            <span className="block text-sm text-muted">
-                              {t("share.yoursShort", { amount: formatMoney(m.share.teacher) })}
-                            </span>
-                          )}
+                      <li
+                        key={m.month}
+                        className={`flex min-h-11 items-center gap-3 px-4 py-2 ${Number(m.collected) > 0 ? "" : "text-muted"}`}
+                      >
+                        <span className="min-w-0 truncate font-bold">{capitalized(m.month)}</span>
+                        <span className="shrink-0 text-sm text-muted">
+                          {t("student.paymentsCount", { count: m.payments_count })}
                         </span>
+                        <span className="ml-auto shrink-0 font-bold tabular-nums">{formatMoney(m.collected)}</span>
                       </li>
                     ))}
                   </ul>

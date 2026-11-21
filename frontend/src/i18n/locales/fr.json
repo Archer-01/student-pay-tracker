@@ -58,7 +58,11 @@
       "all": "Tous",
       "owing": "Impayés",
       "left": "Anciens",
-      "punctuality": "Ponctualité"
+      "punctuality": "Ponctualité",
+      "allCount_one": "Tous · {{count}}",
+      "allCount_other": "Tous · {{count}}",
+      "owingCount_one": "Impayés · {{count}}",
+      "owingCount_other": "Impayés · {{count}}"
     },
     "addShort": "Élève"
   },
@@ -336,7 +340,8 @@
     "note": "Note",
     "noteTitle": "Note sur {{name}}",
     "editNote": "Modifier",
-    "addNote": "Ajouter une note"
+    "addNote": "Ajouter une note",
+    "packFromClass": "Choisi d'après la classe"
   },
   "annual": {
     "year": "Année",
@@ -348,7 +353,8 @@
     "averageHint": "Calculée sur les mois avec des encaissements, pas sur douze",
     "best": "Meilleur mois",
     "downloadPdf": "Télécharger le PDF",
-    "empty": "Aucun paiement enregistré cette année."
+    "empty": "Aucun paiement enregistré cette année.",
+    "months": "Mois"
   },
   "debts": {
     "empty": "Aucun ancien élève n'a laissé d'impayés.",
@@ -390,7 +396,11 @@
     "nextYear": "Année suivante",
     "byStudent": "Par élève",
     "paid": "A payé {{amount}}",
-    "paidNothing": "Rien payé"
+    "paidNothing": "Rien payé",
+    "unpaidGroup_one": "Pas encore payé · {{count}}",
+    "unpaidGroup_other": "Pas encore payé · {{count}}",
+    "paidGroup_one": "Ont payé · {{count}}",
+    "paidGroup_other": "Ont payé · {{count}}"
   },
   "settings": {
     "title": "Réglages",

@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listPacks } from "../../api/endpoints";
 import { useApi } from "../../lib/useApi";
@@ -13,6 +14,12 @@ type Props = {
   onPriceNote: (value: string) => void;
   /** The student's class level, used to sort the most likely packs to the top. */
   classLevel?: string | null;
+  /**
+   * Enrolment only: until the teacher picks a pack themselves, choose the one pack sold at the
+   * class's level (and none when there are several, or none). Editing never sets this, so an
+   * existing student's pack only changes when the teacher changes it.
+   */
+  pickFromClass?: boolean;
   errors?: Record<string, string>;
 };
 
@@ -31,11 +38,26 @@ export function PricingFields({
   priceNote,
   onPriceNote,
   classLevel,
+  pickFromClass = false,
   errors = {},
 }: Props) {
   const { t } = useTranslation();
   // Retired packs can't be assigned; they stay visible only on students already on them.
   const packs = useApi(() => listPacks({ active: true }), []);
+
+  // Once the teacher touches the pack, it is theirs: never picked over again, even "no pack".
+  const [teacherChose, setTeacherChose] = useState(false);
+  // The pack the class suggests ("" for none), or null while nothing should be picked. Until the
+  // teacher chooses, the pack follows the class, so changing class can't leave a stale guess.
+  const atLevel = (packs.data ?? []).filter((p) => classLevel && p.level === classLevel);
+  const suggested =
+    pickFromClass && !teacherChose && packs.status === "success" ? (atLevel.length === 1 ? String(atLevel[0].id) : "") : null;
+  useEffect(() => {
+    // Classes and packs both load after the form opens (and a class can come preset from its
+    // page), so this runs when either lands, not only when the class is changed.
+    if (suggested !== null && packId !== suggested) onPackId(suggested);
+  }, [suggested, packId, onPackId]);
+  const pickedFromClass = !!suggested && packId === suggested;
 
   const options = (packs.data ?? [])
     .slice()
@@ -59,11 +81,15 @@ export function PricingFields({
         id="student-pack"
         label={t("student.pack")}
         value={packId}
-        onChange={onPackId}
+        onChange={(value) => {
+          setTeacherChose(true);
+          onPackId(value);
+        }}
         options={[{ value: "", label: t("student.noPack") }, ...options]}
         hint={selected ? t("student.packPriceHint", { price: formatMoney(selected.price) }) : undefined}
         error={errors.pack_id}
       />
+      {pickedFromClass && <p className="-mt-2 text-sm text-muted">{t("student.packFromClass")}</p>}
       {mismatch && selected && (
         <p className="-mt-2 text-xs text-amber-700 dark:text-amber-400">
           {t("student.levelMismatch", { packLevel: selected.level, classLevel })}

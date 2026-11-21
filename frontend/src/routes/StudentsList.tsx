@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { listClasses, listStudents } from "../api/endpoints";
 import type { StudentListItem } from "../api/types";
-import { useApi } from "../lib/useApi";
+import { useApi, type AsyncState } from "../lib/useApi";
 import { useDebounced } from "../lib/useDebounced";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
@@ -22,8 +22,9 @@ type Filter = "all" | "owing" | "punctuality" | "left" | number;
 
 /**
  * Everyone, one line each, alphabetical so a name is where you expect it. A large search box and
- * a row of chips replace the four crammed filters: "Doivent de l'argent" is one tap, each class
- * is one tap, and former students sit behind "Anciens" so the default list is the current year.
+ * two rows of chips replace the four crammed filters: "Impayés" is one tap, each class is one
+ * tap, and former students sit behind "Anciens" so the default list is the current year. Every
+ * chip shows on a phone; the first row says how many students there are and how many owe.
  */
 export function StudentsList() {
   const { t } = useTranslation();
@@ -36,25 +37,47 @@ export function StudentsList() {
 
   // Refreshes after a payment taken from the shared sheet, wherever it was opened.
   const paymentsVersion = usePaymentsVersion();
-  const state = useApi(
-    () =>
-      listStudents({
-        status: filter === "left" ? "inactive" : "active",
-        class_id: typeof filter === "number" ? filter : undefined,
-        q: q || undefined,
-      }),
-    [filter, q, paymentsVersion],
+  // The current students, fetched once whichever chip is picked: the chips count them, and a
+  // class is filtered here rather than by the server so the counts stay put.
+  const current = useApi(() => listStudents({ status: "active", q: q || undefined }), [q, paymentsVersion]);
+  // Former students only once "Anciens" is picked. Until then this resolves to null, which reads
+  // as still loading, so a first tap never flashes "no students" before the rows arrive.
+  const showingLeft = filter === "left";
+  const former = useApi(
+    () => (showingLeft ? listStudents({ status: "inactive", q: q || undefined }) : Promise.resolve(null)),
+    [showingLeft, q, paymentsVersion],
   );
+  const state = showingLeft ? asLoaded(former) : current;
   // Class chips. A failure here must not blank the page; the chips simply don't appear.
   const classes = useApi(() => listClasses(), []);
 
-  const chips: { value: Filter; label: string }[] = [
-    { value: "all", label: t("students.filters.all") },
-    { value: "owing", label: t("students.filters.owing") },
+  const counted = (key: "allCount" | "owingCount", plain: "all" | "owing") =>
+    current.status === "success"
+      ? t(`students.filters.${key}`, { count: shown(current.data, plain).length })
+      : t(`students.filters.${plain}`);
+  const firstRow: { value: Filter; label: string }[] = [
+    { value: "all", label: counted("allCount", "all") },
+    { value: "owing", label: counted("owingCount", "owing") },
     { value: "punctuality", label: t("students.filters.punctuality") },
+  ];
+  const secondRow: { value: Filter; label: string }[] = [
     ...(classes.data ?? []).map((c) => ({ value: c.id as Filter, label: `${c.level} ${c.name}` })),
     { value: "left", label: t("students.filters.left") },
   ];
+  const chip = ({ value, label }: { value: Filter; label: string }) => (
+    <button
+      key={String(value)}
+      type="button"
+      role="radio"
+      aria-checked={filter === value}
+      onClick={() => setFilter(value)}
+      className={`min-h-11 whitespace-nowrap rounded-full border-2 px-3 text-sm font-bold ${
+        filter === value ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink"
+      }`}
+    >
+      {label}
+    </button>
+  );
 
   return (
     <div className="flex flex-col gap-4 pb-20 sm:pb-0">
@@ -89,25 +112,12 @@ export function StudentsList() {
         />
       </label>
 
-      <div
-        role="radiogroup"
-        aria-label={t("students.filters.label")}
-        className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
-      >
-        {chips.map((chip) => (
-          <button
-            key={String(chip.value)}
-            type="button"
-            role="radio"
-            aria-checked={filter === chip.value}
-            onClick={() => setFilter(chip.value)}
-            className={`min-h-11 shrink-0 whitespace-nowrap rounded-full border-2 px-4 font-bold ${
-              filter === chip.value ? "border-brand bg-brand text-brand-ink" : "border-line bg-surface text-ink"
-            }`}
-          >
-            {chip.label}
-          </button>
-        ))}
+      {/* Two rows that wrap rather than one that scrolls sideways, which hid the classes and
+          "Anciens" off the edge of a phone. Smaller type is meant to keep the first row on one
+          line at 375px with two-digit counts (by estimate); a longer one wraps, never hides. */}
+      <div role="radiogroup" aria-label={t("students.filters.label")} className="flex flex-col gap-2">
+        <div className="flex flex-wrap gap-2">{firstRow.map(chip)}</div>
+        <div className="flex flex-wrap gap-2">{secondRow.map(chip)}</div>
       </div>
 
       <AsyncView
@@ -163,10 +173,16 @@ export function StudentsList() {
 
 /**
  * The rows a filter shows, in the order it shows them: who owes most first for "owing", the
- * latest payers first for "punctuality" (students with nothing due yet left out), alphabetical
- * otherwise. `Number` only compares amounts; nothing is computed from them.
+ * latest payers first for "punctuality" (students with nothing due yet left out), the class's
+ * students for a class, alphabetical otherwise. `Number` only compares amounts; nothing is
+ * computed from them.
  */
 function shown(rows: StudentListItem[], filter: Filter): StudentListItem[] {
+  if (typeof filter === "number") {
+    return rows
+      .filter((s) => s.school_class?.id === filter)
+      .sort((a, b) => a.full_name.localeCompare(b.full_name));
+  }
   if (filter === "punctuality") {
     return rows
       .filter((s) => s.average_days_late !== null)
@@ -180,4 +196,10 @@ function shown(rows: StudentListItem[], filter: Filter): StudentListItem[] {
       .sort((a, b) => Number(b.amount_owed) - Number(a.amount_owed) || a.full_name.localeCompare(b.full_name));
   }
   return [...rows].sort((a, b) => a.full_name.localeCompare(b.full_name));
+}
+
+/** A fetch that answered "nothing asked yet" (null) reads as still loading. */
+function asLoaded<T>(state: AsyncState<T | null> & { reload: () => void }): AsyncState<T> & { reload: () => void } {
+  if (state.status === "success" && state.data === null) return { status: "loading", reload: state.reload };
+  return state as AsyncState<T> & { reload: () => void };
 }
