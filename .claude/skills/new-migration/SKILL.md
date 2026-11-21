@@ -37,4 +37,5 @@ description: Use when a SQLAlchemy model in app/models changes (new table, colum
      enough to enumerate. A regex that splits names on the first space looks fine until it meets a
      compound given name like "Fatima Zahra", already present in the seed data.
 8. After the migration lands, grep `app/models` and `app/repos` for date/day arithmetic — it should find nothing. If you find yourself adding a computed property or default that does date math, that logic belongs in `app/services` instead.
-9. If this is the very first migration, make sure the `conftest.py` fixture (fresh in-memory DB with all migrations applied) exists and every integration test from here on uses it.
+9. Add a focused up/down test to `tests/integration/test_migrations.py` (see `test_0010_…`); the
+   stairway test there already walks every revision up, down one and up again.

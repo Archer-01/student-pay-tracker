@@ -34,15 +34,17 @@ cd frontend && npm run gen:api # after any backend schema change; CI fails on a 
 
 ## Changing things
 
-- **An API change** goes backend schema + tests → `npm run gen:api` → `src/api/types.ts` →
-  `endpoints.ts` + `endpoints.test.ts` → the screen. A new screen read also goes into
-  `frontend/src/lib/offlineWarmup.ts`, so it works offline.
+- **An API change** goes service → schema and route → `npm run gen:api` → `types.ts` →
+  `endpoints.ts` + `endpoints.test.ts` → the screen and `lib/offlineWarmup.ts` (skill
+  `api-change`).
 - **A schema change** is an Alembic migration (skill `new-migration`), checked up, down and
   against the models.
+- **New text** goes into both languages at once (skill `add-i18n-keys`).
 - **Docs move with the code**: the area's CLAUDE.md for rules, `frontend/docs/screens.md` for
-  screen behaviour, `backend/README.md` for what shipped.
-- **Parallel agents** each own distinct files; when two would edit the same file, use git
-  worktrees and merge. Give each its own scratch file names.
+  screen behaviour, `backend/README.md` for what shipped. A new invariant belongs in
+  `backend/CLAUDE.md` (or a skill), not only in a commit message, or the next session breaks it.
+- **Parallel agents** each own distinct files, scratch folders and ports (skill
+  `parallel-agents`).
 
 ## Harness
 
