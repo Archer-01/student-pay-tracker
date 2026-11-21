@@ -1,15 +1,13 @@
 # Frontend Handoff — Ardoise
 
-This backend is **complete** (all 8 sprints, 179 tests green). It's a single-teacher tool for tracking
-student tuition payments and **"drift"** (how chronically late a student pays). This document is
-everything a frontend needs: how to run it, every endpoint with its shapes, the domain
-concepts the UI must get right, and the known gotchas.
+The contract between `backend/` and `frontend/`: how the API behaves, the domain concepts the UI
+must get right, and the known gotchas. It describes what the API does and why; the exact shapes
+live in the OpenAPI schema.
 
-> **Read this first:** the API is self-describing. With the server running, open
-> **`http://127.0.0.1:8000/docs`** (interactive Swagger) and **`/openapi.json`** (machine-readable).
-> Generating a typed client from `/openapi.json` (e.g. `openapi-typescript`, `orval`) is the fastest,
-> least error-prone path — treat the shapes below as the human summary, and the OpenAPI schema as the
-> source of truth.
+> **The schema is the source of truth.** `ardoise openapi` (in `backend/`) prints it without a
+> server or a session, and `npm run gen:api` (in `frontend/`) turns it into
+> `frontend/src/api/schema.d.ts`; CI fails when that file is stale. `/docs` and `/openapi.json` on
+> a running server need a signed-in session.
 
 ---
 
