@@ -1,21 +1,11 @@
-"""Write endpoints: validation (422), domain errors (404/409/400), the full happy path,
-and CLI<->API parity, through the signed-in `client`."""
+"""Write endpoints: validation (422), domain errors (404/409/400) and the full happy path,
+through the signed-in `client`."""
 
-import re
 from decimal import Decimal
 from pathlib import Path
 
 import pytest
-from alembic.config import Config
 from httpx import AsyncClient
-from typer.testing import CliRunner
-
-from alembic import command
-from app.cli import app as cli_app
-from app.core import db as db_module
-from app.core.provisioning import provision_tenant
-from app.core.settings import settings
-from app.models import User
 
 _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
@@ -309,7 +299,7 @@ async def test_writes_on_unknown_student_are_404(client: AsyncClient) -> None:
 
 
 # --------------------------------------------------------------------------- #
-# Full flow + CLI<->API parity
+# Full flow
 # --------------------------------------------------------------------------- #
 
 
@@ -323,64 +313,6 @@ async def test_full_flow_drift_15(client: AsyncClient) -> None:
         assert resp.status_code == 201
     drift = await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-06-10"})
     assert drift.json()["cumulative_drift"] == 15
-
-
-async def test_cli_and_api_agree(
-    client: AsyncClient, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    # --- Same flow through the API (in-memory test DB) ---
-    sid = await _create_student(client)
-    for month in ("2023-04", "2023-05", "2023-06"):
-        await client.post(
-            f"/api/v1/students/{sid}/payments",
-            json={"paid_date": f"{month}-10", "amount": "300", "for_month": month},
-        )
-    api_drift = (
-        await client.get(f"/api/v1/students/{sid}/ledger", params={"as_of": "2023-06-30"})
-    ).json()["cumulative_drift"]
-
-    # --- Same flow through the CLI (separate temp-file DB) ---
-    monkeypatch.setattr(settings, "database_url", f"sqlite:///{tmp_path / 'cli.db'}")
-    db_module.clear_engine_cache()
-    command.upgrade(Config(str(_ALEMBIC_INI)), "head")
-
-    # The CLI works on one teacher's database, so it needs an account to work on. Inserted
-    # directly rather than via AuthService to skip argon2 for a password nothing verifies here.
-    with db_module.get_sessionmaker()() as session:
-        user = User(username="cli", display_name="CLI", password_hash="unused", is_active=True)
-        session.add(user)
-        session.commit()
-        provision_tenant(user.id)
-    monkeypatch.setenv("ARDOISE_USER", "cli")
-
-    runner = CliRunner()
-    runner.invoke(
-        cli_app,
-        ["students", "add", "--first-name", "Amina", "--join-date", "2023-03-05", "--price", "300"],
-    )
-    for month in ("2023-04", "2023-05", "2023-06"):
-        runner.invoke(
-            cli_app,
-            [
-                "payments",
-                "record",
-                "1",
-                "--date",
-                f"{month}-10",
-                "--amount",
-                "300",
-                "--for-month",
-                month,
-            ],
-        )
-    show = runner.invoke(cli_app, ["students", "show", "1", "--as-of", "2023-06-30"])
-    db_module.clear_engine_cache()
-
-    match = re.search(r"Cumulative drift:\s*(\d+)", show.output)
-    assert match is not None, show.output
-    cli_drift = int(match.group(1))
-
-    assert api_drift == cli_drift == 15
 
 
 async def test_the_list_and_the_student_say_how_late_they_usually_pay(client: AsyncClient) -> None:

@@ -1,9 +1,5 @@
-"""Packs: the price list. Create an offering across levels, edit it, retire it.
-
-An *offering* (e.g. "Maths seul") is not a table — it is a pack ``name`` shared by that offering's
-level-variants. Since ``level`` sits on the pack, the subject set is physically duplicated across
-those variants, so this service is what keeps them identical: subject and name edits always apply
-to **every** variant of an offering at once (:meth:`update_offering`), never to one row.
+"""Packs: the price list. A pack is one name at one level, created, edited, retired or deleted on
+its own; a pack's level is locked once a student is on it.
 """
 
 from decimal import Decimal
@@ -143,35 +139,6 @@ class PackService:
             pack.is_active = is_active
         self.session.commit()
         return pack
-
-    def update_offering(
-        self,
-        name: str,
-        *,
-        new_name: str | _Unset = _UNSET,
-        subjects: SubjectNames | _Unset = _UNSET,
-    ) -> Packs:
-        """Rename an offering and/or change its subjects, across **all** its level-variants."""
-        variants = self.packs.list_by_name(name)
-        if not variants:
-            raise InvalidPackError("pack_offering_unknown", name=name)
-
-        if not isinstance(new_name, _Unset):
-            cleaned = _clean_name(new_name)
-            if cleaned != name:
-                for variant in variants:
-                    if self.packs.find(cleaned, variant.level) is not None:
-                        raise DuplicatePackError(cleaned, variant.level.value)
-                for variant in variants:
-                    variant.name = cleaned
-
-        if not isinstance(subjects, _Unset):
-            resolved = self._resolve_subjects(_clean_subjects(subjects))
-            for variant in variants:
-                variant.subjects = list(resolved)
-
-        self.session.commit()
-        return variants
 
     def delete(self, pack_id: int) -> None:
         """Delete a pack no student is on. Otherwise: deactivate it instead."""

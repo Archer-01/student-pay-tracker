@@ -9,7 +9,7 @@ neither may see the other's students.
 
 ## Decision
 Each account's data lives in its own SQLite file next to a central one holding accounts and
-sessions. Only `api/deps.py::get_db` and `cli.py::_session` know about it. Details in
+sessions. Only `api/deps.py::get_db` and the CLI's `teacher_session` know about it. Details in
 `backend/CLAUDE.md`, "Per-teacher databases".
 
 ## Rejected

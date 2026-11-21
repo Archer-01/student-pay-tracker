@@ -35,9 +35,9 @@ rule, with a scenario that shows it, not to comment on style.
   Columns are `Numeric(10, 2)`: a value with more decimals is rounded on write, so a check made
   before rounding ("> 0") can still store 0.00. Look at what is stored, not only what is
   validated.
-- **One rule, every door**: the API (Pydantic validators), the CLI and the app reach the same
-  services. A guard that lives only in a schema is skipped by the CLI; rules belong in the
-  service, and the CLI and API must agree (parity tests in `test_api_write.py`).
+- **Rules live in the services**: a guard only in a Pydantic schema is skipped by any other
+  caller (the CLI, a script, a future job); that is how a future paid date once inflated drift.
+  The CLI writes no teacher data (decision 0010); a change that adds a write there is a finding.
 - **The school share** is a flat percentage of money received by paid date, half-up to the
   cent; never on amounts owed or write-offs; a handover only records cash given. A write-off is
   never revenue.
@@ -55,7 +55,7 @@ rule, with a scenario that shows it, not to comment on style.
 For each suspected problem, try to show it: read the test that should catch it, or write a quick
 check in your scratchpad (never in the repo, never against `backend/app.db`, `local-prod/` or
 any `*.db` there). A scratch test file can use the repo's fixtures (`client`, `db_session`,
-`cli_db` imported from `tests.integration.test_cli`):
+`cli_db` and `_school` from `tests.integration.test_cli`):
 
 ```bash
 cd backend && uv run pytest -p tests.conftest --rootdir=. -p no:cacheprovider \

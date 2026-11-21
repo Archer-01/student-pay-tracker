@@ -259,3 +259,71 @@ def test_deleting_a_missing_payment_errors(db_session: Session) -> None:
     sid = _student(db_session)
     with pytest.raises(PaymentNotFoundError):
         PaymentService(db_session).delete_payment(student_id=sid, cycle_number=0)
+
+
+# --------------------------------------------------------------------------- #
+# Rules every caller gets (the API, and anything else that reaches the service)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_payment_cannot_be_dated_in_the_future(db_session: Session) -> None:
+    sid = _student(db_session)
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).record_payment(
+            student_id=sid,
+            cycle_number=1,
+            paid_date=date(2023, 4, 11),
+            amount=Decimal("300"),
+            today=date(2023, 4, 10),
+        )
+    assert exc.value.code == "payment_date_in_future"
+
+
+def test_a_payment_dated_today_is_fine(db_session: Session) -> None:
+    sid = _student(db_session)
+    payment = PaymentService(db_session).record_payment(
+        student_id=sid,
+        cycle_number=1,
+        paid_date=date(2023, 4, 10),
+        amount=Decimal("300"),
+        today=date(2023, 4, 10),
+    )
+    assert payment.days_late == 5
+
+
+def test_a_correction_cannot_move_the_date_into_the_future(db_session: Session) -> None:
+    # Such a date would count as hundreds of days late and inflate drift (decision 0008).
+    sid = _paid(db_session)
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).update_payment(
+            student_id=sid, cycle_number=1, paid_date=date(2024, 1, 1), today=date(2023, 6, 1)
+        )
+    assert exc.value.code == "payment_date_in_future"
+
+
+@pytest.mark.parametrize("amount", ["0.004", "199.999", "250.5001"])
+def test_an_amount_has_at_most_two_decimals(db_session: Session, amount: str) -> None:
+    # The column keeps two decimals and would round silently: "0.004" stored as a 0.00 payment.
+    sid = _student(db_session)
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).record_payment(
+            student_id=sid, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal(amount)
+        )
+    assert exc.value.code == "payment_amount_precision"
+
+
+def test_a_corrected_amount_has_at_most_two_decimals(db_session: Session) -> None:
+    sid = _paid(db_session)
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).update_payment(
+            student_id=sid, cycle_number=1, amount=Decimal("250.555")
+        )
+    assert exc.value.code == "payment_amount_precision"
+
+
+def test_cents_are_fine(db_session: Session) -> None:
+    sid = _student(db_session)
+    payment = PaymentService(db_session).record_payment(
+        student_id=sid, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("199.50")
+    )
+    assert payment.amount == Decimal("199.50")

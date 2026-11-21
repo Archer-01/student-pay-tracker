@@ -106,9 +106,10 @@ def db_session(db_engine: Engine) -> Iterator[Session]:
 def _plain_cli_output() -> Iterator[None]:
     """The CLI's tests read its output as text. Typer forces colours when `GITHUB_ACTIONS` is set,
     and the codes split words (`--amount` came out wrapped in ANSI codes in CI); a dumb terminal
-    gets plain text everywhere."""
+    gets plain text everywhere. A wide terminal, so a table cell isn't wrapped across lines."""
     with pytest.MonkeyPatch.context() as patch:
         patch.setenv("TERM", "dumb")
+        patch.setenv("COLUMNS", "160")
         yield
 
 

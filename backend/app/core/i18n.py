@@ -44,6 +44,14 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "{amount} is more than this student's monthly price of {price}",
         "fr": "Le montant ({amount}) dépasse le tarif mensuel de l'élève ({price})",
     },
+    "error.payment_amount_precision": {
+        "en": "An amount has at most two decimals",
+        "fr": "Un montant a au plus deux chiffres après la virgule",
+    },
+    "error.payment_date_in_future": {
+        "en": "The paid date ({paid_date}) can't be in the future",
+        "fr": "La date de paiement ({paid_date}) ne peut pas être dans le futur",
+    },
     "error.override_reason_empty": {
         "en": "Override reason must not be empty",
         "fr": "Indiquez le motif du décalage",
@@ -98,10 +106,6 @@ MESSAGES: dict[str, dict[str, str]] = {
     "error.pack_price_negative": {
         "en": "Pack price must not be negative",
         "fr": "Le tarif du pack ne peut pas être négatif",
-    },
-    "error.pack_offering_unknown": {
-        "en": "No pack offering named '{name}'",
-        "fr": "Aucune offre nommée «\u00a0{name}\u00a0»",
     },
     "error.pack_level_locked": {
         "en": "{student_count} student(s) are on this pack, so its level can no longer change",

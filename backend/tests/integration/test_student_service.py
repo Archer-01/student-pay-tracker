@@ -77,13 +77,6 @@ def test_update_cannot_touch_join_date(db_session: Session) -> None:
         svc.update(student.id, join_date=date(2024, 1, 1))  # type: ignore[call-arg]
 
 
-def test_change_status(db_session: Session) -> None:
-    svc = StudentService(db_session)
-    student = _enroll(svc)
-    svc.change_status(student.id, StudentStatus.INACTIVE)
-    assert svc.get(student.id).status is StudentStatus.INACTIVE
-
-
 def test_delete_removes_student(db_session: Session) -> None:
     svc = StudentService(db_session)
     student = _enroll(svc)

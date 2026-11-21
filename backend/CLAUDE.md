@@ -41,7 +41,7 @@ app/
              FastAPI; schedule.py is pure, no DB
   schemas/   Pydantic request/response models, separate from the ORM
   api/       routers, deps, error handlers, the PDFs (pdf_export.py, pdf_documents.py)
-  cli.py     the `ardoise` CLI
+  cli/       the `ardoise` admin CLI (decision 0010): accounts, db, lookups
 tests/
   unit/        pure functions only (a guard fails any test asking for the database)
   integration/ services, API, CLI, migrations, tenant isolation
@@ -53,7 +53,8 @@ tests/
 - **The service layer is sync and locale-agnostic**: domain errors carry a stable `code` and
   params, never a sentence; the API layer translates. Services take settings such as the school
   share percent as parameters; only the API reads `settings`.
-- **The CLI and the API must agree** for the same operation (there are parity tests).
+- **The CLI writes no teacher data** (decision 0010): accounts, operations and read-only
+  lookups only. Every rule lives in a service, so no caller can skip it.
 - **Trap: a method named `list`** (`StudentRepo.list`, `PackService.list`…) shadows the builtin
   for every annotation after it in the class body, so `-> list[Thing]` breaks at import or under
   mypy. Use a module-level alias (`Packs = list[Pack]`); reordering methods only delays it.
@@ -112,7 +113,7 @@ leak a row that isn't in the file, the write lock is split per teacher, and both
 "2BAC / A" class.
 
 - **Nothing in `models/`, `repos/` or `services/` knows about it.** Routing happens in two places:
-  `app/api/deps.py::get_db` (the signed-in user's file) and `app/cli.py::_session` (`--user` /
+  `app/api/deps.py::get_db` (the signed-in user's file) and `app/cli/_common.py::teacher_session` (`--user` /
   `ARDOISE_USER`; domain commands refuse to guess). `get_auth_db` is the central counterpart.
 - **One migration chain for every file**: tenant files carry empty auth tables and the central
   file empty domain tables, so `alembic upgrade head` works on any of them. Startup migrates them
@@ -131,13 +132,13 @@ These must hold for every change:
   never touches `join_date` or payments, and never reduces drift for cycles before its date
   (regression test required).
 - **Recorded payments are frozen truth**: `amount`, `expected_due_date` and `days_late` are
-  written once by the service and never recomputed. A **correction** (`update_payment`: CLI
-  `payments edit`, `PATCH /students/{id}/payments/{cycle}`, "Modifier ce paiement") fixes a typed
+  written once by the service and never recomputed. A **correction** (`update_payment`:
+  `PATCH /students/{id}/payments/{cycle}`, "Modifier ce paiement") fixes a typed
   amount or paid date; `expected_due_date` never moves, `days_late` is re-derived only when the
   paid date was the mistake. Moving a payment to another month is delete + record.
 - **Duplicate payments are rejected**, never overwritten.
-- **A payment is positive and at most the student's monthly price** (`PricingService.price_of`),
-  enforced in `PaymentService`; an edit checks only a changed amount. A 0 DH payment is meant to
+- **A payment is positive, has at most two decimals, is never dated in the future, and is at
+  most the student's monthly price** (`PricingService.price_of`), all enforced in `PaymentService`; an edit checks only a changed amount. A 0 DH payment is meant to
   be allowed (`docs/decisions/0007`, not built yet): don't add checks that reject it elsewhere.
 - **Money is quoted through `PricingService.price_of`**, never `pack.price` at a call site: it
   holds the `custom_price` override and "no pack means not billed".

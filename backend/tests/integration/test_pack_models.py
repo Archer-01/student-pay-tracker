@@ -164,13 +164,6 @@ def test_pack_repo_list_filters(db_session: Session) -> None:
     assert [p.name for p in repo.list(active=True)] == ["A"]
 
 
-def test_pack_repo_list_by_name_spans_levels(db_session: Session) -> None:
-    _pack(db_session, name="Maths seul", level=ClassLevel.AC1)
-    _pack(db_session, name="Maths seul", level=ClassLevel.BAC2)
-    _pack(db_session, name="Pack complet", level=ClassLevel.AC1)
-    assert len(PackRepo(db_session).list_by_name("Maths seul")) == 2
-
-
 def test_student_repo_counts_students_on_a_pack(db_session: Session) -> None:
     pack = _pack(db_session)
     _student(db_session, pack_id=pack.id)

@@ -49,7 +49,7 @@ select = ["E", "F", "I", "UP", "B"]
 
 [tool.ruff.lint.per-file-ignores]
 # typer and FastAPI both put Option/Argument/Depends/Query calls in parameter defaults by design.
-"app/cli.py" = ["B008"]
+"app/cli/*.py" = ["B008"]
 "app/api/*.py" = ["B008"]
 
 [tool.mypy]

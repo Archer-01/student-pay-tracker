@@ -37,20 +37,26 @@ just backup     # ardoise db backup
 
 ## The `ardoise` CLI
 
-The admin tool. It talks to the databases directly, so it keeps working when nobody can sign
-in. Domain commands need to know which teacher: `--user <username>` or `ARDOISE_USER`.
+The admin tool, for a shell on the server (Northflank) or locally. It does only what the app
+can't (`../docs/decisions/0010`): everything the teacher does, from enrolling to payments, is
+done in the app. It talks to the databases directly, so it keeps working when nobody can sign
+in. Commands about a teacher's data need to know which teacher: `--user <username>` or
+`ARDOISE_USER`.
 
-| Group | For |
+| Command | For |
 |---|---|
-| `users` | accounts: `add`, `list`, `passwd`, `deactivate`, `activate` |
-| `students`, `classes`, `packs`, `payments`, `overrides`, `debts` | the same data the app edits |
+| `users add / list / passwd / deactivate / activate` | accounts (there is no sign-up in the app) |
 | `db migrate` | bring the central database and every teacher's up to date |
 | `db backup [--to DIR]` | a consistent, timestamped copy of every database, safe while running |
 | `db reset` | drop and recreate the central database (dev only, needs `ALLOW_DB_RESET=1`) |
 | `openapi` | print the API schema (what `npm run gen:api` uses) |
+| `students list [--owing] [--search NAME]` | students, most owed first |
+| `students show STUDENT` | one student's facts and every month; by id or a piece of the name |
+| `students delete STUDENT` | delete a student and their history for good (asks for the name) |
+| `debts list` | students who left owing money |
+| `share list` | the school's share of each month, and what was handed over |
 
-`uv run ardoise <group> --help` lists each group's commands. The CLI is due for a rework
-(`../docs/decisions/0008`): use its payment commands with care until then.
+`uv run ardoise <command> --help` gives the options.
 
 ## Configuration
 

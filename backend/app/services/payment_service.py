@@ -25,6 +25,17 @@ from app.services.exceptions import (
 from app.services.pricing_service import PricingService
 from app.services.schedule import cycle_number_for_month, days_late, expected_due_date_for_cycle
 
+_CENTS = Decimal("0.01")
+
+
+def _check_paid_date(paid_date: date, today: date | None) -> None:
+    """A payment can't be dated in the future: it would count as days late that never happened.
+
+    Here rather than only in the API's request schema, so every caller gets it (decision 0008).
+    """
+    if paid_date > (today or date.today()):
+        raise InvalidPaymentError("payment_date_in_future", paid_date=paid_date)
+
 
 class PaymentService:
     def __init__(self, session: Session) -> None:
@@ -49,12 +60,16 @@ class PaymentService:
         """
         if amount <= 0:
             raise InvalidPaymentError("payment_amount_not_positive")
+        if amount != amount.quantize(_CENTS):
+            # The column keeps two decimals and would round silently ("0.004" stored as 0.00).
+            raise InvalidPaymentError("payment_amount_precision")
         price = self.pricing.price_of(student)
         if price > 0 and amount > price:
             # Quoted to the cent so a typed "350" and a stored "300.00" read alike in the message.
-            cents = Decimal("0.01")
             raise InvalidPaymentError(
-                "payment_exceeds_price", amount=amount.quantize(cents), price=price.quantize(cents)
+                "payment_exceeds_price",
+                amount=amount.quantize(_CENTS),
+                price=price.quantize(_CENTS),
             )
 
     def cycle_for_month(self, student_id: int, year: int, month: int) -> int:
@@ -66,9 +81,16 @@ class PaymentService:
         return cycle_number_for_month(student.join_date, year, month, override_dates)
 
     def record_payment(
-        self, *, student_id: int, cycle_number: int, paid_date: date, amount: Decimal
+        self,
+        *,
+        student_id: int,
+        cycle_number: int,
+        paid_date: date,
+        amount: Decimal,
+        today: date | None = None,
     ) -> Payment:
         student = self._require_student(student_id)
+        _check_paid_date(paid_date, today)
         self._check_amount(student, amount)
 
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
@@ -104,6 +126,7 @@ class PaymentService:
         cycle_number: int,
         amount: Decimal | None = None,
         paid_date: date | None = None,
+        today: date | None = None,
     ) -> Payment:
         """Correct a recorded payment's amount and/or paid date; ``None`` leaves a field alone.
 
@@ -117,6 +140,7 @@ class PaymentService:
             self._check_amount(payment.student, amount)
             payment.amount = amount
         if paid_date is not None:
+            _check_paid_date(paid_date, today)
             payment.paid_date = paid_date
             payment.days_late = days_late(payment.expected_due_date, paid_date)
         self.session.commit()

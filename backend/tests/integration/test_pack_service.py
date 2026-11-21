@@ -25,8 +25,7 @@ _GRID = {ClassLevel.AC1: Decimal("100"), ClassLevel.BAC2: Decimal("150")}
 
 
 def _offering(service: PackService, name: str) -> list[Pack]:
-    """One pack per level of `_GRID`, sharing a name and a subject: an offering, as the CLI
-    edits it with `update_offering`."""
+    """One pack per level of `_GRID`, sharing a name and a subject."""
     return [
         service.create(name=name, level=lv, price=p, subjects=["Maths"]) for lv, p in _GRID.items()
     ]
@@ -100,42 +99,6 @@ def test_duplicate_subject_names_collapse(db_session: Session) -> None:
 
 # --------------------------------------------------------------------------- #
 # --------------------------------------------------------------------------- #
-
-
-# --------------------------------------------------------------------------- #
-# update_offering — variants must never diverge
-# --------------------------------------------------------------------------- #
-
-
-def test_editing_subjects_applies_to_every_level_variant(db_session: Session) -> None:
-    service = PackService(db_session)
-    _offering(service, "Maths seul")
-    service.update_offering("Maths seul", subjects=["Maths", "Physique"])
-    variants = service.list()
-    assert len(variants) == 2
-    for variant in variants:
-        assert sorted(s.name for s in variant.subjects) == ["Maths", "Physique"]
-
-
-def test_renaming_an_offering_renames_every_variant(db_session: Session) -> None:
-    service = PackService(db_session)
-    _offering(service, "Maths seul")
-    service.update_offering("Maths seul", new_name="Maths uniquement")
-    assert {p.name for p in service.list()} == {"Maths uniquement"}
-
-
-def test_renaming_onto_an_existing_offering_is_rejected(db_session: Session) -> None:
-    service = PackService(db_session)
-    _offering(service, "A")
-    _offering(service, "B")
-    with pytest.raises(DuplicatePackError):
-        service.update_offering("B", new_name="A")
-
-
-def test_updating_an_unknown_offering_raises(db_session: Session) -> None:
-    with pytest.raises(InvalidPackError) as exc:
-        PackService(db_session).update_offering("nope", subjects=["Maths"])
-    assert exc.value.code == "pack_offering_unknown"
 
 
 # --------------------------------------------------------------------------- #
@@ -218,13 +181,6 @@ def test_update_rejects_a_negative_price(db_session: Session) -> None:
     with pytest.raises(InvalidPackError) as exc:
         service.update(pack.id, price=Decimal("-1"))
     assert exc.value.code == "pack_price_negative"
-
-
-def test_renaming_an_offering_to_its_own_name_is_a_no_op(db_session: Session) -> None:
-    service = PackService(db_session)
-    _offering(service, "Maths seul")
-    service.update_offering("Maths seul", new_name="Maths seul")
-    assert {p.name for p in service.list()} == {"Maths seul"}
 
 
 # --------------------------------------------------------------------------- #

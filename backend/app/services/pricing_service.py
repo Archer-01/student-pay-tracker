@@ -17,7 +17,7 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.models import ClassLevel, Pack, Student
+from app.models import Student
 from app.repos import StudentRepo
 
 
@@ -45,13 +45,3 @@ class PricingService:
     def billable(self, student: Student) -> bool:
         """Whether a cycle costs anything — an unpriced or free month is not arrears."""
         return self.price_of(student) > 0
-
-    def level_mismatch(self, student: Student, pack: Pack) -> tuple[ClassLevel, ClassLevel] | None:
-        """``(class level, pack level)`` when they disagree, else ``None``.
-
-        Advisory only — never a block. A student may have no class yet, or genuinely sit with a
-        group above their level, and refusing the pack would be wrong in both cases.
-        """
-        if student.school_class is None or student.school_class.level is pack.level:
-            return None
-        return student.school_class.level, pack.level

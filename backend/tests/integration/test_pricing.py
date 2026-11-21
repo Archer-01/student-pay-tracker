@@ -14,7 +14,6 @@ import pytest
 from sqlalchemy.orm import Session
 
 from app.models import ClassLevel
-from app.services.class_service import ClassService
 from app.services.exceptions import InvalidPackError, PackNotFoundError
 from app.services.ledger_service import LedgerService
 from app.services.pack_service import PackService
@@ -189,26 +188,3 @@ def test_a_student_can_be_taken_off_their_pack(db_session: Session) -> None:
 # --------------------------------------------------------------------------- #
 # Level mismatch — advisory, never a block
 # --------------------------------------------------------------------------- #
-
-
-def test_a_level_mismatch_is_reported_but_allowed(db_session: Session) -> None:
-    school_class = ClassService(db_session).create(level=ClassLevel.AC1, name="Groupe A")
-    pack = _pack(db_session)  # 2BAC
-    student = _student(db_session, class_id=school_class.id, pack_id=pack.id)
-    assert student.pack_id == pack.id  # succeeded
-    assert PricingService(db_session).level_mismatch(student, pack) == (
-        ClassLevel.AC1,
-        ClassLevel.BAC2,
-    )
-
-
-def test_no_mismatch_when_levels_agree_or_there_is_no_class(db_session: Session) -> None:
-    pricing = PricingService(db_session)
-    pack = _pack(db_session)
-    assert pricing.level_mismatch(_student(db_session), pack) is None
-
-    school_class = ClassService(db_session).create(level=ClassLevel.BAC2, name="Groupe A")
-    matched = StudentService(db_session).enroll(
-        first_name="B", phone=None, join_date=_JOIN, class_id=school_class.id, pack_id=pack.id
-    )
-    assert pricing.level_mismatch(matched, pack) is None

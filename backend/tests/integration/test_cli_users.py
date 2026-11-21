@@ -5,6 +5,7 @@ Worth testing end-to-end rather than trusting the service tests: this is the bre
 """
 
 from collections.abc import Iterator
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -16,23 +17,12 @@ from app.cli import app
 from app.core import db as db_module
 from app.core.settings import settings
 from app.services.auth_service import AuthService
+from app.services.student_service import StudentService
 
 _ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 runner = CliRunner()
 
 PASSWORD = "correct-horse"
-
-# Repeated verbatim in a couple of tests; named so the lines stay under the limit.
-_ENROL_AMINA = [
-    "--user",
-    "aymen",
-    "students",
-    "add",
-    "--first-name",
-    "Amina",
-    "--join-date",
-    "2026-01-05",
-]
 
 
 @pytest.fixture
@@ -48,6 +38,14 @@ def cli_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 def _add(username: str = "aymen", name: str = "Aymen", password: str = PASSWORD) -> None:
     result = runner.invoke(app, ["users", "add", username, "--name", name, "--password", password])
     assert result.exit_code == 0, result.output
+
+
+def _enrol_amina(username: str = "aymen") -> None:
+    """A student in this teacher's own database (students are added in the app, not the CLI)."""
+    with db_module.get_sessionmaker()() as central:
+        user_id = AuthService(central).get_user(username).id
+    with db_module.get_sessionmaker(db_module.tenant_url(user_id))() as session:
+        StudentService(session).enroll(first_name="Amina", phone=None, join_date=date(2026, 1, 5))
 
 
 def test_add_then_list(cli_db: str) -> None:
@@ -142,32 +140,26 @@ def test_two_accounts_get_two_databases(cli_db: str, tmp_path: Path) -> None:
 
 
 def test_a_domain_command_refuses_to_guess_which_teacher(cli_db: str) -> None:
-    """Writing a student into the wrong teacher's database is not something you'd notice quickly,
-    so the CLI asks rather than defaulting."""
+    """Reading, or deleting in, the wrong teacher's database is not something you'd notice
+    quickly, so the CLI asks rather than defaulting."""
     _add()
-    result = runner.invoke(
-        app, ["students", "add", "--first-name", "Amina", "--join-date", "2026-01-05"]
-    )
+    result = runner.invoke(app, ["students", "list"])
     assert result.exit_code == 1
     assert "--user" in result.output
 
 
 def test_a_domain_command_works_with_user(cli_db: str) -> None:
     _add()
-    result = runner.invoke(
-        app,
-        _ENROL_AMINA,
-    )
+    _enrol_amina()
+    result = runner.invoke(app, ["--user", "aymen", "students", "list"])
     assert result.exit_code == 0, result.output
+    assert "Amina" in result.output
 
 
 def test_each_teacher_sees_only_their_own_students(cli_db: str) -> None:
     _add("aymen", "Aymen")
     _add("ayoub", "Ayoub")
-    runner.invoke(
-        app,
-        _ENROL_AMINA,
-    )
+    _enrol_amina("aymen")
 
     mine = runner.invoke(app, ["--user", "aymen", "students", "list"])
     theirs = runner.invoke(app, ["--user", "ayoub", "students", "list"])

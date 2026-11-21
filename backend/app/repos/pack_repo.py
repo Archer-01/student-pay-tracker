@@ -9,7 +9,6 @@ from app.models import ClassLevel, Pack, Subject
 # every annotation declared after it. Aliasing at module scope keeps the later return types
 # correct for mypy and at runtime, whatever order the methods end up in.
 Packs = list[Pack]
-Subjects = list[Subject]
 
 
 class PackRepo:
@@ -37,16 +36,6 @@ class PackRepo:
             stmt = stmt.where(Pack.is_active == active)
         return list(self.session.scalars(stmt))
 
-    def list_by_name(self, name: str) -> Packs:
-        """Every level-variant of one offering — the unit that name/subject edits apply to."""
-        stmt = (
-            select(Pack)
-            .options(selectinload(Pack.subjects))
-            .where(Pack.name == name)
-            .order_by(Pack.id)
-        )
-        return list(self.session.scalars(stmt))
-
     def delete(self, pack: Pack) -> None:
         self.session.delete(pack)
         self.session.flush()
@@ -58,9 +47,6 @@ class SubjectRepo:
 
     def find(self, name: str) -> Subject | None:
         return self.session.scalars(select(Subject).where(Subject.name == name)).one_or_none()
-
-    def list(self) -> Subjects:
-        return list(self.session.scalars(select(Subject).order_by(Subject.name)))
 
     def create(self, subject: Subject) -> Subject:
         self.session.add(subject)

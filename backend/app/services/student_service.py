@@ -139,12 +139,6 @@ class StudentService:
         self.students.delete(student)
         self.session.commit()
 
-    def change_status(self, student_id: int, status: StudentStatus) -> Student:
-        student = self.get(student_id)
-        student.status = status
-        self.session.commit()
-        return student
-
     def update(
         self,
         student_id: int,

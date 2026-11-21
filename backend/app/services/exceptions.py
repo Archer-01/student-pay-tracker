@@ -111,7 +111,7 @@ class PackInUseError(DomainError):
 
 class InvalidPackError(DomainError):
     """Bad pack data or pricing. ``code`` is one of: pack_name_empty / pack_no_subjects /
-    pack_price_negative / pack_offering_unknown / pack_inactive /
+    pack_price_negative / pack_inactive /
     pack_level_locked / custom_price_negative."""
 
 

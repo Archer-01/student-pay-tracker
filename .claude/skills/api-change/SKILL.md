@@ -25,7 +25,8 @@ The order matters: each step depends on the one before being right. Tests first 
 - A new error's HTTP status goes in `api/errors.py` (`_STATUS_BY_ERROR`: 404 not found, 409 conflict;
   anything unlisted is 400), and its message in `app/core/i18n.py` as `error.<code>`, French and
   English (skill `add-i18n-keys`).
-- If the CLI does the same thing, keep the two in step (`cli.py`; there are parity tests).
+- Rules go in the service, not only in the schema, so every caller gets them. The CLI writes no
+  teacher data (decision 0010): a new feature belongs in the app, not as a CLI command.
 - A schema change in the database is a migration first (skill `new-migration`).
 - API tests in `tests/integration/test_api_*.py` with the signed-in `client` fixture.
 

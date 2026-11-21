@@ -22,8 +22,9 @@ every change: a commit message is enough for those.
 | [0005](0005-session-cookie-no-csrf.md) | A session cookie, and no CSRF token | Accepted |
 | [0006](0006-offline-read-only-first.md) | Offline is read-only first; recording payments offline comes next | Accepted |
 | [0007](0007-zero-payments.md) | A 0 DH payment is allowed on purpose | Accepted, not built |
-| [0008](0008-cli-rework-pending.md) | The CLI will be reworked; its known bugs wait for it | Accepted |
+| [0008](0008-cli-rework-pending.md) | The CLI will be reworked; its known bugs wait for it | Replaced by 0010 |
 | [0009](0009-leavers-debt-is-a-warning.md) | A leaver's debt is a warning, never a block | Accepted |
+| [0010](0010-cli-is-an-admin-tool.md) | The CLI is an admin tool, not a second app | Accepted |
 
 ## Template
 

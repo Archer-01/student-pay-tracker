@@ -1,6 +1,6 @@
 # 0008. The CLI will be reworked; its known bugs wait for it
 
-- Status: Accepted
+- Status: Replaced by 0010
 - Decided: 2026-11-21 · Recorded: 2026-11-21
 
 ## Context
