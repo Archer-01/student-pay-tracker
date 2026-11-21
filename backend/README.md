@@ -1,6 +1,6 @@
 # Ardoise — Backend
 
-Backend for a payment tracker a teacher uses to track student tuition payments and lateness ("drift") over time. See `sprint-planning.md` for the full build plan and `CLAUDE.md` for architecture/working-style notes.
+Backend for a payment tracker a teacher uses to track student tuition payments and lateness ("drift") over time. See `CLAUDE.md` for architecture and working-style notes, and `../docs/decisions/` for why things are the way they are.
 
 ## Requirements
 

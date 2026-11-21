@@ -119,7 +119,7 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Agreed price must not be negative",
         "fr": "Le tarif convenu ne peut pas être négatif",
     },
-    # --- Sign-in / accounts (BACKLOG §5) ---
+    # --- Sign-in / accounts (docs/decisions/0005) ---
     # One message for wrong-username, wrong-password and deactivated alike: naming which one
     # failed would let an attacker enumerate accounts.
     "error.invalid_credentials": {

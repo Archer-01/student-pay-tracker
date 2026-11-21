@@ -11,7 +11,7 @@ description: Use when a SQLAlchemy model in app/models changes (new table, colum
    - CHECK constraints (e.g. `AnchorOverride.reason` must be NOT NULL and non-empty via CHECK)
    - Column-level NOT NULL on existing tables with data
    - Constraint/index renames
-4. Confirm the migration encodes the actual domain rules from `sprint-planning.md`'s data model — don't just accept whatever autogenerate produced:
+4. Confirm the migration encodes the actual domain rules (`backend/CLAUDE.md`, "Domain invariants") — don't just accept whatever autogenerate produced:
    - `Student.join_date` NOT NULL
    - `Payment.days_late` should be set by the service layer on insert, not a DB-computed column (keeps it testable in `app/services`)
    - `AnchorOverride.reason` NOT NULL and non-empty (CHECK constraint)
@@ -25,8 +25,7 @@ description: Use when a SQLAlchemy model in app/models changes (new table, colum
    - `alembic upgrade head` → assert the resulting schema matches expectations
    - `alembic downgrade base` (or `-1` for an incremental migration) → assert it leaves the DB clean
 7. **If the migration backfills or transforms existing data, a blank-DB test proves nothing.** Splitting
-   a column, deriving new rows from old ones, or replacing one pricing field with another (see
-   `../BACKLOG.md` sprints 10–12) can produce a perfectly valid schema holding wrong values. For those:
+   a column, deriving new rows from old ones, or replacing one pricing field with another can produce a perfectly valid schema holding wrong values. For those:
    - Run the upgrade against a **copy of the real `app.db`**, never the live file.
    - Assert on *values*, not just shape: row counts match, and the numbers the product is judged on
      — `cumulative_drift` and `months_overdue` for every student — are **identical before and after**.

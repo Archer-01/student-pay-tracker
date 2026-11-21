@@ -10,7 +10,7 @@ One deployable image serving a **FastAPI** API and a **built Vite/React SPA** fr
 ├── Dockerfile   # multi-stage: build frontend → build backend → runtime (copies SPA to /app/static)
 ├── docker-compose.yml
 ├── .dockerignore
-├── FRONTEND_HANDOFF.md  # the API contract between the two apps
+├── docs/decisions/  # why things are the way they are
 ├── Justfile     # `just check`: everything CI runs
 ├── .github/     # CI, one job per app
 └── .claude/     # Claude Code: shared settings, hooks, skills

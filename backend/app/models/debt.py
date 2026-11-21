@@ -38,7 +38,7 @@ class DebtWriteoff(Base):
     amount: Mapped[Decimal] = mapped_column(Numeric(10, 2), nullable=False)
     reason: Mapped[str] = mapped_column(nullable=False)
     created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
-    # A nullable `user_id` belongs here once login lands (BACKLOG §5); adding a nullable column
-    # later is a one-line migration, so nothing is stubbed out now.
+    # No `user_id`: each teacher's write-offs live in their own database file
+    # (docs/decisions/0001), so the file already says whose they are.
 
     student: Mapped["Student"] = relationship(back_populates="writeoffs")

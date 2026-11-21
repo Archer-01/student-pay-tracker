@@ -14,7 +14,7 @@ already taken (`payment.amount`) never changes.
 
 ## Rejected
 - **A price history** (price snapshots per period, or an append-only assignment table, as
-  `BACKLOG.md` §2.2 once proposed): exact for past months, but three numbers per student to
+  the sprint 10 plan first proposed): exact for past months, but three numbers per student to
   understand and edit instead of one, for a teacher who rarely changes prices mid-year.
 
 ## Consequences

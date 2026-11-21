@@ -2,7 +2,7 @@
 
 Deliberately minimal. There are two users (the two teachers) and accounts are provisioned from
 the CLI (``ardoise users add``), so there is no self-service signup, no email, and no
-password-reset flow — see ``BACKLOG.md`` §5.
+password-reset flow — see ``docs/decisions/0005``.
 
 **No ``role`` column.** Both accounts can do everything. Should that ever change, adding one is
 ``ALTER TABLE user ADD COLUMN role ... DEFAULT ...`` — non-rewriting in SQLite, no backfill — so

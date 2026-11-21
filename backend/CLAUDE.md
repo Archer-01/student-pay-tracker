@@ -3,9 +3,8 @@
 The Ardoise API: FastAPI, SQLite (one file per teacher), SQLAlchemy 2, Alembic, Pydantic v2, a
 `typer` CLI (`ardoise`), managed with `uv`. It tracks each student's payments and **drift**:
 cumulative days paid late, the number the whole product exists to keep right. Repo-wide rules are
-in `../CLAUDE.md`; the frontend's contract is `../FRONTEND_HANDOFF.md`. Why things are shaped the
-way they are is recorded in `sprint-planning.md` and `../BACKLOG.md`; `README.md` is the
-sprint-by-sprint log of what shipped.
+in `../CLAUDE.md`. Why things are shaped the way they are is recorded in `../docs/decisions/`;
+`README.md` is the sprint-by-sprint log of what shipped.
 
 ## Commands
 

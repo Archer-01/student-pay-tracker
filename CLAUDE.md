@@ -7,7 +7,8 @@ tier) with **real student data**. Two apps in one repo:
 - `backend/`: FastAPI + SQLite, one database file per teacher. Rules in `backend/CLAUDE.md`.
 - `frontend/`: React PWA, installable, readable offline. Rules in `frontend/CLAUDE.md`; what each
   screen does in `frontend/docs/screens.md`.
-- `FRONTEND_HANDOFF.md`: the API contract between them (the OpenAPI schema is the truth).
+- The API contract is the OpenAPI schema: `ardoise openapi` prints it, `npm run gen:api` turns it
+  into the frontend's types, and CI fails when they differ.
 - `docs/decisions/`: why things are the way they are (one database per teacher, current
   pricing, a PWA, read-only offline, 0 DH payments…). **Read the relevant record before changing
   what it covers.**

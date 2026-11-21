@@ -1,7 +1,7 @@
 # 0001. One SQLite file per teacher, not an `owner_id` column
 
 - Status: Accepted
-- Decided: when sign-in landed (BACKLOG §5) · Recorded: 2026-11-21
+- Decided: when sign-in landed · Recorded: 2026-11-21
 
 ## Context
 Two accounts may use Ardoise (the teacher, and perhaps the school's other teacher one day), and

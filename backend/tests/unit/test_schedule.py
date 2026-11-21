@@ -1,6 +1,6 @@
 """Example and edge-case tests for the drift domain core (``app.services.schedule``).
 
-These are the hand-picked scenarios from ``sprint-planning.md`` and the ``drift-invariants``
+These are the hand-picked scenarios from the original build plan and the ``drift-invariants``
 skill: the canonical acceptance scenario, calendar month-end arithmetic, a DST-adjacent
 date (to prove ``date`` math is timezone-agnostic), and the messy real-world payment-timing
 cases the user called out (early, prepay, backpay, unpaid, one payment covering two cycles).

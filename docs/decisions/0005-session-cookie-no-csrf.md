@@ -1,7 +1,7 @@
 # 0005. A session cookie, and no CSRF token
 
 - Status: Accepted
-- Decided: when sign-in landed (BACKLOG §5) · Recorded: 2026-11-21
+- Decided: when sign-in landed · Recorded: 2026-11-21
 
 ## Context
 The app needs a sign-in gate for two accounts, with no email and no account management.

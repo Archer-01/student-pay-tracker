@@ -58,7 +58,6 @@ cd frontend && npm run gen:api     # regenerates src/api/schema.d.ts from `ardoi
 ## 5. Docs and checks
 
 - `docs/decisions/` if the change settles or reverses a decision (check the index first).
-- `FRONTEND_HANDOFF.md` if the contract changed in a way a reader needs explained (the schema
-  covers the shapes); `backend/CLAUDE.md` for a new invariant; `frontend/docs/screens.md` for what
+- `backend/CLAUDE.md` for a new invariant; `frontend/docs/screens.md` for what
   a screen now does; `backend/README.md` for what shipped.
 - `just check` at the root; look at the screen on a phone (skill `ardoise-demo`).

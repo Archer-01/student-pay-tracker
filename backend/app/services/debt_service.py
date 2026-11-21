@@ -11,8 +11,8 @@ Two routes off the list, and no silent third:
   It is deliberately *not* a payment — writing off must never inflate collected revenue, which is
   exactly what recording a fake payment to clear the list would do.
 
-Nothing here blocks anything. Re-admitting a student who owes is the teacher's call (BACKLOG
-§2.3); this service's only job is to make the debt impossible to miss.
+Nothing here blocks anything. Re-admitting a student who owes is the teacher's call
+(docs/decisions/0009); this service's only job is to make the debt impossible to miss.
 """
 
 import unicodedata

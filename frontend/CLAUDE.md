@@ -1,9 +1,9 @@
 # CLAUDE.md — frontend
 
 The Ardoise app: a Vite + React + TypeScript PWA for one teacher, used mostly on a phone between
-classes. It talks to the FastAPI backend in `../backend` (contract: `../FRONTEND_HANDOFF.md`, the
-OpenAPI schema is the source of truth). Repo-wide rules are in `../CLAUDE.md`. What each screen
-does, screen by screen, is in `docs/screens.md`: read it before changing a screen, update it after.
+classes. It talks to the FastAPI backend in `../backend`, whose OpenAPI schema is the contract
+(`npm run gen:api`). Repo-wide rules are in `../CLAUDE.md`. What each screen does, screen by
+screen, is in `docs/screens.md`: read it before changing a screen, update it after.
 
 ## Commands
 

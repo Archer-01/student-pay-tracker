@@ -1,11 +1,11 @@
 ---
 name: drift-invariants
-description: Use when writing, reviewing, or extending app/services/schedule.py (due-date generation, days_late, cumulative_drift, next_expected_date) or its tests. Encodes the specific edge cases and property tests the domain logic must never lose, per sprint-planning.md's Sprint 1 and the override regression rule from Sprint 3.
+description: Use when writing, reviewing, or extending app/services/schedule.py (due-date generation, days_late, cumulative_drift, next_expected_date) or its tests. Encodes the specific edge cases and property tests the domain logic must never lose, including the override regression rule.
 ---
 
 # Drift calculation invariants
 
-`services/schedule.py` is the highest-value, highest-risk code in this repo — per `sprint-planning.md`, "cutting Sprint 1's property tests to save time is a mistake." Any change to due-date generation, lateness, or cumulative drift must keep all of the following covered, not just make the immediate change pass.
+`services/schedule.py` is the highest-value, highest-risk code in this repo — cutting its property tests to save time is a mistake. Any change to due-date generation, lateness, or cumulative drift must keep all of the following covered, not just make the immediate change pass.
 
 ## Required example tests
 
