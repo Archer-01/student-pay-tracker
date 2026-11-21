@@ -18,7 +18,7 @@ cp .env.example .env   # then fill in DATABASE_URL if you don't want the sqlite 
 
 ```bash
 just test      # run tests
-just lint      # ruff check + mypy
+just lint      # ruff format --check + ruff check + mypy
 just run       # start the dev server (fastapi dev)
 just migrate   # apply Alembic migrations
 just backup    # ardoise db backup (timestamped SQLite copy)

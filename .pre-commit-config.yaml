@@ -1,0 +1,45 @@
+# Optional local gate, the same tools as CI. Enable once with:
+#   uv tool install pre-commit && pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: no-student-data
+        name: no databases or production copies
+        entry: Never commit a database or backend/local-prod (real student data).
+        language: fail
+        files: (\.db(-wal|-shm)?|\.sqlite3)$|^backend/local-prod/
+
+      - id: ruff-format
+        name: ruff format (backend)
+        entry: uv run --project backend ruff format --force-exclude
+        language: system
+        types: [python]
+        files: ^backend/
+
+      - id: ruff-check
+        name: ruff check (backend)
+        entry: uv run --project backend ruff check --fix --force-exclude
+        language: system
+        types: [python]
+        files: ^backend/
+
+      - id: mypy
+        name: mypy (backend)
+        entry: bash -c 'cd backend && uv run mypy app'
+        language: system
+        types: [python]
+        files: ^backend/
+        pass_filenames: false
+
+      - id: tsc
+        name: tsc (frontend)
+        entry: bash -c 'cd frontend && npx tsc -b'
+        language: system
+        files: ^frontend/.*\.(ts|tsx)$
+        pass_filenames: false
+
+      - id: eslint
+        name: eslint (frontend)
+        entry: bash -c 'cd frontend && npx eslint "${@#frontend/}"' --
+        language: system
+        files: ^frontend/.*\.(ts|tsx|js|mjs)$

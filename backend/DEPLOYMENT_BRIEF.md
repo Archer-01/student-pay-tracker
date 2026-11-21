@@ -176,7 +176,7 @@ All must satisfy §3 (single instance + persistent volume + a non-public/authent
 - `README.md` — full feature/endpoint reference (sprint-by-sprint), Docker + backup + i18n sections.
 - `CLAUDE.md` — architecture, invariants, out-of-scope (note: **SQLite only, single writer**; the
   Auth section covers the session gate).
-- `FRONTEND_HANDOFF.md` — the frontend contract (`Accept-Language`/`?lang`, CORS caveat). Predates
+- `../FRONTEND_HANDOFF.md` — the frontend contract (`Accept-Language`/`?lang`, CORS caveat). Predates
   the session gate; `frontend/CLAUDE.md` is current on auth.
 - `Dockerfile` / `docker-compose.yml` — the deployment artifacts described above.
 - `app/core/settings.py` — the exact config surface.

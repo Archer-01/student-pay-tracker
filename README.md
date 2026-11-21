@@ -9,7 +9,11 @@ One deployable image serving a **FastAPI** API and a **built Vite/React SPA** fr
 ├── frontend/    # Vite + React + TypeScript SPA — calls /api/v1 relatively (same-origin in prod)
 ├── Dockerfile   # multi-stage: build frontend → build backend → runtime (copies SPA to /app/static)
 ├── docker-compose.yml
-└── .dockerignore
+├── .dockerignore
+├── FRONTEND_HANDOFF.md  # the API contract between the two apps
+├── Justfile     # `just check`: everything CI runs
+├── .github/     # CI, one job per app
+└── .claude/     # Claude Code: shared settings, hooks, skills
 ```
 
 ## How it fits together
@@ -40,6 +44,19 @@ cd backend && uv sync && uv run alembic upgrade head && uv run uvicorn app.main:
 # frontend (proxies to :8000)
 cd frontend && npm install && npm run dev   # http://localhost:5173
 ```
+
+## Checks
+
+`just check` at the root runs what CI (`.github/workflows/ci.yml`) runs, one job per app:
+backend `ruff format --check`, `ruff check`, mypy, pytest and migrations on an empty database;
+frontend generated API types up to date (`npm run gen:api` leaves no diff), `tsc`, eslint and
+Vitest. `.pre-commit-config.yaml` holds the same tools as an optional local gate
+(`uv tool install pre-commit && pre-commit install`), plus a refusal to commit any database.
+
+Repo-level config lives at the root, one copy for both apps: `.gitignore`, `.github/`,
+`.pre-commit-config.yaml`, and `.claude/` (Claude Code's shared settings, hooks and skills;
+`.claude/hooks/guard-bash.sh` refuses to stage student data or stop the dev servers on
+8000/5173).
 
 ## Installing it on a phone
 

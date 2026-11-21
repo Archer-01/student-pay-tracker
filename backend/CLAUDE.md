@@ -28,12 +28,13 @@ A backend-only payment tracker for a teacher tracking student tuition payments a
 Use the `Justfile`:
 ```
 just test      # uv run pytest
-just lint      # uv run ruff check . && uv run mypy app
+just lint      # ruff format --check, ruff check, mypy (what CI runs)
 just run       # uv run fastapi dev app/main.py
 just migrate   # uv run alembic upgrade head
 just backup    # uv run ardoise db backup
 just docker-up # docker compose up --build
 ```
+`just check` at the repo root runs this plus the frontend's checks, exactly as CI does.
 Run a single test with `uv run pytest path/to/test_file.py::test_name`. Admin tasks — including
 **creating the accounts that can sign in** — run via the `ardoise` CLI, which talks to the DB
 directly and therefore keeps working when nobody can log in.

@@ -16,7 +16,7 @@ headline metric). English + French.
 ## Requirements
 
 - Node 20+ and npm.
-- The backend running locally at `http://127.0.0.1:8000` (see `FRONTEND_HANDOFF.md`).
+- The backend running locally at `http://127.0.0.1:8000` (see `../FRONTEND_HANDOFF.md`).
 
 ## Getting started
 
@@ -168,5 +168,5 @@ Money is handled as **decimal strings** end to end (never float math on the clie
 ## Learn more
 
 - `CLAUDE.md` — architecture, conventions, and domain rules for contributors.
-- `FRONTEND_HANDOFF.md` — the authoritative backend contract.
+- `../FRONTEND_HANDOFF.md` — the authoritative backend contract.
 - `sprint-planning.md` — how the frontend was built, sprint by sprint.

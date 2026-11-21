@@ -1,0 +1,76 @@
+name: CI
+
+# The same checks as `just check` at the repo root, one job per app.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - uses: extractions/setup-just@v2
+
+      - run: uv sync --locked
+
+      - name: Lint (ruff format, ruff check, mypy)
+        run: just lint
+
+      - name: Test (100 % coverage on app/services)
+        run: uv run pytest -q
+
+      - name: Migrations apply to an empty database and match the models
+        run: |
+          just migrate
+          uv run alembic check
+        env:
+          DATABASE_URL: sqlite:///${{ runner.temp }}/ci.db
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: frontend/.nvmrc
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      # gen:api asks the backend CLI for the OpenAPI schema.
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+
+      - run: npm ci
+
+      - name: Generated API types match the backend
+        run: |
+          npm run gen:api
+          git diff --exit-code -- src/api/schema.d.ts \
+            || { echo "::error::src/api/schema.d.ts is stale: run 'npm run gen:api' and commit it"; exit 1; }
+
+      - name: Typecheck
+        run: npx tsc -b
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test

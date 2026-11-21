@@ -1,8 +1,61 @@
-# Root-level ignores (each app also has its own .gitignore covering node_modules, .venv, dist, *.db, etc.)
-.DS_Store
-.claude/
-**/.claude/
+# One ignore file for the whole repo (backend/ and frontend/ were separate repos once).
+
+# --- Real student data: never committed, wherever it sits --------------------------------
+# SQLite databases, their WAL/shared-memory siblings (which *.db does not match), and the
+# timestamped snapshots `ardoise db backup` writes. backend/local-prod/ holds a copy of
+# production and is covered by the same patterns.
+*.db
+*.db-wal
+*.db-shm
+*.sqlite3
+backups/
+backend/local-prod/
+
+# --- Secrets -----------------------------------------------------------------------------
+.env
+.env.local
 *.local
 
-# Built SPA copied into the backend for local runs — the Docker image generates it, so it isn't source.
+# --- Claude Code -------------------------------------------------------------------------
+# Shared harness (settings, hooks, agents, skills) is committed; local state is not.
+/.claude/*
+!/.claude/settings.json
+!/.claude/hooks/
+!/.claude/agents/
+!/.claude/skills/
+**/.claude/settings.local.json
+
+# --- Backend (Python) --------------------------------------------------------------------
+__pycache__/
+*.py[oc]
+build/
+wheels/
+*.egg-info
+.venv
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.hypothesis/
+.coverage
+.coverage.*
+htmlcov/
+# Built SPA copied into the backend for local runs — the Docker image generates it.
 backend/static/
+
+# --- Frontend (Node) ---------------------------------------------------------------------
+node_modules
+dist
+dist-ssr
+logs
+*.log
+npm-debug.log*
+# Schema dump produced by `npm run gen:api` (via `ardoise openapi`); regenerate, don't commit.
+frontend/.openapi.json
+
+# --- Editors and OS ----------------------------------------------------------------------
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.sw?

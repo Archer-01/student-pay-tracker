@@ -4,7 +4,7 @@ A step-by-step build plan for the SPA. Each sprint is a **shippable, demoable in
 stays runnable at every boundary. Ordering favors real value early (a usable roster and evidence screen)
 before layering on writes, aggregates, and polish.
 
-Read alongside `CLAUDE.md` (architecture + domain rules) and `FRONTEND_HANDOFF.md` (backend contract).
+Read alongside `CLAUDE.md` (architecture + domain rules) and `../FRONTEND_HANDOFF.md` (backend contract).
 
 ---
 

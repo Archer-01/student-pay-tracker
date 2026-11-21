@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Frontend for a **single-teacher student tuition tracker**. The backend (FastAPI, complete) tracks student
 payments and **"drift"** — cumulative days a student pays late. This is a Vite + React + TypeScript SPA
-that talks to that API. `FRONTEND_HANDOFF.md` is the authoritative backend contract; read it before
+that talks to that API. `../FRONTEND_HANDOFF.md` is the authoritative backend contract; read it before
 touching anything API-related.
 
 ## Commands
@@ -91,7 +91,7 @@ Réglages — the phone's own language is deliberately not consulted.
 
 ## Domain rules the UI must respect
 
-These come from the backend contract (`FRONTEND_HANDOFF.md`) and are easy to get wrong:
+These come from the backend contract (`../FRONTEND_HANDOFF.md`) and are easy to get wrong:
 
 - **Money is decimal strings** (e.g. `"300.00"`), never numbers. Do not do float math on the client;
   render with `formatMoney()` (`src/lib/money.ts`) and send strings back. Sending a stringified float you
@@ -371,6 +371,8 @@ Vitest + Testing Library, jsdom. `src/test/setup.ts` registers the jest-dom matc
 locale between tests, and loads the **real i18n singleton** — so tests assert on the copy the
 teacher actually sees, and a missing translation key fails a test instead of rendering its own
 name. `src/test/render.tsx` wraps a component in the providers every screen assumes (router + i18n).
+jsdom's `localStorage` is real and cleared after every test; Node's own one (Node 25+) is switched
+off for the test workers in `vite.config.ts`, so don't stub `localStorage` per file.
 
 What is worth testing here, and what isn't: the suite covers **logic**, not markup. Formatting and
 locale behaviour, the API client's two error shapes, the `useApi` / `useMutation` state machines,
