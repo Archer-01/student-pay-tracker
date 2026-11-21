@@ -179,6 +179,30 @@ async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Sessi
     ] == [("A", "600.00", 10), ("B", "200.00", 0)]
 
 
+async def test_the_home_page_carries_the_months_dues_and_the_week_ahead(
+    client: AsyncClient, db_session: Session
+) -> None:
+    amina = StudentService(db_session).enroll(
+        first_name="Amina", phone=None, join_date=date(2026, 9, 5), custom_price=Decimal("240")
+    )
+    PaymentService(db_session).record_payment(
+        student_id=amina.id, cycle_number=1, paid_date=date(2026, 10, 5), amount=Decimal("240")
+    )
+    home = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-10-31"})).json()
+    assert home["this_month"] == {
+        "expected": "240.00",
+        "settled": "240.00",
+        "students_expected": 1,
+        "students_settled": 1,
+    }
+    soon = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-11-01"})).json()[
+        "due_this_week"
+    ]
+    assert [(d["name"], d["due_date"], d["amount"]) for d in soon] == [
+        ("Amina", "2026-11-05", "240.00")
+    ]
+
+
 async def test_openapi_and_docs_render(client: AsyncClient) -> None:
     assert (await client.get("/openapi.json")).status_code == 200
     assert (await client.get("/docs")).status_code == 200

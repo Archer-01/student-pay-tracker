@@ -34,6 +34,7 @@ dev = [
     "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
     "pytest-cov>=7.1.0",
+    "pytest-xdist>=3.8.0",
     "ruff>=0.15.22",
 ]
 
@@ -62,3 +63,13 @@ strict = true
 [[tool.mypy.overrides]]
 module = ["app.models.*", "app.schemas.*", "app.api.*", "app.core.*", "app.repos.*", "app.cli"]
 disallow_untyped_defs = false
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+# All of app/ at 95 %; app/services, the domain logic, is held at 100 % by `just cov`.
+fail_under = 95
+show_missing = true
+skip_covered = true

@@ -1,5 +1,15 @@
+# Every test, in parallel, without coverage: the everyday loop.
 test:
-    uv run pytest
+    uv run pytest -n auto
+
+# Only tests/unit: pure functions, no database.
+test-unit:
+    uv run pytest tests/unit
+
+# Every test with coverage: all of app/ at 95 %, app/services at 100 % (what CI runs).
+cov:
+    uv run pytest -n auto --cov --cov-report=term
+    uv run coverage report --include='app/services/*' --fail-under=100
 
 lint:
     uv run ruff format --check .

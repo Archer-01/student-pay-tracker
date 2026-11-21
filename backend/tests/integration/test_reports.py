@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from app.models import StudentStatus
 from app.services.payment_service import PaymentService
 from app.services.student_service import StudentService
+from tests.pdf import pdf_text
 
 _PDF_MAGIC = b"%PDF-"
 
@@ -106,8 +107,6 @@ async def test_ledger_pdf_unknown_student_404(client: AsyncClient) -> None:
 
 
 async def test_ledger_pdf_includes_name_and_phone(client: AsyncClient, db_session: Session) -> None:
-    from tests.integration.test_api_profile import pdf_text
-
     student = StudentService(db_session).enroll(
         first_name="Amina",
         phone="+212600112233",
@@ -122,8 +121,6 @@ async def test_ledger_pdf_includes_name_and_phone(client: AsyncClient, db_sessio
 async def test_ledger_pdf_without_phone_shows_name_only(
     client: AsyncClient, db_session: Session
 ) -> None:
-    from tests.integration.test_api_profile import pdf_text
-
     student = StudentService(db_session).enroll(
         first_name="Bilal", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
     )
@@ -156,8 +153,6 @@ async def test_annual_report_endpoint(client: AsyncClient, db_session: Session) 
 
 
 async def test_annual_report_pdf(client: AsyncClient, db_session: Session) -> None:
-    from tests.integration.test_api_profile import pdf_text
-
     _seed_month(db_session)
     resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 2023})
     assert resp.status_code == 200
@@ -170,8 +165,6 @@ async def test_annual_report_pdf(client: AsyncClient, db_session: Session) -> No
 
 
 async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: Session) -> None:
-    from tests.integration.test_api_profile import pdf_text
-
     _seed_month(db_session)
     resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"})
     text = pdf_text(resp.content)
@@ -181,7 +174,5 @@ async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: S
 
 
 async def test_annual_report_pdf_of_an_empty_year_says_so(client: AsyncClient) -> None:
-    from tests.integration.test_api_profile import pdf_text
-
     resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 1999})
     assert "no payments were recorded" in pdf_text(resp.content)

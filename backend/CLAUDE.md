@@ -8,7 +8,7 @@ All eight sprints in `sprint-planning.md` are implemented: the pure drift core
 (`app/services/schedule.py`), SQLAlchemy models + Alembic migration, the sync service layer, a
 `typer` CLI (`tracker`), the FastAPI read + write API under `/api/v1` (session-gated, see Auth below), monthly/CSV
 reports, ops hardening (SQLite pragmas, DB health check, `ardoise db backup`, minimal logging,
-Docker), and English/French i18n on API error messages + CSV exports (`app/core/i18n.py`). `uv run pytest` is green with 100% coverage on `app/services` (100% branch on `schedule.py`);
+Docker), and English/French i18n on API error messages + CSV exports (`app/core/i18n.py`). `just cov` is green with 100% coverage on `app/services` (100% branch on `schedule.py`) and ≥ 95% on all of `app/`;
 `ruff` and `mypy` are clean. `sprint-planning.md` remains the record of *why* things are shaped this
 way; this CLAUDE.md governs how ongoing changes should be made. The invariants and layering rules
 below are not "done" — they must keep holding for any future change.
@@ -27,7 +27,9 @@ A backend-only payment tracker for a teacher tracking student tuition payments a
 
 Use the `Justfile`:
 ```
-just test      # uv run pytest
+just test      # every test, in parallel, no coverage (~5 s): the everyday loop
+just test-unit # tests/unit only: pure functions, no database
+just cov       # with coverage: app/ ≥ 95 %, app/services 100 % (what CI runs)
 just lint      # ruff format --check, ruff check, mypy (what CI runs)
 just run       # uv run fastapi dev app/main.py
 just migrate   # uv run alembic upgrade head
@@ -62,7 +64,7 @@ app/
 tests/
   unit/          # pure schedule.py tests (example + hypothesis)
   integration/   # DB/service/API/CLI/ops tests
-  conftest.py    # fresh migration-applied in-memory DB per test; authed httpx client fixtures
+  conftest.py    # per test, a copy of a DB migrated once per run; cheap argon2; authed httpx clients
 alembic/
 Dockerfile · docker-compose.yml   # ops packaging
 ```

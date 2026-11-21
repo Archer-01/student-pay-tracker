@@ -1,11 +1,9 @@
 """API tests for the student profile fields and the reworked PDF exports."""
 
-import io
 from datetime import date
 from decimal import Decimal
 
 from httpx import AsyncClient
-from pypdf import PdfReader
 from sqlalchemy.orm import Session
 
 from app.models import ClassLevel
@@ -13,24 +11,9 @@ from app.services.class_service import ClassService
 from app.services.pack_service import PackService
 from app.services.payment_service import PaymentService
 from app.services.student_service import StudentService
+from tests.pdf import pdf_pages, pdf_text
 
 _JOIN = "2023-03-05"
-
-
-def pdf_text(raw: bytes) -> str:
-    """Visible text of a PDF, lowercased with whitespace collapsed, so exports can be asserted on.
-
-    Read with pypdf rather than by grepping the content stream: the PDFs embed their fonts, so
-    the stream holds glyph codes, not text. ``split()`` also folds the no-break spaces French
-    typography puts inside numbers and before punctuation into plain ones.
-    """
-    return " ".join(pdf_pages(raw))
-
-
-def pdf_pages(raw: bytes) -> list[str]:
-    """Each page's text, as `pdf_text` reads it."""
-    reader = PdfReader(io.BytesIO(raw))
-    return [" ".join((page.extract_text() or "").split()).lower() for page in reader.pages]
 
 
 def _seed(db_session: Session) -> int:

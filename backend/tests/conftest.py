@@ -4,13 +4,20 @@
 migration-applied in-memory SQLite database *per test*. Because each test gets its own
 throwaway database (disposed at teardown), service code that calls ``session.commit()`` is
 naturally isolated — no cross-test leakage, no savepoint bookkeeping.
+
+The migrations run once per session, into a template; each test gets a copy of it through
+SQLite's backup API (about a millisecond, where running the chain took ~60 ms a test and most of
+the suite's time). The copy is the migrated schema itself, so tests still run against exactly
+what the migrations build, never `metadata.create_all`.
 """
 
-from collections.abc import AsyncIterator, Iterator
+import sqlite3
+from collections.abc import AsyncIterator, Callable, Iterator
 from pathlib import Path
 
 import pytest
 from alembic.config import Config
+from argon2 import PasswordHasher
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import Connection, create_engine
 from sqlalchemy.engine import Engine
@@ -19,6 +26,7 @@ from sqlalchemy.pool import StaticPool
 
 from alembic import command
 from app.api.deps import SESSION_COOKIE, get_db
+from app.core import security
 from app.core.db import get_auth_db
 from app.core.settings import settings
 from app.core.throttle import login_throttle
@@ -36,21 +44,40 @@ def _alembic_config(connection: Connection) -> Config:
     return cfg
 
 
-@pytest.fixture
-def db_engine() -> Iterator[Engine]:
-    """A fresh in-memory SQLite database, migrated to head, for a single test.
+def _in_memory_engine(creator: Callable[[], sqlite3.Connection] | None = None) -> Engine:
+    # StaticPool keeps the one underlying connection alive so the in-memory schema and data
+    # persist across sessions/connections; ``dispose()`` throws it all away.
+    if creator is None:
+        return create_engine(
+            "sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool
+        )
+    return create_engine("sqlite://", creator=creator, poolclass=StaticPool)
 
-    StaticPool keeps the one underlying connection alive so the in-memory schema and data
-    persist across sessions/connections within the test; ``dispose()`` throws it all away.
-    """
-    engine = create_engine(
-        "sqlite://",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
+
+@pytest.fixture(scope="session")
+def _migrated_template() -> Iterator[sqlite3.Connection]:
+    """An in-memory database migrated to head once for the whole run. Never handed to a test."""
+    engine = _in_memory_engine()
     with engine.connect() as connection:
         command.upgrade(_alembic_config(connection), "head")
         connection.commit()
+        template = connection.connection.driver_connection
+        assert isinstance(template, sqlite3.Connection)
+        yield template
+    engine.dispose()
+
+
+@pytest.fixture
+def db_engine(_migrated_template: sqlite3.Connection) -> Iterator[Engine]:
+    """A fresh in-memory SQLite database, migrated to head, for a single test."""
+
+    def copy_of_template() -> sqlite3.Connection:
+        fresh = sqlite3.connect(":memory:", check_same_thread=False)
+        _migrated_template.backup(fresh)
+        return fresh
+
+    # The app's connect hook (app/core/db.py) sets foreign_keys=ON on the copy, as in production.
+    engine = _in_memory_engine(copy_of_template)
     yield engine
     engine.dispose()
 
@@ -73,6 +100,20 @@ def db_session(db_engine: Engine) -> Iterator[Session]:
 #
 # Use `anonymous_client` for the tests that are specifically about the gate.
 # --------------------------------------------------------------------------- #
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _cheap_password_hashing() -> Iterator[None]:
+    """argon2id at production cost takes ~25 ms by design, and the signed-in `client` pays it
+    twice per test (create the account, then sign in). The tests check what hashing does, not
+    how slow it is, so they hash at a fraction of the cost: still argon2id, still a real PHC
+    string. Above the minimum on purpose, so the rehash test's weaker hash still counts as weaker.
+    """
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(
+            security, "_hasher", PasswordHasher(time_cost=1, memory_cost=1024, parallelism=1)
+        )
+        yield
 
 
 @pytest.fixture(autouse=True)

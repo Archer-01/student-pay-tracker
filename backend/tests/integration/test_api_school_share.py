@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 from app.core.settings import Settings, settings
 from app.services.payment_service import PaymentService
 from app.services.student_service import StudentService
-from tests.integration.test_api_profile import pdf_text
+from tests.pdf import pdf_text
 
 
 def _paid_in_october(db_session: Session) -> None:
@@ -87,25 +87,6 @@ async def test_the_pdfs_say_nothing_about_a_share_of_zero(
     params = {"year": 2026, "month": 10, "lang": "fr"}
     text = pdf_text((await client.get("/api/v1/reports/monthly.pdf", params=params)).content)
     assert "votre part" not in text
-
-
-async def test_the_home_page_carries_the_months_dues_and_the_week_ahead(
-    client: AsyncClient, db_session: Session
-) -> None:
-    _paid_in_october(db_session)  # Amina, 240 a month from 5 September, paid October
-    home = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-10-31"})).json()
-    assert home["this_month"] == {
-        "expected": "240.00",
-        "settled": "240.00",
-        "students_expected": 1,
-        "students_settled": 1,
-    }
-    soon = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-11-01"})).json()[
-        "due_this_week"
-    ]
-    assert [(d["name"], d["due_date"], d["amount"]) for d in soon] == [
-        ("Amina", "2026-11-05", "240.00")
-    ]
 
 
 # --------------------------------------------------------------------------- #
