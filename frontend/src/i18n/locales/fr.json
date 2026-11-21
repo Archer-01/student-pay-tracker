@@ -334,6 +334,7 @@
     "whatsapp": "WhatsApp",
     "whatsappNumber": "Écrire sur WhatsApp au {{phone}}",
     "note": "Note",
+    "noteTitle": "Note sur {{name}}",
     "editNote": "Modifier",
     "addNote": "Ajouter une note"
   },
@@ -513,7 +514,11 @@
     "often_late": "Souvent tard",
     "paysOnTime": "Paie à l'heure",
     "average_one": "Retard moyen : {{count}} j",
-    "average_other": "Retard moyen : {{count}} j"
+    "average_other": "Retard moyen : {{count}} j",
+    "averageShort_one": "Retard moyen {{count}} j",
+    "averageShort_other": "Retard moyen {{count}} j",
+    "total_one": "{{count}} j au total",
+    "total_other": "{{count}} j au total"
   },
   "schoolShare": {
     "title": "Part de l'école",
