@@ -112,7 +112,8 @@ class PaymentService:
         must not be blocked by an amount nobody is touching.
         """
         payment = self.get_payment(student_id=student_id, cycle_number=cycle_number)
-        if amount is not None:
+        # "Changed" by value: the same amount sent again (the CLI sends every field) isn't one.
+        if amount is not None and amount != payment.amount:
             self._check_amount(payment.student, amount)
             payment.amount = amount
         if paid_date is not None:

@@ -216,6 +216,18 @@ def test_correcting_only_the_date_does_not_recheck_an_old_amount(db_session: Ses
     assert payment.amount == Decimal("300")
 
 
+def test_resending_the_same_amount_with_a_new_date_is_not_rechecked(db_session: Session) -> None:
+    # A caller that sends every field (the CLI, a script) repeats the amount unchanged: that is
+    # not "changing" it, so a later price cut must not block the date fix either.
+    sid = _paid(db_session)
+    StudentService(db_session).update(sid, custom_price=Decimal("200"))
+    payment = PaymentService(db_session).update_payment(
+        student_id=sid, cycle_number=1, amount=Decimal("300.00"), paid_date=date(2023, 4, 6)
+    )
+    assert payment.amount == Decimal("300")
+    assert payment.paid_date == date(2023, 4, 6)
+
+
 def test_correcting_a_missing_payment_errors(db_session: Session) -> None:
     sid = _student(db_session)
     with pytest.raises(PaymentNotFoundError):
