@@ -373,8 +373,8 @@
     "undone": "Payment undone"
   },
   "tiles": {
-    "late_one": "{{count}} d",
-    "late_other": "{{count}} d",
+    "late_one": "paid +{{count}} d",
+    "late_other": "paid +{{count}} d",
     "short": {
       "paid": "paid",
       "due": "to pay",
@@ -402,7 +402,9 @@
     "deletePayment": "Delete this payment",
     "deleteConfirm": "Delete this payment ({{month}}, {{amount}})? The month will be owed again.",
     "deleteMoveHint": "To move it to another month, delete it, then record the right month.",
-    "deleteConfirmButton": "Delete"
+    "deleteConfirmButton": "Delete",
+    "days_one": "{{count}} day",
+    "days_other": "{{count}} days"
   },
   "share": {
     "title": "Split",
@@ -436,21 +438,21 @@
     "handedOn": "Handed over on {{date}}",
     "nothing": "Nothing to hand over",
     "running": "in progress, {{amount}} so far",
-    "collected": "Share {{due}} · collected {{collected}}",
+    "collected": "Collected {{collected}} · share {{due}}",
     "months": "Months",
     "mark": "Mark as handed over",
     "handedDate": "Handed over on",
     "changeDate": "Change the date",
-    "undo": "Undo the handover",
-    "undoConfirm": "Undo the handover for {{month}}? The month will be to hand over again.",
-    "undoButton": "Undo",
+    "undo": "Mark as not handed over",
+    "undoConfirm": "Mark this month as not handed over? It will show as to hand over again.",
+    "undoButton": "Mark not handed over",
     "collectedLabel": "Collected",
     "dueLabel": "School's share",
     "handedLabel": "Handed over",
     "empty": "No payments yet.",
     "off": "The school's share is turned off.",
     "validation": {
-      "dateRequired": "Choose the day it was handed over.",
+      "dateRequired": "Choose the date.",
       "dateFuture": "The date can't be in the future."
     }
   },

@@ -318,7 +318,7 @@ describe("StudentDetail opened on a month", () => {
     vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
     renderPage("/students/5?month=2026-10");
     const sheet = await screen.findByRole("dialog", { name: "October 2026" });
-    expect(sheet).toHaveTextContent(/9 days late/);
+    expect(sheet).toHaveTextContent(/Lateness\s*9 days/);
     expect(screen.getByTestId("location")).toHaveTextContent(/^\/students\/5$/);
   });
 

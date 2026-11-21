@@ -373,8 +373,8 @@
     "undone": "Paiement annulé"
   },
   "tiles": {
-    "late_one": "{{count}} j",
-    "late_other": "{{count}} j",
+    "late_one": "payé +{{count}} j",
+    "late_other": "payé +{{count}} j",
     "short": {
       "paid": "payé",
       "due": "à payer",
@@ -402,7 +402,9 @@
     "deletePayment": "Supprimer ce paiement",
     "deleteConfirm": "Supprimer ce paiement ({{month}}, {{amount}}) ? Le mois redeviendra à payer.",
     "deleteMoveHint": "Pour le déplacer vers un autre mois, supprimez-le puis encaissez le bon mois.",
-    "deleteConfirmButton": "Supprimer"
+    "deleteConfirmButton": "Supprimer",
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours"
   },
   "share": {
     "title": "Répartition",
@@ -436,21 +438,21 @@
     "handedOn": "Remis le {{date}}",
     "nothing": "Rien à remettre",
     "running": "en cours, {{amount}} jusqu'ici",
-    "collected": "Part {{due}} · encaissé {{collected}}",
+    "collected": "Encaissé {{collected}} · part {{due}}",
     "months": "Mois",
     "mark": "Marquer comme remis",
     "handedDate": "Remis le",
     "changeDate": "Changer la date",
-    "undo": "Annuler la remise",
-    "undoConfirm": "Annuler la remise de {{month}} ? Le mois redeviendra à remettre.",
-    "undoButton": "Annuler la remise",
+    "undo": "Marquer comme non remis",
+    "undoConfirm": "Marquer ce mois comme non remis ? Il sera de nouveau à remettre.",
+    "undoButton": "Marquer non remis",
     "collectedLabel": "Encaissé",
     "dueLabel": "Part de l'école",
     "handedLabel": "Remis",
     "empty": "Aucun paiement pour l'instant.",
     "off": "La part de l'école est désactivée.",
     "validation": {
-      "dateRequired": "Choisissez le jour de la remise.",
+      "dateRequired": "Choisissez la date.",
       "dateFuture": "La date ne peut pas être dans le futur."
     }
   },

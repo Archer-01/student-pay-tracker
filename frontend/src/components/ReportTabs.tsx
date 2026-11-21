@@ -22,7 +22,7 @@ export function ReportTabs() {
           key={tab.to}
           to={tab.to}
           className={({ isActive }) =>
-            `min-h-11 flex-1 shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-center text-sm font-bold ${
+            `min-h-11 flex-1 shrink-0 whitespace-nowrap rounded-lg px-2 py-2 sm:px-3 text-center text-sm font-bold ${
               isActive ? "bg-brand text-brand-ink" : "text-muted hover:text-ink"
             }`
           }

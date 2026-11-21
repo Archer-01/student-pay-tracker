@@ -91,8 +91,8 @@ export function SchoolShare() {
                       className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-ground active:bg-line disabled:cursor-default disabled:hover:bg-transparent"
                     >
                       <span className="min-w-0 flex-1">
-                        <span className="block font-bold">{formatMonthTitle(ym(m))}</span>
-                        <span className="block truncate text-sm text-muted">
+                        <span className="block whitespace-nowrap font-bold">{formatMonthTitle(ym(m))}</span>
+                        <span className="block text-sm text-muted">
                           {t("schoolShare.collected", { collected: formatMoney(m.collected), due: formatMoney(m.due) })}
                         </span>
                       </span>

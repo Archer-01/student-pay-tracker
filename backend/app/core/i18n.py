@@ -211,12 +211,12 @@ MESSAGES: dict[str, dict[str, str]] = {
     },
     # --- Handing the school its share ---
     "error.share_month_not_over": {
-        "en": "This month isn't over yet: its share can be handed over once it ends.",
-        "fr": "Ce mois n'est pas terminé\u00a0: sa part pourra être remise une fois fini.",
+        "en": "This month isn't over yet: you can hand over its share after it ends.",
+        "fr": "Ce mois n'est pas encore fini\u00a0: vous pourrez remettre sa part après.",
     },
     "error.handover_in_future": {
-        "en": "The handover date can't be in the future.",
-        "fr": "La date de remise ne peut pas être dans le futur.",
+        "en": "The date can't be in the future.",
+        "fr": "La date ne peut pas être dans le futur.",
     },
     "error.nothing_to_hand_over": {
         "en": "Nothing came in that month, so there is no share to hand over.",

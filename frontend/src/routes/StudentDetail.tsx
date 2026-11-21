@@ -6,7 +6,7 @@ import { downloadFile } from "../api/client";
 import type { EnrollmentPeriod, LedgerOut, StudentDetailOut } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { formatMoney } from "../lib/money";
-import { formatDate, formatMonthTitle } from "../lib/dates";
+import { formatDate, formatMonthInSentence, formatMonthTitle } from "../lib/dates";
 import { classLabel } from "../lib/classes";
 import { slugify } from "../lib/slug";
 import { resolveErrorMessage } from "../lib/errors";
@@ -272,7 +272,7 @@ function StatusCard({
         <p className="font-display text-2xl font-extrabold tracking-tight">
           {t("pay.owes", { count: detail.months_overdue, amount: formatMoney(detail.amount_owed) })}
         </p>
-        <p className="text-ink">{t("student.oldestUnpaid", { month: formatMonthTitle(oldest) })}</p>
+        <p className="text-ink">{t("student.oldestUnpaid", { month: formatMonthInSentence(oldest) })}</p>
         <Button onClick={() => onPay(oldest)} disabled={readOnly} className="min-h-12 text-lg sm:self-start">
           {t("student.payMonth", { month: formatMonthTitle(oldest) })}
         </Button>
@@ -559,7 +559,7 @@ function TileDetails({
               <Row label={t("tile.paidOn")}>{formatDate(paid.paid_date)}</Row>
               <Row label={t("tile.amount")}>{formatMoney(paid.amount)}</Row>
               <Row label={t("tile.lateness")}>
-                {(paid.days_late ?? 0) > 0 ? t("drift.late", { count: paid.days_late ?? 0 }) : t("ledger.status.onTime")}
+                {(paid.days_late ?? 0) > 0 ? t("tile.days", { count: paid.days_late ?? 0 }) : t("ledger.status.onTime")}
               </Row>
             </dl>
           ) : (
@@ -684,7 +684,7 @@ function Facts({ detail }: { detail: StudentDetailOut }) {
           )}
         </Row>
         <Row label={t("student.pack")}>
-          {detail.pack ? `${detail.pack.name} · ${detail.pack.level}` : t("student.noPack")}
+          {detail.pack ? packWithLevel(detail.pack.name, detail.pack.level) : t("student.noPack")}
           {detail.pack && detail.school_class && detail.school_class.level !== detail.pack.level && (
             <span className="block text-sm font-normal text-warn">
               {t("student.levelMismatch", { packLevel: detail.pack.level, classLevel: detail.school_class.level })}
@@ -693,7 +693,10 @@ function Facts({ detail }: { detail: StudentDetailOut }) {
         </Row>
         <Row label={t("detail.fields.class")}>
           {detail.school_class ? (
-            <Link to={`/settings/classes/${detail.school_class.id}`} className="text-brand underline">
+            <Link
+              to={`/settings/classes/${detail.school_class.id}`}
+              className="inline-flex min-h-11 items-center text-brand underline"
+            >
               {classLabel(detail.school_class)}
             </Link>
           ) : (
@@ -711,6 +714,11 @@ function Facts({ detail }: { detail: StudentDetailOut }) {
       </dl>
     </section>
   );
+}
+
+/** "Pack TC Sciences · TC", but just the name when it already says the level. */
+function packWithLevel(name: string, level: string): string {
+  return name.includes(level) ? name : `${name} · ${level}`;
 }
 
 function Row({ label, children }: { label: string; children: ReactNode }) {

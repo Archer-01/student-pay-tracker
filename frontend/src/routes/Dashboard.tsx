@@ -6,7 +6,7 @@ import { useApi } from "../lib/useApi";
 import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { formatMoney } from "../lib/money";
-import { formatDayMonth, formatMonthTitle, formatWeekday } from "../lib/dates";
+import { formatDayMonth, formatMonthInSentence, formatMonthTitle, formatWeekday } from "../lib/dates";
 import { AsyncView, Button } from "../components/ui";
 import { OwedPill } from "../components/people";
 import { StudentRow, StudentRows } from "../components/StudentRow";
@@ -256,7 +256,7 @@ function Attention({ data }: { data: DashboardSummary }) {
             id: `share-${pending.year}-${pending.month}`,
             to: "/reports/school",
             text: t("home.sharePending", {
-              month: formatMonthTitle(`${pending.year}-${String(pending.month).padStart(2, "0")}`),
+              month: formatMonthInSentence(`${pending.year}-${String(pending.month).padStart(2, "0")}`),
               amount: formatMoney(pending.remaining),
             }),
             action: t("home.handOver"),

@@ -51,9 +51,9 @@ describe("Bilan › École", () => {
     const unmark = vi.spyOn(endpoints, "unmarkShareHandedOver").mockResolvedValue(undefined as never);
     renderWithProviders(<SchoolShare />);
     await userEvent.click(await screen.findByRole("button", { name: /august 2026/i }));
-    await userEvent.click(screen.getByRole("button", { name: /undo the handover/i }));
+    await userEvent.click(screen.getByRole("button", { name: /mark as not handed over/i }));
     expect(unmark).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: /^undo$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^mark not handed over$/i }));
     expect(unmark).toHaveBeenCalledWith(2026, 8);
   });
 

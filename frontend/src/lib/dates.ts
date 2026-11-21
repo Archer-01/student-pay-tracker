@@ -14,6 +14,12 @@ export function formatMonth(ym: string): string {
   return new Intl.DateTimeFormat(i18n.language, { month: "long", year: "numeric" }).format(d);
 }
 
+/** "2026-10" → "octobre 2026" for the middle of a sentence: lowercase in French, and the month
+ * kept on the year's line (no-break space), so the year never wraps alone. */
+export function formatMonthInSentence(ym: string): string {
+  return formatMonth(ym).replace(" ", "\u00a0");
+}
+
 /** "2026-11" → "Novembre 2026": `formatMonth`, capitalised to stand alone as a title or a choice. */
 export function formatMonthTitle(ym: string): string {
   const text = formatMonth(ym);

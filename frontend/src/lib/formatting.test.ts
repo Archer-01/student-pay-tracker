@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import i18n from "../i18n";
-import { formatDate, formatMonth, formatMonthShort, localIso } from "./dates";
+import { formatDate, formatMonth, formatMonthInSentence, formatMonthShort, localIso } from "./dates";
 import { formatMoney } from "./money";
 import { slugify } from "./slug";
 import { CLASS_LEVELS, classLabel } from "./classes";
@@ -120,5 +120,14 @@ describe("localIso", () => {
     // Half past midnight locally: in Morocco toISOString() would still say the 21st.
     expect(localIso(new Date(2026, 10, 22, 0, 30))).toBe("2026-11-22");
     expect(localIso(new Date(2026, 0, 5, 23, 59))).toBe("2026-01-05");
+  });
+});
+
+describe("formatMonthInSentence", () => {
+  it("is lowercase in French and keeps the year on the month's line", async () => {
+    await i18n.changeLanguage("fr");
+    expect(formatMonthInSentence("2026-10")).toBe("octobre\u00a02026");
+    await i18n.changeLanguage("en");
+    expect(formatMonthInSentence("2026-10")).toBe("October\u00a02026");
   });
 });
