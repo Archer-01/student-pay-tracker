@@ -15,6 +15,7 @@ function student(over: Partial<Record<string, unknown>> = {}) {
     pack_id: null, pack: null, custom_price: "200.00", price_note: null, note: null, created_at: "2026-09-01T00:00:00",
     cumulative_drift: 0, months_overdue: 0, amount_owed: "0.00", monthly_price: "200.00",
     next_expected_date: "2026-12-01", payments_count: 0, total_paid: "0.00", first_payment_date: null,
+    average_days_late: null,
     as_of: "2026-11-14", ...over,
   };
 }
@@ -222,5 +223,23 @@ describe("StudentDetail note", () => {
     renderPage();
     await userEvent.click(await screen.findByRole("button", { name: /add a note/i }));
     expect(await screen.findByLabelText(/^note/i)).toBeInTheDocument();
+  });
+});
+
+describe("StudentDetail punctuality", () => {
+  it("says how late the student usually pays, in a group and in days", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student({ average_days_late: 4 }) as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("A little late")).toBeInTheDocument();
+    expect(screen.getByText("Usually 4 days late")).toBeInTheDocument();
+  });
+
+  it("says nothing before the first payment is due", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(student() as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await screen.findByText("Fatima Zahra");
+    expect(screen.queryByText("Punctuality")).toBeNull();
   });
 });

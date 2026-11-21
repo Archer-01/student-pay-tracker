@@ -103,6 +103,8 @@ class StudentListItemOut(StudentOut):
     months_overdue: int
     # What they owe, in money.
     amount_owed: Decimal
+    # Average days late over their last six payments; None before their first one is due.
+    average_days_late: int | None
     # The effective price: `custom_price` if set, else the pack's, else zero.
     monthly_price: Decimal
 
@@ -116,6 +118,8 @@ class StudentDetailOut(StudentOut):
     payments_count: int
     total_paid: Decimal
     first_payment_date: date | None
+    # Average days late over their last six payments; None before their first one is due.
+    average_days_late: int | None
     as_of: date
 
 

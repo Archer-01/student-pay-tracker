@@ -406,3 +406,22 @@ async def test_cli_and_api_agree(
     cli_drift = int(match.group(1))
 
     assert api_drift == cli_drift == 15
+
+
+async def test_the_list_and_the_student_say_how_late_they_usually_pay(client: AsyncClient) -> None:
+    sid = await _create_student(client)  # joins 5 March 2023, 300 a month
+    for month, day in (("2023-04", "10"), ("2023-05", "05"), ("2023-06", "12")):
+        await client.post(
+            f"/api/v1/students/{sid}/payments",
+            json={"paid_date": f"{month}-{day}", "amount": "300", "for_month": month},
+        )
+    as_of = {"as_of": "2023-06-30"}
+    # 5, 0 and 7 days late: 4 on average.
+    detail = (await client.get(f"/api/v1/students/{sid}", params=as_of)).json()
+    assert detail["average_days_late"] == 4
+    row = (await client.get("/api/v1/students", params=as_of)).json()[0]
+    assert row["average_days_late"] == 4
+
+    fresh = await _create_student(client, name="Nouveau", join="2023-06-20")
+    rows = (await client.get("/api/v1/students", params=as_of)).json()
+    assert next(r for r in rows if r["id"] == fresh)["average_days_late"] is None

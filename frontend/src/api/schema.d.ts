@@ -1332,6 +1332,8 @@ export interface components {
             total_paid: string;
             /** First Payment Date */
             first_payment_date: string | null;
+            /** Average Days Late */
+            average_days_late: number | null;
             /**
              * As Of
              * Format: date
@@ -1401,6 +1403,8 @@ export interface components {
             months_overdue: number;
             /** Amount Owed */
             amount_owed: string;
+            /** Average Days Late */
+            average_days_late: number | null;
             /** Monthly Price */
             monthly_price: string;
         };

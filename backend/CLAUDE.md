@@ -238,6 +238,9 @@ the file that fails if privacy ever regresses.
   (default 0); only the API layer reads the setting. Known limits, chosen knowingly: one rate for
   every account (Aymen is the only user; the owner's account would need 0%), and no history, so
   changing the rate recalculates past months.
+- **Punctuality is a reading, not a measure of its own** (`services/punctuality.py`): the
+  average of `max(0, days_late)` over the last six payments due, rounded half up, `None` before
+  any is due. It never feeds drift or touches a payment.
 - **A student's `note` is private** (migration 0009). It is the teacher's own memo ("paie le
   samedi") and must never reach a PDF: the student history is sent to parents.
 - **A write-off is not a payment.** `debt_writeoff` forgives a departed student's balance; it must

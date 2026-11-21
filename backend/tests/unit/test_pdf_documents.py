@@ -51,6 +51,7 @@ def _summary(months: int = 0, owed: str = "0") -> StudentSummary:
         payments_count=1,
         total_paid=Decimal("300"),
         first_payment_date=date(2026, 9, 5),
+        average_days_late=0,
     )
 
 

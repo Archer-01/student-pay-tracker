@@ -16,12 +16,13 @@ import { usePaymentSheet } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
 import { useMutation } from "../lib/useMutation";
+import { usePunctualityText } from "../lib/punctuality";
 import { CreateOverrideForm } from "../components/students/CreateOverrideForm";
 import { EditStudentForm } from "../components/students/EditStudentForm";
 import { AttendanceForm } from "../components/students/AttendanceForm";
 import { EditPaymentForm } from "../components/students/EditPaymentForm";
 import { AsyncView, Button, Modal } from "../components/ui";
-import { Avatar } from "../components/people";
+import { Avatar, PunctualityPill } from "../components/people";
 import {
   CalendarIcon,
   ChevronLeftIcon,
@@ -601,6 +602,7 @@ function Note({ note, readOnly, onEdit }: { note: string | null; readOnly: boole
 
 function Facts({ detail }: { detail: StudentDetailOut }) {
   const { t } = useTranslation();
+  const punctualityText = usePunctualityText();
   return (
     <section className="flex flex-col gap-3">
       <h2 className="text-lg font-bold">{t("student.details")}</h2>
@@ -608,6 +610,14 @@ function Facts({ detail }: { detail: StudentDetailOut }) {
         <Row label={t("student.totalLate")}>
           {detail.cumulative_drift > 0 ? t("student.days", { count: detail.cumulative_drift }) : t("drift.onTrack")}
         </Row>
+        {detail.average_days_late !== null && (
+          <Row label={t("punctuality.label")}>
+            <span className="flex flex-col items-end gap-1">
+              <PunctualityPill averageDaysLate={detail.average_days_late} />
+              <span className="text-sm font-normal text-muted">{punctualityText(detail.average_days_late)}</span>
+            </span>
+          </Row>
+        )}
         <Row label={t("detail.fields.monthlyPrice")}>
           {formatMoney(detail.monthly_price)}
           {/* An agreed price is shown against the pack's, so the exception is visible. */}

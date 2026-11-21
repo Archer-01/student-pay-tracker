@@ -298,6 +298,11 @@ confirmation says so. Both announce themselves through `usePaymentSheet().change
 which bumps the same `version` as a recorded payment, so every screen refreshes and the same
 toast appears.
 
+**Ponctualité** (in Détails, and as a chip on the students list, latest payers first): the
+server's `average_days_late` over the student's last six payments, read as À l'heure (0–2 days),
+Un peu tard (3–7) or Souvent tard (8+) by `lib/punctuality.ts`. Hidden until a first payment is
+due. It reads the frozen lateness of payments; it is not drift and changes nothing.
+
 Under the status card sits the teacher's **note** on the student (`student.note`, up to 500
 characters, edited in `EditStudentForm`), or a quiet "Ajouter une note" link when there is none.
 It is private: it never goes on a PDF, since those are sent to parents.

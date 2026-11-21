@@ -35,6 +35,7 @@ from app.services.ledger_service import LedgerService
 from app.services.override_service import OverrideService
 from app.services.payment_service import PaymentService
 from app.services.pricing_service import PricingService
+from app.services.punctuality import average_days_late
 from app.services.student_service import StudentService
 
 router = APIRouter(prefix="/students", tags=["students"])
@@ -69,6 +70,7 @@ async def list_students(
                 months_overdue=len(unpaid_due),
                 amount_owed=pricing.amount_for_cycles(student, unpaid_due),
                 monthly_price=pricing.price_of(student),
+                average_days_late=average_days_late(entries, as_of_date),
             )
         )
     if sort is StudentSort.drift_desc:
@@ -95,6 +97,7 @@ async def get_student(
         payments_count=summary.payments_count,
         total_paid=summary.total_paid,
         first_payment_date=summary.first_payment_date,
+        average_days_late=summary.average_days_late,
         as_of=as_of_date,
     )
 

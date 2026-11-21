@@ -57,7 +57,8 @@
       "label": "Afficher",
       "all": "Tous",
       "owing": "Impayés",
-      "left": "Anciens"
+      "left": "Anciens",
+      "punctuality": "Ponctualité"
     },
     "addShort": "Élève"
   },
@@ -501,5 +502,14 @@
   "offline": {
     "stored": "Hors ligne · lecture seule · données du {{date}} à {{time}}",
     "none": "Hors ligne · lecture seule"
+  },
+  "punctuality": {
+    "label": "Ponctualité",
+    "on_time": "À l'heure",
+    "bit_late": "Un peu tard",
+    "often_late": "Souvent tard",
+    "paysOnTime": "Paie à l'heure",
+    "average_one": "Retard moyen : {{count}} j",
+    "average_other": "Retard moyen : {{count}} j"
   }
 }

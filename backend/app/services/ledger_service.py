@@ -24,6 +24,7 @@ from app.models import Student
 from app.repos import EnrollmentRepo, OverrideRepo, PaymentRepo, StudentRepo
 from app.services.exceptions import StudentNotFoundError
 from app.services.pricing_service import PricingService
+from app.services.punctuality import average_days_late
 from app.services.schedule import generate_expected_due_dates, next_expected_date
 
 
@@ -51,6 +52,8 @@ class StudentSummary:
     # Derived, never stored: one less thing to keep in sync when a payment is corrected. Not the
     # same as join_date — the gap between them is itself informative.
     first_payment_date: date | None
+    # Average days late over the last six payments due (see `services/punctuality.py`).
+    average_days_late: int | None
 
 
 class LedgerService:
@@ -183,4 +186,5 @@ class LedgerService:
             payments_count=len(payments),
             total_paid=sum((p.amount for p in payments), Decimal("0")),
             first_payment_date=min((p.paid_date for p in payments), default=None),
+            average_days_late=average_days_late(entries, as_of),
         )

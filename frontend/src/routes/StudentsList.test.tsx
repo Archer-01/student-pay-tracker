@@ -9,14 +9,15 @@ function student(over: Partial<Record<string, unknown>>) {
   return {
     id: 1, full_name: "Amina Benali", is_repeating: false, status: "active",
     school_class: { id: 5, level: "2BAC", name: "Groupe A" }, cumulative_drift: 0,
-    months_overdue: 0, amount_owed: "0.00", monthly_price: "240.00", ...over,
+    months_overdue: 0, amount_owed: "0.00", monthly_price: "240.00", average_days_late: 0, ...over,
   };
 }
 
 const rows = [
-  student({ id: 3, full_name: "Youssef El Amrani", months_overdue: 2, amount_owed: "600.00", cumulative_drift: 9 }),
+  student({ id: 3, full_name: "Youssef El Amrani", months_overdue: 2, amount_owed: "600.00", cumulative_drift: 9, average_days_late: 9 }),
   student({ id: 1, full_name: "Amina Benali" }),
-  student({ id: 2, full_name: "Karim Bennis", months_overdue: 1, amount_owed: "190.00", school_class: null }),
+  student({ id: 2, full_name: "Karim Bennis", months_overdue: 1, amount_owed: "190.00", school_class: null, average_days_late: 4 }),
+  student({ id: 4, full_name: "Zineb Nouri", average_days_late: null }),
 ];
 
 beforeEach(() => {
@@ -68,5 +69,17 @@ describe("StudentsList", () => {
     await waitFor(() =>
       expect(endpoints.listStudents).toHaveBeenLastCalledWith(expect.objectContaining({ status: "inactive" })),
     );
+  });
+
+  it("ranks who pays late, worst first, leaving out students with nothing due yet", async () => {
+    renderWithProviders(<StudentsList />);
+    await screen.findByText("Amina Benali");
+    await userEvent.click(screen.getByRole("radio", { name: "Punctuality" }));
+    const shown = list().getAllByRole("link").map((a) => a.textContent);
+    expect(shown).toEqual([
+      expect.stringMatching(/Youssef El Amrani.*Usually 9 days late.*Often late/),
+      expect.stringMatching(/Karim Bennis.*Usually 4 days late.*A little late/),
+      expect.stringMatching(/Amina Benali.*Pays on time.*On time/),
+    ]);
   });
 });

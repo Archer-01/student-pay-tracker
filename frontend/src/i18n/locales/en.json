@@ -57,7 +57,8 @@
       "label": "Show",
       "all": "All",
       "owing": "Unpaid",
-      "left": "Former"
+      "left": "Former",
+      "punctuality": "Punctuality"
     },
     "addShort": "Student"
   },
@@ -501,5 +502,14 @@
   "offline": {
     "stored": "Offline · read only · data from {{date}} at {{time}}",
     "none": "Offline · read only"
+  },
+  "punctuality": {
+    "label": "Punctuality",
+    "on_time": "On time",
+    "bit_late": "A little late",
+    "often_late": "Often late",
+    "paysOnTime": "Pays on time",
+    "average_one": "Usually {{count}} day late",
+    "average_other": "Usually {{count}} days late"
   }
 }

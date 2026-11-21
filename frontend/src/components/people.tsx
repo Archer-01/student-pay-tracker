@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "../lib/money";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
+import { punctualityOf, punctualityTone } from "../lib/punctuality";
 
 /** "Amina Benali" → "AB"; "Fatima Zahra El Idrissi" → "FZ". */
 function initials(name: string): string {
@@ -60,6 +61,14 @@ export function OwedPill({
     label = t("owed.noPrice");
   }
   return <PillText tone={tone} label={label} />;
+}
+
+/** How a student usually pays, as a pill: "À l'heure", "Un peu tard", "Souvent tard". */
+export function PunctualityPill({ averageDaysLate }: { averageDaysLate: number | null }) {
+  const { t } = useTranslation();
+  const group = punctualityOf(averageDaysLate);
+  if (!group) return null;
+  return <PillText tone={punctualityTone[group]} label={t(`punctuality.${group}`)} />;
 }
 
 function PillText({ tone, label }: { tone: keyof typeof tones; label: string }) {

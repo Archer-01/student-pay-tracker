@@ -8,13 +8,17 @@ import { useDebounced } from "../lib/useDebounced";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
 import { useReadOnly } from "../lib/connectivity";
 import { AsyncView } from "../components/ui";
-import { OwedPill } from "../components/people";
+import { OwedPill, PunctualityPill } from "../components/people";
 import { StudentRow, StudentRows } from "../components/StudentRow";
 import { useMoneyFacts } from "../lib/useMoneyFacts";
+import { usePunctualityText } from "../lib/punctuality";
 import { PlusIcon, SearchIcon } from "../components/icons";
 
-/** "all" and "owing" are current students; "left" is everyone who has left; a number is a class. */
-type Filter = "all" | "owing" | "left" | number;
+/**
+ * "all", "owing" and "punctuality" are current students; "left" is everyone who has left; a
+ * number is a class.
+ */
+type Filter = "all" | "owing" | "punctuality" | "left" | number;
 
 /**
  * Everyone, one line each, alphabetical so a name is where you expect it. A large search box and
@@ -27,6 +31,7 @@ export function StudentsList() {
   const [search, setSearch] = useState("");
   const q = useDebounced(search.trim(), 250);
   const moneyFacts = useMoneyFacts();
+  const punctualityText = usePunctualityText();
   const readOnly = useReadOnly();
 
   // Refreshes after a payment taken from the shared sheet, wherever it was opened.
@@ -46,6 +51,7 @@ export function StudentsList() {
   const chips: { value: Filter; label: string }[] = [
     { value: "all", label: t("students.filters.all") },
     { value: "owing", label: t("students.filters.owing") },
+    { value: "punctuality", label: t("students.filters.punctuality") },
     ...(classes.data ?? []).map((c) => ({ value: c.id as Filter, label: `${c.level} ${c.name}` })),
     { value: "left", label: t("students.filters.left") },
   ];
@@ -118,17 +124,23 @@ export function StudentsList() {
                 to={`/students/${s.id}`}
                 name={s.full_name}
                 facts={[
-                  ...moneyFacts({ monthsOverdue: s.months_overdue, drift: s.cumulative_drift }),
+                  ...(filter === "punctuality" && s.average_days_late !== null
+                    ? [punctualityText(s.average_days_late)]
+                    : moneyFacts({ monthsOverdue: s.months_overdue, drift: s.cumulative_drift })),
                   typeof filter !== "number" &&
                     (s.school_class ? `${s.school_class.level} ${s.school_class.name}` : t("classes.unassigned")),
                   s.is_repeating && t("student.repeatingShort"),
                 ]}
                 right={
-                  <OwedPill
-                    monthsOverdue={s.months_overdue}
-                    amountOwed={s.amount_owed}
-                    monthlyPrice={s.monthly_price}
-                  />
+                  filter === "punctuality" ? (
+                    <PunctualityPill averageDaysLate={s.average_days_late} />
+                  ) : (
+                    <OwedPill
+                      monthsOverdue={s.months_overdue}
+                      amountOwed={s.amount_owed}
+                      monthlyPrice={s.monthly_price}
+                    />
+                  )
                 }
               />
             ))}
@@ -150,10 +162,18 @@ export function StudentsList() {
 }
 
 /**
- * The rows a filter shows, in the order it shows them: who owes most first for "owing",
- * alphabetical otherwise. `Number` only compares amounts; nothing is computed from them.
+ * The rows a filter shows, in the order it shows them: who owes most first for "owing", the
+ * latest payers first for "punctuality" (students with nothing due yet left out), alphabetical
+ * otherwise. `Number` only compares amounts; nothing is computed from them.
  */
 function shown(rows: StudentListItem[], filter: Filter): StudentListItem[] {
+  if (filter === "punctuality") {
+    return rows
+      .filter((s) => s.average_days_late !== null)
+      .sort(
+        (a, b) => (b.average_days_late ?? 0) - (a.average_days_late ?? 0) || a.full_name.localeCompare(b.full_name),
+      );
+  }
   if (filter === "owing") {
     return rows
       .filter((s) => s.months_overdue > 0)
