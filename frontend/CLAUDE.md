@@ -17,6 +17,7 @@ npm run build      # tsc -b (typecheck) then vite build → dist/
 npm run lint       # eslint
 npm run gen:api    # regenerate src/api/schema.d.ts from the running backend's /openapi.json
 npm test           # vitest run (jsdom); npm run test:watch to iterate
+npm run test:coverage  # the same with coverage, ≥ 85 % or it fails (what CI runs)
 ```
 
 - **Typecheck without building:** `npx tsc -b`. Tests are Vitest + Testing Library: `npm test`
@@ -371,7 +372,9 @@ Vitest + Testing Library, jsdom. `src/test/setup.ts` registers the jest-dom matc
 locale between tests, and loads the **real i18n singleton** — so tests assert on the copy the
 teacher actually sees, and a missing translation key fails a test instead of rendering its own
 name. `src/test/render.tsx` wraps a component in the providers every screen assumes (router + i18n).
-jsdom's `localStorage` is real and cleared after every test; Node's own one (Node 25+) is switched
+`src/api/endpoints.test.ts` checks every endpoint function against the routes in `schema.d.ts`
+(method and path), so a new function needs a line there, and a typo in a path fails a test
+rather than a screen. jsdom's `localStorage` is real and cleared after every test; Node's own one (Node 25+) is switched
 off for the test workers in `vite.config.ts`, so don't stub `localStorage` per file.
 
 What is worth testing here, and what isn't: the suite covers **logic**, not markup. Formatting and

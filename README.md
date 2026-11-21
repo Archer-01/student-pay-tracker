@@ -48,9 +48,11 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 ## Checks
 
 `just check` at the root runs what CI (`.github/workflows/ci.yml`) runs, one job per app:
-backend `ruff format --check`, `ruff check`, mypy, pytest and migrations on an empty database;
-frontend generated API types up to date (`npm run gen:api` leaves no diff), `tsc`, eslint and
-Vitest. `.pre-commit-config.yaml` holds the same tools as an optional local gate
+backend `ruff format --check`, `ruff check`, mypy, pytest with coverage (all of `app/` ≥ 95 %,
+`app/services` 100 %) and migrations on an empty database matching the models; frontend
+generated API types up to date (`npm run gen:api` leaves no diff), `tsc`, eslint and Vitest with
+coverage (≥ 85 %). Day to day, `just test` in `backend/` (~5 s) and `npm test` in `frontend/`
+(~5 s) run every test without coverage. `.pre-commit-config.yaml` holds the same tools as an optional local gate
 (`uv tool install pre-commit && pre-commit install`), plus a refusal to commit any database.
 
 Repo-level config lives at the root, one copy for both apps: `.gitignore`, `.github/`,

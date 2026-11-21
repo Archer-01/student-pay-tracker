@@ -28,8 +28,8 @@ jobs:
       - name: Lint (ruff format, ruff check, mypy)
         run: just lint
 
-      - name: Test (100 % coverage on app/services)
-        run: uv run pytest -q
+      - name: Test with coverage (app/ ≥ 95 %, app/services 100 %)
+        run: just cov
 
       - name: Migrations apply to an empty database and match the models
         run: |
@@ -72,5 +72,5 @@ jobs:
       - name: Lint
         run: npm run lint
 
-      - name: Test
-        run: npm test
+      - name: Test with coverage (≥ 85 %)
+        run: npm run test:coverage

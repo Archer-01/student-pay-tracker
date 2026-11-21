@@ -59,5 +59,22 @@ export default defineConfig({
       forks: { execArgv: ["--no-experimental-webstorage"] },
       threads: { execArgv: ["--no-experimental-webstorage"] },
     },
+    // `npm run test:coverage` (CI, `just check`); plain `npm test` skips it to stay quick.
+    coverage: {
+      provider: "v8",
+      include: ["src/**/*.{ts,tsx}"],
+      exclude: [
+        "src/**/*.test.{ts,tsx}",
+        "src/test/**",
+        "src/api/schema.d.ts", // generated
+        "src/api/types.ts", // type re-exports only
+        "src/vite-env.d.ts",
+        "src/main.tsx", // mounts the app and registers the service worker
+      ],
+      reporter: ["text-summary", "text"],
+      skipFull: true, // list only the files with something left uncovered
+      // A floor under what the suite reaches today (~95 % lines, ~88 % branches and functions).
+      thresholds: { lines: 85, statements: 85, branches: 85, functions: 85 },
+    },
   },
 });
