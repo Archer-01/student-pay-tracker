@@ -39,3 +39,6 @@ description: Use when a SQLAlchemy model in app/models changes (new table, colum
 8. After the migration lands, grep `app/models` and `app/repos` for date/day arithmetic — it should find nothing. If you find yourself adding a computed property or default that does date math, that logic belongs in `app/services` instead.
 9. Add a focused up/down test to `tests/integration/test_migrations.py` (see `test_0010_…`); the
    stairway test there already walks every revision up, down one and up again.
+10. A migration usually carries a data-model decision (a new table instead of a column, what is
+    stored versus derived, a lossy downgrade): if it isn't obvious from the code, record it in
+    `docs/decisions/` (see `docs/decisions/0001` and `0002`).

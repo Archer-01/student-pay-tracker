@@ -138,7 +138,8 @@ These must hold for every change:
   paid date was the mistake. Moving a payment to another month is delete + record.
 - **Duplicate payments are rejected**, never overwritten.
 - **A payment is positive and at most the student's monthly price** (`PricingService.price_of`),
-  enforced in `PaymentService`; an edit checks only a changed amount.
+  enforced in `PaymentService`; an edit checks only a changed amount. A 0 DH payment is meant to
+  be allowed (`docs/decisions/0007`, not built yet): don't add checks that reject it elsewhere.
 - **Money is quoted through `PricingService.price_of`**, never `pack.price` at a call site: it
   holds the `custom_price` override and "no pack means not billed".
 - **Pricing is current, not historical** (migration 0004), a deliberate trade: changing a price

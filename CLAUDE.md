@@ -8,6 +8,9 @@ tier) with **real student data**. Two apps in one repo:
 - `frontend/`: React PWA, installable, readable offline. Rules in `frontend/CLAUDE.md`; what each
   screen does in `frontend/docs/screens.md`.
 - `FRONTEND_HANDOFF.md`: the API contract between them (the OpenAPI schema is the truth).
+- `docs/decisions/`: why things are the way they are (one database per teacher, current
+  pricing, a PWA, read-only offline, 0 DH payments…). **Read the relevant record before changing
+  what it covers.**
 
 ## Commands
 
@@ -43,6 +46,10 @@ cd frontend && npm run gen:api # after any backend schema change; CI fails on a 
 - **Docs move with the code**: the area's CLAUDE.md for rules, `frontend/docs/screens.md` for
   screen behaviour, `backend/README.md` for what shipped. A new invariant belongs in
   `backend/CLAUDE.md` (or a skill), not only in a commit message, or the next session breaks it.
+- **A decision gets a record** in `docs/decisions/` whenever it's settled, whether in the code,
+  with the developer, with the teacher, or by a skill or agent's recommendation being accepted:
+  a choice that isn't obvious from the code, or that rejects an option that will look tempting.
+  A changed decision gets a new record that replaces the old one (see its README).
 - **Parallel agents** each own distinct files, scratch folders and ports (skill
   `parallel-agents`).
 
