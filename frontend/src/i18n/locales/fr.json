@@ -241,7 +241,10 @@
     "noteTitle": "Note sur {{name}}",
     "editNote": "Modifier",
     "addNote": "Ajouter une note",
-    "packFromClass": "Choisi d'après la classe"
+    "packFromClass": "Choisi d'après la classe",
+    "freeText": "Cet élève ne paie rien : aucun mois ne lui est réclamé.",
+    "changePrice": "Modifier le tarif",
+    "freeConfirm": "Tarif convenu à 0 DH : cet élève ne paiera rien et ne sera jamais relancé. C'est voulu ?"
   },
   "annual": {
     "payments": "Paiements",
@@ -349,7 +352,8 @@
     "paidUp": "À jour",
     "noPrice": "Sans tarif",
     "monthsUnpaid_one": "{{count}} mois impayé",
-    "monthsUnpaid_other": "{{count}} mois impayés"
+    "monthsUnpaid_other": "{{count}} mois impayés",
+    "free": "Gratuit"
   },
   "pay": {
     "title": "Encaisser un paiement",
@@ -379,7 +383,8 @@
       "paid": "payé",
       "due": "à payer",
       "away": "absent",
-      "upcoming": "à venir"
+      "upcoming": "à venir",
+      "free": "gratuit"
     },
     "state": {
       "paid": "payé",
@@ -387,7 +392,8 @@
       "due": "à payer",
       "away": "absent, non facturé",
       "upcoming": "à venir",
-      "none": "pas inscrit"
+      "none": "pas inscrit",
+      "free": "gratuit, rien n'est dû"
     }
   },
   "tile": {
@@ -404,7 +410,8 @@
     "deleteMoveHint": "Pour le déplacer vers un autre mois, supprimez-le puis encaissez le bon mois.",
     "deleteConfirmButton": "Supprimer",
     "days_one": "{{count}} jour",
-    "days_other": "{{count}} jours"
+    "days_other": "{{count}} jours",
+    "free": "Cet élève est gratuit : rien n'est dû pour ce mois."
   },
   "share": {
     "title": "Répartition",

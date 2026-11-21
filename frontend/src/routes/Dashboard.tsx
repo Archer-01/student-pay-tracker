@@ -91,7 +91,7 @@ export function Dashboard() {
                       d.class_label,
                     ]}
                     right={
-                      <OwedPill monthsOverdue={d.months_overdue} amountOwed={d.amount_owed} monthlyPrice={d.monthly_price} />
+                      <OwedPill monthsOverdue={d.months_overdue} amountOwed={d.amount_owed} priceStatus={d.price_status} />
                     }
                   />
                 ))}

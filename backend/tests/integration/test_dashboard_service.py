@@ -149,6 +149,19 @@ def test_a_student_with_no_price_is_flagged_as_unbilled(db_session: Session) -> 
     assert [d.name for d in summary.top_debtors] == ["Billed"]
 
 
+def test_a_student_free_on_purpose_is_never_flagged_or_chased(db_session: Session) -> None:
+    """An agreed price of 0 (or a pack at 0) was set deliberately (decision 0011): no reminder
+    to set a price, and nothing to chase."""
+    students = StudentService(db_session)
+    students.enroll(
+        first_name="Free", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("0")
+    )
+    students.enroll(first_name="Unset", phone=None, join_date=date(2023, 3, 5))
+    summary = DashboardService(db_session).get_summary(as_of=date(2023, 5, 31))
+    assert [d.name for d in summary.unbilled_students] == ["Unset"]
+    assert summary.top_debtors == []
+
+
 def test_a_healthy_database_has_nothing_needing_attention(db_session: Session) -> None:
     StudentService(db_session).enroll(
         first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("100")

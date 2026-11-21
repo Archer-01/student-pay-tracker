@@ -3,8 +3,9 @@
     effective price = ``student.custom_price`` if set, else the price of ``student.pack``
 
 A student with no pack and no custom price has no price, and so is not billed: they show as owing
-nothing, exactly as a zero fee did before. That is a legal, visible state (the UI nudges to assign
-a pack), not an error.
+nothing. That is a legal, visible state (the UI nudges to assign a pack), not an error. A price of 0
+that *was* set (an agreed price of 0, or a pack at 0) is different: the student is free on purpose,
+and nothing nudges about them (decision 0011). :meth:`price_status` tells the two apart.
 
 **Prices are not historical.** Changing a pack's price changes what its students owe for months
 they haven't paid yet, and moving a student to another pack reprices their unpaid past months too.
@@ -14,11 +15,15 @@ already taken is never rewritten — only the outstanding estimate moves.
 
 from datetime import date
 from decimal import Decimal
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
 from app.models import Student
 from app.repos import StudentRepo
+
+# "priced": pays something. "free": a price of 0 was set on purpose. "unset": nothing set yet.
+PriceStatus = Literal["priced", "free", "unset"]
 
 
 class PricingService:
@@ -41,6 +46,12 @@ class PricingService:
         date-dependent again; today every cycle is priced the same.
         """
         return self.price_of(student) * len(due_dates)
+
+    def price_status(self, student: Student) -> PriceStatus:
+        """Whether the student pays, is free on purpose, or still needs a price."""
+        if student.custom_price is None and student.pack is None:
+            return "unset"
+        return "priced" if self.price_of(student) > 0 else "free"
 
     def billable(self, student: Student) -> bool:
         """Whether a cycle costs anything — an unpriced or free month is not arrears."""

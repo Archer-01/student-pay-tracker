@@ -14,7 +14,7 @@ rule, with a scenario that shows it, not to comment on style.
 1. Read `CLAUDE.md`, `backend/CLAUDE.md` ("Domain invariants", "Layers", "Per-teacher
    databases") and, for frontend changes, `frontend/CLAUDE.md` ("Domain rules", "Offline").
    Skim `docs/decisions/README.md` and read the records the change touches: something that
-   looks like a bug may be a recorded choice (0 DH payments, current pricing, no CSRF token),
+   looks like a bug may be a recorded choice (free students, current pricing, no CSRF token),
    and a change that quietly reverses a record is a finding.
 2. Get the change: what you were pointed at, or `git diff main...HEAD` plus `git diff HEAD`.
 3. Read the changed code **and its callers**; a rule usually breaks one call away from the diff.

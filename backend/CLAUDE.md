@@ -138,8 +138,7 @@ These must hold for every change:
   paid date was the mistake. Moving a payment to another month is delete + record.
 - **Duplicate payments are rejected**, never overwritten.
 - **A payment is positive, has at most two decimals, is never dated in the future, and is at
-  most the student's monthly price** (`PricingService.price_of`), all enforced in `PaymentService`; an edit checks only a changed amount. A 0 DH payment is meant to
-  be allowed (`docs/decisions/0007`, not built yet): don't add checks that reject it elsewhere.
+  most the student's monthly price** (`PricingService.price_of`), all enforced in `PaymentService`; an edit checks only a changed amount.
 - **Money is quoted through `PricingService.price_of`**, never `pack.price` at a call site: it
   holds the `custom_price` override and "no pack means not billed".
 - **Pricing is current, not historical** (migration 0004), a deliberate trade: changing a price
@@ -151,6 +150,9 @@ These must hold for every change:
   recorded.
 - **Cumulative drift never decreases** as `as_of` moves forward, is always ≥ 0, and is 0 when
   every payment was on time (property tests).
+- **A price of 0 that was set is free on purpose** (decision 0011): `PricingService.price_status`
+  is "free", never chased or flagged. Only "unset" (no pack, no agreed price) gets the Accueil
+  reminder.
 - **Punctuality is a reading** (`services/punctuality.py`): the mean of `max(0, days_late)` over
   the last six payments due, rounded half up; it never feeds drift.
 - **The school share is a flat percentage of money received** (`services/school_share.py`,

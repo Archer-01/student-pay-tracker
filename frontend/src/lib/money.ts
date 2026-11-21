@@ -23,3 +23,9 @@ export function formatPercent(value: string): string {
     Number(value) / 100,
   );
 }
+
+/** Whether a typed amount is zero ("0", "0,00", " 0.0 "); empty is not zero, it means "none". */
+export function isZeroAmount(value: string): boolean {
+  const typed = value.trim().replace(",", ".");
+  return typed !== "" && Number(typed) === 0;
+}

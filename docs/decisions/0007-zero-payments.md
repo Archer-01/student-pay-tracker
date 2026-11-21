@@ -1,6 +1,6 @@
 # 0007. A 0 DH payment is allowed on purpose
 
-- Status: Accepted, not built
+- Status: Replaced by 0011
 - Decided: 2026-11-21 · Recorded: 2026-11-21
 
 ## Context

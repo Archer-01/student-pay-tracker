@@ -100,6 +100,27 @@ async def test_months_overdue_counts_arrears_and_ignores_free_students(
     assert data["Free"]["months_overdue"] == 0
 
 
+async def test_list_and_detail_say_whether_a_price_was_set(
+    client: AsyncClient, db_session: Session
+) -> None:
+    students = StudentService(db_session)
+    free = students.enroll(
+        first_name="Free", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("0")
+    )
+    students.enroll(first_name="Unset", phone=None, join_date=date(2023, 3, 5))
+    students.enroll(
+        first_name="Paying", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("100")
+    )
+    rows = (await client.get("/api/v1/students")).json()
+    assert {r["first_name"]: r["price_status"] for r in rows} == {
+        "Free": "free",
+        "Unset": "unset",
+        "Paying": "priced",
+    }
+    detail = (await client.get(f"/api/v1/students/{free.id}")).json()
+    assert detail["price_status"] == "free"
+
+
 @pytest.mark.parametrize(
     "params",
     [{"status": "bogus"}, {"sort": "bogus"}, {"as_of": "not-a-date"}],

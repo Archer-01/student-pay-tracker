@@ -241,7 +241,10 @@
     "noteTitle": "Note on {{name}}",
     "editNote": "Edit",
     "addNote": "Add a note",
-    "packFromClass": "Picked from the class"
+    "packFromClass": "Picked from the class",
+    "freeText": "This student pays nothing: no month is ever asked of them.",
+    "changePrice": "Change the price",
+    "freeConfirm": "An agreed price of 0 DH: this student will pay nothing and never be chased. Is that intended?"
   },
   "annual": {
     "payments": "Payments",
@@ -349,7 +352,8 @@
     "paidUp": "Up to date",
     "noPrice": "No price",
     "monthsUnpaid_one": "{{count}} month unpaid",
-    "monthsUnpaid_other": "{{count}} months unpaid"
+    "monthsUnpaid_other": "{{count}} months unpaid",
+    "free": "Free"
   },
   "pay": {
     "title": "Record a payment",
@@ -379,7 +383,8 @@
       "paid": "paid",
       "due": "to pay",
       "away": "away",
-      "upcoming": "to come"
+      "upcoming": "to come",
+      "free": "free"
     },
     "state": {
       "paid": "paid",
@@ -387,7 +392,8 @@
       "due": "to pay",
       "away": "away, not billed",
       "upcoming": "to come",
-      "none": "not enrolled"
+      "none": "not enrolled",
+      "free": "free, nothing owed"
     }
   },
   "tile": {
@@ -404,7 +410,8 @@
     "deleteMoveHint": "To move it to another month, delete it, then record the right month.",
     "deleteConfirmButton": "Delete",
     "days_one": "{{count}} day",
-    "days_other": "{{count}} days"
+    "days_other": "{{count}} days",
+    "free": "This student is free: nothing is owed for this month."
   },
   "share": {
     "title": "Split",

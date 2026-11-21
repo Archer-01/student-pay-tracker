@@ -1,3 +1,4 @@
+import type { PriceStatus } from "../api/types";
 import { useTranslation } from "react-i18next";
 import { formatMoney } from "../lib/money";
 import { useFlashOnChange } from "../lib/useFlashOnChange";
@@ -40,11 +41,11 @@ const tones = {
 export function OwedPill({
   monthsOverdue,
   amountOwed,
-  monthlyPrice,
+  priceStatus,
 }: {
   monthsOverdue: number;
   amountOwed: string;
-  monthlyPrice: string;
+  priceStatus: PriceStatus;
 }) {
   const { t } = useTranslation();
   let tone: keyof typeof tones;
@@ -53,12 +54,13 @@ export function OwedPill({
     // The amount alone: how many months goes on the line under the name, where there is room.
     tone = monthsOverdue === 1 ? "warn" : "bad";
     label = formatMoney(amountOwed);
-  } else if (Number(monthlyPrice) > 0) {
+  } else if (priceStatus === "priced") {
     tone = "ok";
     label = t("owed.paidUp");
   } else {
+    // Free on purpose and not set up yet look alike but mean different things (decision 0011).
     tone = "off";
-    label = t("owed.noPrice");
+    label = t(priceStatus === "free" ? "owed.free" : "owed.noPrice");
   }
   return <PillText tone={tone} label={label} />;
 }

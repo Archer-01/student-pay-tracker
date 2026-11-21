@@ -367,6 +367,7 @@ class _YearTiles(Flowable):  # type: ignore[misc]  # reportlab ships no types
         "due": "bad",
         "away": "off",
         "upcoming": None,
+        "free": "off",
         "none": None,
     }
 

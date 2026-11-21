@@ -188,3 +188,29 @@ def test_a_student_can_be_taken_off_their_pack(db_session: Session) -> None:
 # --------------------------------------------------------------------------- #
 # Level mismatch — advisory, never a block
 # --------------------------------------------------------------------------- #
+
+
+# --------------------------------------------------------------------------- #
+# Free on purpose, or not set up yet (decision 0011)
+# --------------------------------------------------------------------------- #
+
+
+def test_a_student_with_a_price_is_priced(db_session: Session) -> None:
+    pricing = PricingService(db_session)
+    assert pricing.price_status(_student(db_session, pack_id=_pack(db_session).id)) == "priced"
+    assert pricing.price_status(_student(db_session, custom_price=Decimal("80"))) == "priced"
+
+
+def test_an_agreed_price_of_zero_is_free_on_purpose(db_session: Session) -> None:
+    pack = _pack(db_session, price="150")
+    student = _student(db_session, pack_id=pack.id, custom_price=Decimal("0"))
+    assert PricingService(db_session).price_status(student) == "free"
+
+
+def test_a_pack_at_zero_is_free_on_purpose(db_session: Session) -> None:
+    student = _student(db_session, pack_id=_pack(db_session, price="0").id)
+    assert PricingService(db_session).price_status(student) == "free"
+
+
+def test_no_pack_and_no_agreed_price_is_not_set_up(db_session: Session) -> None:
+    assert PricingService(db_session).price_status(_student(db_session)) == "unset"

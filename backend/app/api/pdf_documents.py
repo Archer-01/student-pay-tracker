@@ -214,6 +214,7 @@ def ledger_story(
     left_on: date | None,
     as_of: date,
     locale: str,
+    free: bool = False,
 ) -> list[Flowable]:
     sub = " · ".join(
         part
@@ -251,7 +252,12 @@ def ledger_story(
     # Newest school year first: it's the one the reader is asking about.
     for start in reversed(school_years(entries, student.join_date, as_of)):
         tiles = month_tiles(
-            entries, start, join_date=student.join_date, today=as_of, enrolled=enrolled
+            entries,
+            start,
+            join_date=student.join_date,
+            today=as_of,
+            enrolled=enrolled,
+            free=free,
         )
         label = translate("pdf.ledger.school_year", locale, start=start, end=start + 1)
         story += [

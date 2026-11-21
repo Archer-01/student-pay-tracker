@@ -13,7 +13,7 @@ function student(over: Partial<Record<string, unknown>> = {}) {
     id: 5, first_name: "Fatima", last_name: "Zahra", full_name: "Fatima Zahra", phone: null,
     is_repeating: false, join_date: "2026-09-01", status: "active", class_id: null, school_class: null,
     pack_id: null, pack: null, custom_price: "200.00", price_note: null, note: null, created_at: "2026-09-01T00:00:00",
-    cumulative_drift: 0, months_overdue: 0, amount_owed: "0.00", monthly_price: "200.00",
+    cumulative_drift: 0, months_overdue: 0, amount_owed: "0.00", monthly_price: "200.00", price_status: "priced",
     next_expected_date: "2026-12-01", payments_count: 0, total_paid: "0.00", first_payment_date: null,
     average_days_late: null,
     as_of: "2026-11-14", ...over,
@@ -108,6 +108,31 @@ describe("StudentDetail status", () => {
     renderPage();
     expect(await screen.findByText("Up to date")).toBeInTheDocument();
     expect(screen.getByText(/next payment expected on/i)).toBeInTheDocument();
+  });
+
+  it("says a student free on purpose is free, not that a price is missing", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ custom_price: "0.00", monthly_price: "0.00", price_status: "free" }) as never,
+    );
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("Free")).toBeInTheDocument();
+    expect(screen.getByText(/pays nothing/)).toBeInTheDocument();
+    expect(screen.queryByText("No price")).not.toBeInTheDocument();
+    // Coming months read "free", not "to come", and the legend says what that means.
+    expect(screen.queryByText("to come")).not.toBeInTheDocument();
+    expect(screen.getAllByText("free").length).toBeGreaterThan(0);
+    expect(screen.getByText("free, nothing owed")).toBeInTheDocument();
+  });
+
+  it("asks for a price when none was set", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ custom_price: null, monthly_price: "0.00", price_status: "unset" }) as never,
+    );
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    expect(await screen.findByText("No price")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Choose a pack" })).toBeInTheDocument();
   });
 });
 

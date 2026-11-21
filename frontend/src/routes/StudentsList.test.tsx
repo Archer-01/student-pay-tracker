@@ -9,7 +9,7 @@ function student(over: Partial<Record<string, unknown>>) {
   return {
     id: 1, full_name: "Amina Benali", is_repeating: false, status: "active",
     school_class: { id: 5, level: "2BAC", name: "Groupe A" }, cumulative_drift: 0,
-    months_overdue: 0, amount_owed: "0.00", monthly_price: "240.00", average_days_late: 0, ...over,
+    months_overdue: 0, amount_owed: "0.00", monthly_price: "240.00", price_status: "priced", average_days_late: 0, ...over,
   };
 }
 

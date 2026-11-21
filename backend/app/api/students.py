@@ -68,6 +68,7 @@ async def list_students(
                 months_overdue=len(unpaid_due),
                 amount_owed=pricing.amount_for_cycles(student, unpaid_due),
                 monthly_price=pricing.price_of(student),
+                price_status=pricing.price_status(student),
                 average_days_late=average_days_late(entries, as_of_date),
             )
         )
@@ -85,12 +86,14 @@ async def get_student(
     as_of_date = as_of or date.today()
     student = StudentService(db).get(student_id)
     summary = LedgerService(db).student_summary(student_id, as_of_date)
+    pricing = PricingService(db)
     return StudentDetailOut(
         **StudentOut.model_validate(student).model_dump(),
         cumulative_drift=summary.cumulative_drift,
         months_overdue=summary.months_overdue,
         amount_owed=summary.amount_owed,
-        monthly_price=PricingService(db).price_of(student),
+        monthly_price=pricing.price_of(student),
+        price_status=pricing.price_status(student),
         next_expected_date=summary.next_expected_date,
         payments_count=summary.payments_count,
         total_paid=summary.total_paid,
@@ -150,6 +153,7 @@ async def get_ledger_pdf(
         left_on=max(leaves) if leaves else None,
         as_of=as_of_date,
         locale=locale,
+        free=PricingService(db).price_status(student) == "free",
     )
     return respond(
         story,

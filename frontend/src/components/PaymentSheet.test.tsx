@@ -10,7 +10,7 @@ import { PaymentSheetProvider } from "./PaymentSheet";
 
 /** Owes October; paid 200 for September. */
 const student = {
-  id: 13, full_name: "Amina Benali", monthly_price: "250.00", months_overdue: 1,
+  id: 13, full_name: "Amina Benali", monthly_price: "250.00", price_status: "priced", months_overdue: 1,
   amount_owed: "250.00", next_expected_date: "2026-11-05",
 };
 const ledger = {

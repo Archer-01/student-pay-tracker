@@ -7,6 +7,8 @@ export type LoginRequest = components["schemas"]["LoginRequest"];
 export type StudentOut = components["schemas"]["StudentOut"];
 /** List rows carry `cumulative_drift` on top of the base StudentOut fields. */
 export type StudentListItem = components["schemas"]["StudentListItemOut"];
+/** "priced", "free" (a price of 0 set on purpose) or "unset" (no pack, no agreed price). */
+export type PriceStatus = StudentListItem["price_status"];
 export type StudentDetailOut = components["schemas"]["StudentDetailOut"];
 export type StudentCreate = components["schemas"]["StudentCreate"];
 export type StudentUpdate = components["schemas"]["StudentUpdate"];

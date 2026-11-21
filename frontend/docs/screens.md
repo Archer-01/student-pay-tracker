@@ -53,6 +53,10 @@ class here, so the counts don't depend on the chip selected.
 Enrolling a student pre-selects the pack when the chosen class's level has exactly one offered
 pack ("Choisi d'après la classe"), until the teacher touches the pack field.
 
+A student's pill reads « Gratuit » when their price was set to 0 on purpose, and « Sans tarif »
+when no price was set at all (decision 0011). Setting an agreed price of 0, when enrolling or in
+the edit form, asks « … C'est voulu ? » first; a student already free isn't asked again.
+
 ## The student page
 
 The school year is twelve tiles, September to August (`src/lib/schoolYear.ts`, with its own
@@ -78,6 +82,10 @@ server's `average_days_late` over the student's last six payments, read as À l'
 Un peu tard (3–7) or Souvent tard (8+) by `lib/punctuality.ts`, with the cumulative total beside
 it ("Retard moyen 2 j · 34 j au total"). It reads the frozen lateness of payments; it is not drift
 and changes nothing.
+
+The status card of a free student says « Gratuit » (nothing is ever asked of them) with
+« Modifier le tarif », and their unpaid and coming months read « gratuit » on the tiles (and on
+the PDF); one with no price says « Sans tarif » with « Choisir un pack ».
 
 Under the status card sits the teacher's **note** on the student (`student.note`, up to 500
 characters), or a quiet "Ajouter une note" link when there is none; both open `NoteSheet`, a sheet

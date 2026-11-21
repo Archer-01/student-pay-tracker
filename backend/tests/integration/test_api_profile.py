@@ -160,6 +160,20 @@ async def test_ledger_pdf_reads_like_the_student_page(
     assert "page 1 of 1" in text
 
 
+async def test_ledger_pdf_shows_a_free_students_months_as_free(
+    client: AsyncClient, db_session: Session
+) -> None:
+    student = StudentService(db_session).enroll(
+        first_name="Ilyas", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("0")
+    )
+    resp = await client.get(
+        f"/api/v1/students/{student.id}/ledger.pdf", params={"as_of": "2023-06-30", "lang": "fr"}
+    )
+    text = pdf_text(resp.content)
+    assert "gratuit" in text
+    assert "à payer" not in text
+
+
 async def test_ledger_pdf_is_localized(client: AsyncClient, db_session: Session) -> None:
     student_id = _seed(db_session)
     resp = await client.get(

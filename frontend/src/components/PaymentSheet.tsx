@@ -187,7 +187,7 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
                       </span>
                     )}
                   </span>
-                  <OwedPill monthsOverdue={s.months_overdue} amountOwed={s.amount_owed} monthlyPrice={s.monthly_price} />
+                  <OwedPill monthsOverdue={s.months_overdue} amountOwed={s.amount_owed} priceStatus={s.price_status} />
                 </button>
               </li>
             ))}

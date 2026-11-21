@@ -160,7 +160,8 @@ banner saying how old it is. Nothing is queued for later sending yet.
   and `.dark`. Tailwind's own scales (`slate`, `indigo`…) are unused and don't follow the theme.
   Opacity shorthand (`bg-brand/35`) silently fails on the tokens: add a solid token instead.
 - **Status is colour plus words**: green "À jour", amber one month owed, red two or more, grey
-  "Sans tarif". Never colour alone.
+  "Sans tarif" (no price set) or « Gratuit » (free on purpose, decision 0011). Never colour
+  alone.
 - **Type**: Atkinson Hyperlegible for text, Bricolage Grotesque (`font-display`) for titles and
   figures. Digits always come from Bricolage through the `Ardoise Digits` face in `index.css`,
   because Atkinson slashes its zero. Both bundled via `@fontsource`; no request to Google.

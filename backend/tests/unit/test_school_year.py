@@ -130,3 +130,14 @@ def test_the_years_run_from_joining_to_now() -> None:
 def test_the_years_reach_as_far_as_a_payment_made_in_advance() -> None:
     entries = [paid(12, date(2027, 9, 5), TODAY)]
     assert school_years(entries, JOINED, TODAY) == [2026, 2027]
+
+
+def test_a_free_students_unpaid_and_coming_months_are_free() -> None:
+    # Free on purpose (decision 0011): nothing is owed or coming, so neither "to pay" nor
+    # "to come"; a month they did pay still shows as paid, and away is still away.
+    entries = [
+        paid(0, date(2026, 9, 5), date(2026, 9, 5)),
+        entry(1, date(2026, 10, 5), suspended=True),
+        entry(2, date(2026, 11, 5)),
+    ]
+    assert states(entries, free=True)[:5] == ["paid", "away", "free", "free", "free"]

@@ -9,6 +9,7 @@ from app.models import StudentStatus
 from app.schemas.money import Money
 from app.schemas.pack import PackBriefOut
 from app.schemas.school_class import ClassBriefOut
+from app.services.pricing_service import PriceStatus
 
 # The teacher's private note: room for a few sentences, not an essay.
 NOTE_MAX_LENGTH = 500
@@ -107,6 +108,8 @@ class StudentListItemOut(StudentOut):
     average_days_late: int | None
     # The effective price: `custom_price` if set, else the pack's, else zero.
     monthly_price: Decimal
+    # "free" when a price of 0 was set on purpose, "unset" when none was set (decision 0011).
+    price_status: PriceStatus
 
 
 class StudentDetailOut(StudentOut):
@@ -114,6 +117,7 @@ class StudentDetailOut(StudentOut):
     months_overdue: int
     amount_owed: Decimal
     monthly_price: Decimal
+    price_status: PriceStatus
     next_expected_date: date
     payments_count: int
     total_paid: Decimal

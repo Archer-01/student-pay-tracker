@@ -278,13 +278,16 @@ function StatusCard({
       </Panel>
     );
   }
-  if (Number(detail.monthly_price) <= 0) {
+  if (detail.price_status !== "priced") {
+    const free = detail.price_status === "free";
     return (
-      <Panel className="bg-off-soft text-off" showing="no-price">
-        <p className="font-display text-2xl font-extrabold tracking-tight">{t("owed.noPrice")}</p>
-        <p className="text-ink">{t("student.noPriceText")}</p>
+      <Panel className="bg-off-soft text-off" showing={free ? "free" : "no-price"}>
+        <p className="font-display text-2xl font-extrabold tracking-tight">
+          {t(free ? "owed.free" : "owed.noPrice")}
+        </p>
+        <p className="text-ink">{t(free ? "student.freeText" : "student.noPriceText")}</p>
         <Button variant="secondary" onClick={onEdit} disabled={readOnly} className="sm:self-start">
-          {t("home.choosePack")}
+          {t(free ? "student.changePrice" : "home.choosePack")}
         </Button>
       </Panel>
     );
@@ -364,6 +367,7 @@ const tileStyles: Record<MonthTile["state"], string> = {
   due: "border-bad bg-bad-soft text-bad",
   away: "border-dashed border-off bg-off-soft text-off",
   upcoming: "border-line bg-surface text-muted",
+  free: "border-transparent bg-off-soft text-off",
   none: "border-transparent bg-transparent text-placeholder",
 };
 
@@ -399,6 +403,7 @@ function YearTiles({
     joinDate: detail.join_date,
     today: ledger.as_of,
     enrolled,
+    free: detail.price_status === "free",
   });
   const index = years.indexOf(year);
   const shortMonth = (month: string) =>
@@ -431,7 +436,7 @@ function YearTiles({
         ))}
       </ol>
       <ul className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted">
-        {(["paid", "late", "due", "away"] as const).map((state) => (
+        {(["paid", "late", "due", "away", ...(tiles.some((x) => x.state === "free") ? ["free" as const] : [])] as const).map((state) => (
           <li key={state} className="flex items-center gap-1.5">
             <span aria-hidden="true" className={`h-3 w-3 rounded border-2 ${tileStyles[state]}`} />
             {t(`tiles.state.${state}`)}
@@ -565,7 +570,9 @@ function TileDetails({
             <p>
               {tile.state === "away"
                 ? t("tile.away")
-                : tile.state === "due" && e
+                : tile.state === "free"
+                  ? t("tile.free")
+                  : tile.state === "due" && e
                   ? t("tile.notPaid", { date: formatDate(e.expected_due_date) })
                   : t("tile.upcoming")}
             </p>
@@ -826,7 +833,12 @@ function linkedTile(
   if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) return null;
   const year = schoolYearStart(`${month}-01`);
   if (!schoolYears(ledger.entries, detail.join_date, ledger.as_of).includes(year)) return null;
-  const tile = monthTiles(ledger.entries, year, { joinDate: detail.join_date, today: ledger.as_of, enrolled }).find(
+  const tile = monthTiles(ledger.entries, year, {
+    joinDate: detail.join_date,
+    today: ledger.as_of,
+    enrolled,
+    free: detail.price_status === "free",
+  }).find(
     (t) => t.month === month,
   );
   return tile && tile.state !== "none" ? { tile, year } : null;

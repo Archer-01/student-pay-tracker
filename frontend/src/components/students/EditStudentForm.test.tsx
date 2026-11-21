@@ -136,3 +136,35 @@ describe("EditStudentForm", () => {
     expect("note" in body && body.note === null).toBe(true);
   });
 });
+
+describe("EditStudentForm, a price of 0", () => {
+  it("asks before making a student free, and saves nothing if the answer is no", async () => {
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const price = screen.getByLabelText(/agreed price/i);
+    await userEvent.clear(price);
+    await userEvent.type(price, "0");
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/0 DH.*never be chased/));
+    expect(endpoints.updateStudent).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    expect(await save()).toMatchObject({ custom_price: "0" });
+  });
+
+  it("doesn't ask again when the student was already free", async () => {
+    const confirm = vi.spyOn(window, "confirm");
+    renderWithProviders(
+      <EditStudentForm
+        studentId={1}
+        initial={{ ...initial, customPrice: "0.00" }}
+        onSuccess={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    await save();
+    expect(confirm).not.toHaveBeenCalled();
+  });
+});

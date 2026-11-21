@@ -26,7 +26,7 @@ from app.repos import PaymentRepo, StudentRepo
 from app.services.debt_service import DebtService
 from app.services.enrollment_service import EnrollmentService
 from app.services.ledger_service import LedgerService
-from app.services.pricing_service import PricingService
+from app.services.pricing_service import PriceStatus, PricingService
 from app.services.schedule import add_months
 from app.services.school_share import ShareSplit, split
 from app.services.school_share_handover_service import SchoolShareHandoverService, ShareMonth
@@ -40,6 +40,7 @@ class StudentDigest:
     name: str
     class_label: str | None
     monthly_price: Decimal
+    price_status: PriceStatus
     cumulative_drift: int
     months_overdue: int
     amount_owed: Decimal
@@ -148,7 +149,8 @@ class DashboardService:
         for student in active:
             digest = self._digest(student, as_of)
             outstanding += digest.amount_owed
-            if digest.monthly_price == 0:
+            if digest.price_status == "unset":
+                # Free on purpose is not a problem to flag (decision 0011); a missing price is.
                 unbilled.append(digest)
             elif digest.amount_owed > 0 or digest.cumulative_drift > 0:
                 debtors.append(digest)
@@ -265,6 +267,7 @@ class DashboardService:
             name=student.full_name,
             class_label=_class_label(student),
             monthly_price=self.pricing.price_of(student),
+            price_status=self.pricing.price_status(student),
             cumulative_drift=summary.cumulative_drift,
             months_overdue=summary.months_overdue,
             amount_owed=summary.amount_owed,

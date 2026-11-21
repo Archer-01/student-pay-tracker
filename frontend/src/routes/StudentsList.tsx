@@ -148,7 +148,7 @@ export function StudentsList() {
                     <OwedPill
                       monthsOverdue={s.months_overdue}
                       amountOwed={s.amount_owed}
-                      monthlyPrice={s.monthly_price}
+                      priceStatus={s.price_status}
                     />
                   )
                 }

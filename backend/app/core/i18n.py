@@ -304,6 +304,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     "pdf.tile.due": {"en": "to pay", "fr": "à payer"},
     "pdf.tile.away": {"en": "away", "fr": "absent"},
     "pdf.tile.upcoming": {"en": "to come", "fr": "à venir"},
+    "pdf.tile.free": {"en": "free", "fr": "gratuit"},
     # --- PDFs: the month ---
     "pdf.monthly.eyebrow": {"en": "Monthly report", "fr": "Bilan du mois"},
     "pdf.monthly.collected": {"en": "Collected in {month}", "fr": "Encaissé en {month}"},

@@ -1231,6 +1231,11 @@ export interface components {
             /** Monthly Price */
             monthly_price: string;
             /**
+             * Price Status
+             * @enum {string}
+             */
+            price_status: "priced" | "free" | "unset";
+            /**
              * Next Expected Date
              * Format: date
              */
@@ -1262,6 +1267,11 @@ export interface components {
             class_label: string | null;
             /** Monthly Price */
             monthly_price: string;
+            /**
+             * Price Status
+             * @enum {string}
+             */
+            price_status: "priced" | "free" | "unset";
             /** Cumulative Drift */
             cumulative_drift: number;
             /** Months Overdue */
@@ -1316,6 +1326,11 @@ export interface components {
             average_days_late: number | null;
             /** Monthly Price */
             monthly_price: string;
+            /**
+             * Price Status
+             * @enum {string}
+             */
+            price_status: "priced" | "free" | "unset";
         };
         /** StudentOut */
         StudentOut: {

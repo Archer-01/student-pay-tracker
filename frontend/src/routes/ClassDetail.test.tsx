@@ -16,7 +16,7 @@ const schoolClass = {
 function student(over: Partial<Record<string, unknown>>) {
   return {
     id: 1, full_name: "Amina Benali", status: "active", cumulative_drift: 0, months_overdue: 0,
-    amount_owed: "0.00", monthly_price: "300.00", ...over,
+    amount_owed: "0.00", monthly_price: "300.00", price_status: "priced", ...over,
   };
 }
 

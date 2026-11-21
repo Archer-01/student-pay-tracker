@@ -10,7 +10,7 @@ import { reportStored, resetConnectivity } from "../lib/connectivity";
 function digest(over: Partial<Record<string, unknown>> = {}) {
   return {
     student_id: 1, name: "Amina Benali", class_label: "2BAC — Groupe A",
-    monthly_price: "300.00", cumulative_drift: 25, months_overdue: 2,
+    monthly_price: "300.00", price_status: "priced", cumulative_drift: 25, months_overdue: 2,
     amount_owed: "600.00", ...over,
   };
 }

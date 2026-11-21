@@ -57,6 +57,18 @@ describe("monthTiles", () => {
     expect(monthTiles(entries, 2026, base)[1]!.state).toBe("away");
   });
 
+  it("shows a free student's unpaid and coming months as free, and paid ones as paid", () => {
+    // Free on purpose (decision 0011): nothing is owed or coming.
+    const entries = [
+      paid(0, "2026-09-05", "2026-09-05"),
+      entry(1, "2026-10-05", { suspended: true }),
+      entry(2, "2026-11-05"),
+    ];
+    expect(states(monthTiles(entries, 2026, { ...base, free: true })).slice(0, 5)).toEqual([
+      "2026-09:paid", "2026-10:away", "2026-11:free", "2026-12:free", "2027-01:free",
+    ]);
+  });
+
   it("leaves months before the student joined blank", () => {
     const tiles = monthTiles([], 2026, { ...base, joinDate: "2026-11-02" });
     expect(states(tiles).slice(0, 3)).toEqual(["2026-09:none", "2026-10:none", "2026-11:upcoming"]);

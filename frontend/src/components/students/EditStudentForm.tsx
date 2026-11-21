@@ -1,3 +1,4 @@
+import { isZeroAmount } from "../../lib/money";
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { listClasses, updateStudent } from "../../api/endpoints";
@@ -72,6 +73,9 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
       return;
     }
     setErrors({});
+    // Asked only when the price becomes 0 here, not on every save of a student already free.
+    const becomesFree = isZeroAmount(customPrice) && !isZeroAmount(initial.customPrice ?? "");
+    if (becomesFree && !window.confirm(t("student.freeConfirm"))) return;
     try {
       // class_id is always sent: an explicit null is what unassigns a student, so omitting the
       // key (which the backend reads as "leave unchanged") would make clearing it impossible.

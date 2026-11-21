@@ -78,3 +78,29 @@ describe("EnrollStudent, the pack", () => {
     expect(screen.getByText("Picked from the class")).toBeInTheDocument();
   });
 });
+
+describe("EnrollStudent, a price of 0", () => {
+  it("asks before enrolling a student who will pay nothing", async () => {
+    const create = vi.spyOn(endpoints, "createStudent").mockResolvedValue({ id: 42 } as never);
+    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderWithProviders(<EnrollStudent />);
+    await userEvent.type(screen.getByLabelText(/first name/i), "Amina");
+    await userEvent.type(screen.getByLabelText(/agreed price/i), "0");
+    await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
+    expect(confirm).toHaveBeenCalledOnce();
+    expect(create).not.toHaveBeenCalled();
+
+    confirm.mockReturnValue(true);
+    await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ custom_price: "0" }));
+  });
+
+  it("doesn't ask when the agreed price is left empty", async () => {
+    vi.spyOn(endpoints, "createStudent").mockResolvedValue({ id: 42 } as never);
+    const confirm = vi.spyOn(window, "confirm");
+    renderWithProviders(<EnrollStudent />);
+    await userEvent.type(screen.getByLabelText(/first name/i), "Amina");
+    await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
+    expect(confirm).not.toHaveBeenCalled();
+  });
+});

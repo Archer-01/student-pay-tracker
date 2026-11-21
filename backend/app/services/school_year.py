@@ -13,8 +13,9 @@ from app.services.ledger_service import LedgerEntry
 
 # paid: on time or early (months paid in advance included); late: paid, but late; due: owed;
 # away: not paid because the student was away, so not owed; upcoming: not due yet;
+# free: unpaid or coming, for a student free on purpose (decision 0011), so never owed;
 # none: nothing expected, before joining or after leaving.
-TileState = Literal["paid", "late", "due", "away", "upcoming", "none"]
+TileState = Literal["paid", "late", "due", "away", "upcoming", "free", "none"]
 
 
 @dataclass(frozen=True)
@@ -43,12 +44,14 @@ def month_tiles(
     join_date: date,
     today: date,
     enrolled: bool,
+    free: bool = False,
 ) -> list[MonthTile]:
     """Twelve tiles, September to August.
 
     The ledger already holds every month that has come due (and any paid in advance); a month
     without an entry is either not due yet or not expected at all. ``enrolled`` decides which:
-    someone who has left is expected to pay nothing further.
+    someone who has left is expected to pay nothing further. For a student free on purpose,
+    ``free`` turns what would be owed or coming into "free".
     """
     by_month = {e.expected_due_date.replace(day=1): e for e in entries}
     join_month = join_date.replace(day=1)
@@ -61,10 +64,11 @@ def month_tiles(
                 late = (entry.days_late or 0) > 0
                 tiles.append(MonthTile(month, "late" if late else "paid", entry))
             else:
-                tiles.append(MonthTile(month, "away" if entry.suspended else "due", entry))
+                unpaid: TileState = "free" if free else "due"
+                tiles.append(MonthTile(month, "away" if entry.suspended else unpaid, entry))
         elif month >= join_month and month >= this_month and enrolled:
             # No entry and not in the past: this month's day hasn't come, or it's a later month.
-            tiles.append(MonthTile(month, "upcoming"))
+            tiles.append(MonthTile(month, "free" if free else "upcoming"))
         else:
             tiles.append(MonthTile(month, "none"))
     return tiles

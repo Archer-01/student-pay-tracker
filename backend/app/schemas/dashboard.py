@@ -6,6 +6,7 @@ from decimal import Decimal
 from pydantic import BaseModel, ConfigDict
 
 from app.schemas.reports import ShareOut
+from app.services.pricing_service import PriceStatus
 
 
 class StudentDigestOut(BaseModel):
@@ -17,6 +18,7 @@ class StudentDigestOut(BaseModel):
     name: str
     class_label: str | None
     monthly_price: Decimal
+    price_status: PriceStatus
     cumulative_drift: int
     months_overdue: int
     amount_owed: Decimal

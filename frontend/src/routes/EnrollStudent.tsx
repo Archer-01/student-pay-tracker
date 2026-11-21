@@ -7,7 +7,7 @@ import { useDebounced } from "../lib/useDebounced";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { classLabel } from "../lib/classes";
-import { formatMoney } from "../lib/money";
+import { formatMoney, isZeroAmount} from "../lib/money";
 import { NameFields } from "../components/students/NameFields";
 import { PricingFields } from "../components/students/PricingFields";
 import { Button, Card, DateField, Select, TextField } from "../components/ui";
@@ -77,6 +77,8 @@ export function EnrollStudent() {
       return;
     }
     setErrors({});
+    // A price of 0 means a student who is never chased (decision 0011): make sure it's meant.
+    if (isZeroAmount(customPrice) && !window.confirm(t("student.freeConfirm"))) return;
     try {
       const student = await create.mutate({
         first_name: firstName.trim(),
