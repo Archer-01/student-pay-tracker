@@ -51,24 +51,60 @@ describe("StudentsList", () => {
   it("shows who owes money, most first, with one tap", async () => {
     renderWithProviders(<StudentsList />);
     await screen.findByText("Amina Benali");
-    await userEvent.click(screen.getByRole("radio", { name: "Unpaid" }));
+    await userEvent.click(screen.getByRole("radio", { name: /^Unpaid/ }));
     await waitFor(() => expect(list().getAllByRole("link")).toHaveLength(2));
     const names = list().getAllByRole("link").map((a) => a.textContent);
     expect(names[0]).toMatch(/Youssef/);
     expect(names[1]).toMatch(/Karim/);
   });
 
-  it("filters by class from a chip, and keeps former students behind their own chip", async () => {
+  it("counts everyone and who owes on their chips, whichever chip is picked", async () => {
+    renderWithProviders(<StudentsList />);
+    expect(await screen.findByRole("radio", { name: "All · 4" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Unpaid · 2" })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("radio", { name: "2BAC Groupe A" }));
+    expect(screen.getByRole("radio", { name: "All · 4" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Unpaid · 2" })).toBeInTheDocument();
+  });
+
+  it("counts only the students the search finds", async () => {
+    vi.mocked(endpoints.listStudents).mockImplementation(async (params) =>
+      rows.filter((s) => !params?.q || s.full_name.includes(params.q)) as never,
+    );
+    renderWithProviders(<StudentsList />);
+    await screen.findByRole("radio", { name: "All · 4" });
+    await userEvent.type(screen.getByRole("searchbox"), "Karim");
+    expect(await screen.findByRole("radio", { name: "All · 1" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Unpaid · 1" })).toBeInTheDocument();
+  });
+
+  it("filters by class on the phone, without asking the server again", async () => {
+    renderWithProviders(<StudentsList />);
+    await screen.findByText("Karim Bennis");
+    await userEvent.click(screen.getByRole("radio", { name: "2BAC Groupe A" }));
+    await waitFor(() => expect(screen.queryByText("Karim Bennis")).not.toBeInTheDocument());
+    expect(list().getAllByRole("link").map((a) => a.textContent)).toEqual([
+      expect.stringMatching(/Amina Benali/),
+      expect.stringMatching(/Youssef El Amrani/),
+      expect.stringMatching(/Zineb Nouri/),
+    ]);
+    expect(endpoints.listStudents).not.toHaveBeenCalledWith(expect.objectContaining({ class_id: expect.anything() }));
+  });
+
+  it("keeps former students behind their own chip", async () => {
     renderWithProviders(<StudentsList />);
     await screen.findByText("Amina Benali");
-    await userEvent.click(screen.getByRole("radio", { name: "2BAC Groupe A" }));
-    await waitFor(() =>
-      expect(endpoints.listStudents).toHaveBeenLastCalledWith(expect.objectContaining({ class_id: 5, status: "active" })),
+    vi.mocked(endpoints.listStudents).mockImplementation(async (params) =>
+      (params?.status === "inactive" ? [student({ id: 9, full_name: "Omar Tazi", status: "inactive" })] : rows) as never,
     );
     await userEvent.click(screen.getByRole("radio", { name: "Former" }));
     await waitFor(() =>
       expect(endpoints.listStudents).toHaveBeenLastCalledWith(expect.objectContaining({ status: "inactive" })),
     );
+    expect(await screen.findByText("Omar Tazi")).toBeInTheDocument();
+    expect(screen.queryByText("Amina Benali")).not.toBeInTheDocument();
+    // The counts are still the current students'.
+    expect(screen.getByRole("radio", { name: "All · 4" })).toBeInTheDocument();
   });
 
   it("ranks who pays late, worst first, leaving out students with nothing due yet", async () => {

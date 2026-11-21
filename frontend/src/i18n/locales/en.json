@@ -58,7 +58,11 @@
       "all": "All",
       "owing": "Unpaid",
       "left": "Former",
-      "punctuality": "Punctuality"
+      "punctuality": "Punctuality",
+      "allCount_one": "All · {{count}}",
+      "allCount_other": "All · {{count}}",
+      "owingCount_one": "Unpaid · {{count}}",
+      "owingCount_other": "Unpaid · {{count}}"
     },
     "addShort": "Student"
   },
@@ -335,7 +339,8 @@
     "whatsappNumber": "Message {{phone}} on WhatsApp",
     "note": "Note",
     "editNote": "Edit",
-    "addNote": "Add a note"
+    "addNote": "Add a note",
+    "packFromClass": "Picked from the class"
   },
   "annual": {
     "year": "Year",
@@ -347,7 +352,8 @@
     "averageHint": "Averaged over the months that earned, not over twelve",
     "best": "Best month",
     "downloadPdf": "Download PDF",
-    "empty": "No payments recorded in this year."
+    "empty": "No payments recorded in this year.",
+    "months": "Months"
   },
   "debts": {
     "empty": "Nobody has left owing money.",
@@ -389,7 +395,11 @@
     "nextYear": "Next year",
     "byStudent": "By student",
     "paid": "Paid {{amount}}",
-    "paidNothing": "Paid nothing"
+    "paidNothing": "Paid nothing",
+    "unpaidGroup_one": "Not paid yet · {{count}}",
+    "unpaidGroup_other": "Not paid yet · {{count}}",
+    "paidGroup_one": "Paid · {{count}}",
+    "paidGroup_other": "Paid · {{count}}"
   },
   "settings": {
     "title": "Settings",

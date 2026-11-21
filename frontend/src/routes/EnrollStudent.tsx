@@ -161,6 +161,7 @@ export function EnrollStudent() {
             priceNote={priceNote}
             onPriceNote={setPriceNote}
             classLevel={(classes.data ?? []).find((c) => String(c.id) === classId)?.level}
+            pickFromClass
             errors={errors}
           />
 

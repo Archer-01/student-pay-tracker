@@ -24,7 +24,7 @@ const shift = ({ year, month }: YearMonth, by: number): YearMonth => {
 
 /**
  * Bilan › Mois: what came in this month and what is still owed, the school year as bars (tap
- * one to open that month), then each student on one line. Arrows step through months instead of
+ * one to open that month), then each student on one line, who hasn't paid first. Arrows step through months instead of
  * two dropdowns; nothing after the current month, which has no figures yet.
  *
  * "Impayés" carries the date it is counted at. The month's figure is counted at the month's end,
@@ -146,19 +146,37 @@ function SchoolYearBars({
   );
 }
 
-/** Each student on one line: what they paid this month, and what they still owe. */
+type Row = MonthlyReportData["rows"][number];
+
+/**
+ * Each student on one line: what they paid this month, and what they still owe. Who hasn't paid
+ * comes first, most owed first, since that is who to chase; then who has, alphabetically. A group
+ * with nobody in it is left out. `Number` only compares amounts.
+ */
 function PerStudent({ data }: { data: MonthlyReportData }) {
   const { t } = useTranslation();
-  const rows = [...data.rows].sort(
-    (a, b) => Number(b.outstanding) - Number(a.outstanding) || a.name.localeCompare(b.name),
-  );
-  if (rows.length === 0) {
+  if (data.rows.length === 0) {
     return <p className="rounded-2xl border border-line bg-surface p-4 text-muted">{t("report.empty")}</p>;
   }
+  const unpaid = data.rows
+    .filter((row) => Number(row.outstanding) > 0)
+    .sort((a, b) => Number(b.outstanding) - Number(a.outstanding) || a.name.localeCompare(b.name));
+  const paid = data.rows.filter((row) => !(Number(row.outstanding) > 0)).sort((a, b) => a.name.localeCompare(b.name));
+  return (
+    <>
+      <StudentGroup title={t("reports.unpaidGroup", { count: unpaid.length })} rows={unpaid} />
+      <StudentGroup title={t("reports.paidGroup", { count: paid.length })} rows={paid} />
+    </>
+  );
+}
+
+function StudentGroup({ title, rows }: { title: string; rows: Row[] }) {
+  const { t } = useTranslation();
+  if (rows.length === 0) return null;
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-bold">{t("reports.byStudent")}</h2>
-      <StudentRows label={t("reports.byStudent")}>
+      <h2 className="text-lg font-bold">{title}</h2>
+      <StudentRows label={title}>
         {rows.map((row) => (
           <StudentRow
             key={row.student_id}
