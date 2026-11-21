@@ -114,9 +114,7 @@ class DebtService:
         if not status.left_with_debt:
             raise InvalidWriteoffError("nothing_to_write_off", student_id=student_id)
 
-        writeoff = DebtWriteoff(
-            student_id=student_id, amount=status.amount_owed, reason=cleaned
-        )
+        writeoff = DebtWriteoff(student_id=student_id, amount=status.amount_owed, reason=cleaned)
         self.session.add(writeoff)
         self.session.commit()
         return writeoff

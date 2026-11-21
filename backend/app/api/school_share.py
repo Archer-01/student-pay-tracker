@@ -20,9 +20,7 @@ _MONTH = Path(..., ge=1, le=12)
 async def list_months(db: Session = Depends(get_db)) -> SchoolShareOut:
     percent = settings.school_share_percent
     months = SchoolShareHandoverService(db).months(date.today(), percent)
-    return SchoolShareOut(
-        percent=percent, months=[ShareMonthOut.model_validate(m) for m in months]
-    )
+    return SchoolShareOut(percent=percent, months=[ShareMonthOut.model_validate(m) for m in months])
 
 
 @router.put("/{year}/{month}", response_model=SchoolShareOut)

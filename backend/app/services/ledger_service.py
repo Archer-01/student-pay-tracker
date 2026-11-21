@@ -83,8 +83,7 @@ class LedgerService:
 
         def attending(due: date) -> bool:
             return any(
-                period.entry_date <= due
-                and (period.leave_date is None or due <= period.leave_date)
+                period.entry_date <= due and (period.leave_date is None or due <= period.leave_date)
                 for period in periods
             )
 

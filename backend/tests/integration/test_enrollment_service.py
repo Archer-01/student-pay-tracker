@@ -254,9 +254,9 @@ def test_a_returning_student_keeps_their_debt(db_session: Session) -> None:
     service = EnrollmentService(db_session)
     # Owes March, April, May; leaves; comes back.
     service.leave(student.id, leave_date=date(2023, 5, 31))
-    owed_at_leave = LedgerService(db_session).student_summary(
-        student.id, date(2023, 5, 31)
-    ).amount_owed
+    owed_at_leave = (
+        LedgerService(db_session).student_summary(student.id, date(2023, 5, 31)).amount_owed
+    )
     service.return_(student.id, entry_date=date(2024, 1, 1))
     after = LedgerService(db_session).student_summary(student.id, date(2024, 1, 31))
     assert after.amount_owed >= owed_at_leave  # the old debt survives the absence
@@ -274,9 +274,10 @@ def test_a_paid_cycle_inside_a_gap_still_counts(db_session: Session) -> None:
     service.leave(student.id, leave_date=date(2023, 5, 31))
     service.return_(student.id, entry_date=date(2023, 9, 1))
 
-    entries = {e.cycle_number: e for e in LedgerService(db_session).get_ledger(
-        student.id, date(2023, 10, 31)
-    )}
+    entries = {
+        e.cycle_number: e
+        for e in LedgerService(db_session).get_ledger(student.id, date(2023, 10, 31))
+    }
     assert entries[3].suspended is False
     assert entries[3].days_late == 20
     assert LedgerService(db_session).cumulative_drift(student.id, date(2023, 10, 31)) == 20

@@ -29,9 +29,7 @@ class PackRepo:
         stmt = select(Pack).where(Pack.name == name, Pack.level == level)
         return self.session.scalars(stmt).one_or_none()
 
-    def list(
-        self, *, level: ClassLevel | None = None, active: bool | None = None
-    ) -> Packs:
+    def list(self, *, level: ClassLevel | None = None, active: bool | None = None) -> Packs:
         stmt = select(Pack).options(selectinload(Pack.subjects)).order_by(Pack.id)
         if level is not None:
             stmt = stmt.where(Pack.level == level)

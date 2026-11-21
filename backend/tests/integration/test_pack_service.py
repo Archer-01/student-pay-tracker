@@ -73,14 +73,12 @@ def test_create_rejects_a_duplicate_name_and_level(db_session: Session) -> None:
 
 
 def test_subjects_are_shared_not_duplicated(db_session: Session) -> None:
-    """"Maths" is one row however many packs include it."""
+    """ "Maths" is one row however many packs include it."""
     service = PackService(db_session)
     first = service.create(
         name="A", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths", "Physique"]
     )
-    second = service.create(
-        name="B", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    second = service.create(name="B", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     maths_ids = {s.id for s in first.subjects if s.name == "Maths"}
     assert maths_ids == {s.id for s in second.subjects if s.name == "Maths"}
 
@@ -180,9 +178,7 @@ def test_update_changes_one_cell_only(db_session: Session) -> None:
 
 def test_update_can_deactivate(db_session: Session) -> None:
     service = PackService(db_session)
-    pack = service.create(
-        name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     assert service.update(pack.id, is_active=False).is_active is False
     assert service.list(active=True) == []
 
@@ -199,9 +195,7 @@ def test_update_unknown_pack_raises(db_session: Session) -> None:
 
 def test_delete_an_unused_pack(db_session: Session) -> None:
     service = PackService(db_session)
-    pack = service.create(
-        name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     service.delete(pack.id)
     with pytest.raises(PackNotFoundError):
         service.get(pack.id)
@@ -209,9 +203,7 @@ def test_delete_an_unused_pack(db_session: Session) -> None:
 
 def test_delete_refuses_a_pack_with_students_on_it(db_session: Session) -> None:
     service = PackService(db_session)
-    pack = service.create(
-        name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     _student(db_session, pack_id=pack.id)
     with pytest.raises(PackInUseError) as exc:
         service.delete(pack.id)
@@ -232,9 +224,7 @@ def test_list_is_ordered_by_offering_then_school_level(db_session: Session) -> N
 
 def test_student_count_for_a_pack(db_session: Session) -> None:
     service = PackService(db_session)
-    pack = service.create(
-        name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     _student(db_session, pack_id=pack.id)
     _student(db_session, name="Other")
     assert service.student_count(pack.id) == 1
@@ -257,9 +247,7 @@ def test_create_offering_rejects_a_negative_price_in_any_cell(db_session: Sessio
 
 def test_update_rejects_a_negative_price(db_session: Session) -> None:
     service = PackService(db_session)
-    pack = service.create(
-        name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"]
-    )
+    pack = service.create(name="X", level=ClassLevel.AC1, price=Decimal("1"), subjects=["Maths"])
     with pytest.raises(InvalidPackError) as exc:
         service.update(pack.id, price=Decimal("-1"))
     assert exc.value.code == "pack_price_negative"

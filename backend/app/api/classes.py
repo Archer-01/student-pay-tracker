@@ -26,6 +26,7 @@ from app.services.class_service import ClassService, RosterRows
 
 router = APIRouter(prefix="/classes", tags=["classes"])
 
+
 def _totals(rows: RosterRows) -> tuple[int, int]:
     """(student_count, class-wide cumulative drift) for a class's roster rows."""
     return len(rows), sum(row.cumulative_drift for row in rows)

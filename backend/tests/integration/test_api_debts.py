@@ -14,8 +14,11 @@ _JOIN = date(2023, 3, 5)
 
 def _left_owing(db_session: Session, first: str = "Amina", phone: str | None = None):
     student = StudentService(db_session).enroll(
-        first_name=first, last_name="Benali", phone=phone,
-        join_date=_JOIN, custom_price=Decimal("300"),
+        first_name=first,
+        last_name="Benali",
+        phone=phone,
+        join_date=_JOIN,
+        custom_price=Decimal("300"),
     )
     EnrollmentService(db_session).leave(student.id, leave_date=date(2023, 6, 30))
     return student
@@ -68,9 +71,7 @@ async def test_write_off_needs_a_reason(client: AsyncClient, db_session: Session
     ).status_code == 422
 
 
-async def test_write_off_with_nothing_owed_is_409(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_write_off_with_nothing_owed_is_409(client: AsyncClient, db_session: Session) -> None:
     student = StudentService(db_session).enroll(first_name="A", join_date=_JOIN)
     resp = await client.post(f"/api/v1/debts/{student.id}/write-off", json={"reason": "x"})
     assert resp.status_code == 409
@@ -105,9 +106,7 @@ async def test_returning_without_debt_carries_no_warning(
     assert resp.json()["debt_warning"] is None
 
 
-async def test_the_return_warning_is_localized(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_the_return_warning_is_localized(client: AsyncClient, db_session: Session) -> None:
     student = _left_owing(db_session)
     resp = await client.post(
         f"/api/v1/students/{student.id}/return",
@@ -122,9 +121,7 @@ async def test_the_return_warning_is_localized(
 
 async def test_matches_by_phone(client: AsyncClient, db_session: Session) -> None:
     _left_owing(db_session, phone="+212600112233")
-    found = (
-        await client.get("/api/v1/debts/matches", params={"phone": "+212600112233"})
-    ).json()
+    found = (await client.get("/api/v1/debts/matches", params={"phone": "+212600112233"})).json()
     assert [m["student"]["full_name"] for m in found] == ["Amina Benali"]
 
 

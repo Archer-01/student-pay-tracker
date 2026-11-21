@@ -24,11 +24,13 @@ from app.services.student_service import StudentService
 
 _ANCHOR = date(2023, 1, 10)
 
+
 def _offsets(draw, count: int) -> list[int]:
     """Strictly increasing day offsets from the anchor, for building non-overlapping periods."""
     picks = draw(
-        st.lists(st.integers(min_value=0, max_value=900), min_size=count, max_size=count,
-                 unique=True)
+        st.lists(
+            st.integers(min_value=0, max_value=900), min_size=count, max_size=count, unique=True
+        )
     )
     return sorted(picks)
 
@@ -53,8 +55,10 @@ def _build(session: Session, absences: list[tuple[int, int]], paid_cycles: list[
         for _ in range(cycle):
             due = add_months(due, 1)
         payments.record_payment(
-            student_id=student.id, cycle_number=cycle,
-            paid_date=due + timedelta(days=cycle % 7), amount=Decimal("100"),
+            student_id=student.id,
+            cycle_number=cycle,
+            paid_date=due + timedelta(days=cycle % 7),
+            amount=Decimal("100"),
         )
     enrollment = EnrollmentService(session)
     for leave, back in absences:
@@ -66,9 +70,7 @@ def _build(session: Session, absences: list[tuple[int, int]], paid_cycles: list[
 @settings(
     max_examples=40, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
 )
-@given(
-    absences=_absences(), paid=st.lists(st.integers(min_value=0, max_value=11), max_size=5)
-)
+@given(absences=_absences(), paid=st.lists(st.integers(min_value=0, max_value=11), max_size=5))
 def test_drift_is_non_decreasing_with_any_absences(
     db_session: Session, absences: list[tuple[int, int]], paid: list[int]
 ) -> None:
@@ -87,9 +89,7 @@ def test_drift_is_non_decreasing_with_any_absences(
 @settings(
     max_examples=40, deadline=None, suppress_health_check=[HealthCheck.function_scoped_fixture]
 )
-@given(
-    absences=_absences(), paid=st.lists(st.integers(min_value=0, max_value=11), max_size=5)
-)
+@given(absences=_absences(), paid=st.lists(st.integers(min_value=0, max_value=11), max_size=5))
 def test_absences_never_increase_what_is_owed(
     db_session: Session, absences: list[tuple[int, int]], paid: list[int]
 ) -> None:
@@ -146,5 +146,7 @@ def test_leaving_and_returning_the_same_day_changes_nothing(
     after = ledger.student_summary(same_day.id, as_of)
 
     assert (after.months_overdue, after.amount_owed, after.cumulative_drift) == (
-        base.months_overdue, base.amount_owed, base.cumulative_drift,
+        base.months_overdue,
+        base.amount_owed,
+        base.cumulative_drift,
     )

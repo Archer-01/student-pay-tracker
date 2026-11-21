@@ -18,9 +18,7 @@ def _student(db_session: Session, price: str = "300"):
     )
 
 
-async def test_a_new_student_has_one_open_period(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_a_new_student_has_one_open_period(client: AsyncClient, db_session: Session) -> None:
     student = _student(db_session)
     periods = (await client.get(f"/api/v1/students/{student.id}/periods")).json()
     assert len(periods) == 1
@@ -50,12 +48,8 @@ async def test_returning_does_not_move_the_join_date(
     client: AsyncClient, db_session: Session
 ) -> None:
     student = _student(db_session)
-    await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-06-30"}
-    )
-    await client.post(
-        f"/api/v1/students/{student.id}/return", json={"entry_date": "2024-01-01"}
-    )
+    await client.post(f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-06-30"})
+    await client.post(f"/api/v1/students/{student.id}/return", json={"entry_date": "2024-01-01"})
     assert (await client.get(f"/api/v1/students/{student.id}")).json()["join_date"] == _JOIN
 
 
@@ -93,12 +87,8 @@ async def test_months_away_are_not_owed(client: AsyncClient, db_session: Session
     ).json()
     assert before["months_overdue"] == 8
 
-    await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"}
-    )
-    await client.post(
-        f"/api/v1/students/{student.id}/return", json={"entry_date": "2023-09-01"}
-    )
+    await client.post(f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"})
+    await client.post(f"/api/v1/students/{student.id}/return", json={"entry_date": "2023-09-01"})
     after = (
         await client.get(f"/api/v1/students/{student.id}", params={"as_of": "2023-10-31"})
     ).json()
@@ -108,12 +98,8 @@ async def test_months_away_are_not_owed(client: AsyncClient, db_session: Session
 
 async def test_ledger_marks_away_months(client: AsyncClient, db_session: Session) -> None:
     student = _student(db_session)
-    await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"}
-    )
-    await client.post(
-        f"/api/v1/students/{student.id}/return", json={"entry_date": "2023-09-01"}
-    )
+    await client.post(f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"})
+    await client.post(f"/api/v1/students/{student.id}/return", json={"entry_date": "2023-09-01"})
     entries = (
         await client.get(f"/api/v1/students/{student.id}/ledger", params={"as_of": "2023-10-31"})
     ).json()["entries"]
@@ -129,9 +115,7 @@ async def test_leaving_keeps_drift_already_accrued(
     )
     params = {"as_of": "2024-06-30"}
     before = (await client.get(f"/api/v1/students/{student.id}", params=params)).json()
-    await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"}
-    )
+    await client.post(f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-05-31"})
     after = (await client.get(f"/api/v1/students/{student.id}", params=params)).json()
     assert after["cumulative_drift"] == before["cumulative_drift"] == 15
 
@@ -161,9 +145,7 @@ async def test_amend_rejects_unknown_fields(client: AsyncClient, db_session: Ses
 async def test_return_is_never_blocked_by_debt(client: AsyncClient, db_session: Session) -> None:
     """The teacher decides whether to re-admit someone who owes — the app doesn't gate it."""
     student = _student(db_session, price="300")
-    await client.post(
-        f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-06-30"}
-    )
+    await client.post(f"/api/v1/students/{student.id}/leave", json={"leave_date": "2023-06-30"})
     owed = (
         await client.get(f"/api/v1/students/{student.id}", params={"as_of": "2023-06-30"})
     ).json()["amount_owed"]

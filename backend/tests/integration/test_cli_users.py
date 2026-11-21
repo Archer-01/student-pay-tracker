@@ -46,9 +46,7 @@ def cli_db(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[str]:
 
 
 def _add(username: str = "aymen", name: str = "Aymen", password: str = PASSWORD) -> None:
-    result = runner.invoke(
-        app, ["users", "add", username, "--name", name, "--password", password]
-    )
+    result = runner.invoke(app, ["users", "add", username, "--name", name, "--password", password])
     assert result.exit_code == 0, result.output
 
 

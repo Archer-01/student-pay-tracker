@@ -18,9 +18,7 @@ def _seed_month(db_session: Session) -> None:
     payments = PaymentService(db_session)
     # A: fee 300, join Mar 5; pays Apr/May/Jun late (10th). June collection = 300.
     a = students.enroll(
-
         first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
-
     )
     for cycle, day in ((1, "04-10"), (2, "05-10"), (3, "06-10")):
         payments.record_payment(
@@ -31,9 +29,7 @@ def _seed_month(db_session: Session) -> None:
         )
     # B: fee 200, join Jun 5; pays cycle 0 on Jun 7 (2 late). June collection = 200.
     b = students.enroll(
-
         first_name="B", phone=None, join_date=date(2023, 6, 5), custom_price=Decimal("200")
-
     )
     payments.record_payment(
         student_id=b.id, cycle_number=0, paid_date=date(2023, 6, 7), amount=Decimal("200")
@@ -109,9 +105,7 @@ async def test_ledger_pdf_unknown_student_404(client: AsyncClient) -> None:
     assert resp.status_code == 404
 
 
-async def test_ledger_pdf_includes_name_and_phone(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_ledger_pdf_includes_name_and_phone(client: AsyncClient, db_session: Session) -> None:
     from tests.integration.test_api_profile import pdf_text
 
     student = StudentService(db_session).enroll(
@@ -158,9 +152,7 @@ async def test_annual_report_endpoint(client: AsyncClient, db_session: Session) 
     body = resp.json()
     assert body["year"] == 2023
     assert [m["month"] for m in body["months"]] == list(range(1, 13))
-    assert Decimal(body["total_collected"]) == sum(
-        Decimal(m["collected"]) for m in body["months"]
-    )
+    assert Decimal(body["total_collected"]) == sum(Decimal(m["collected"]) for m in body["months"])
 
 
 async def test_annual_report_pdf(client: AsyncClient, db_session: Session) -> None:
@@ -181,9 +173,7 @@ async def test_annual_report_pdf_is_localized(client: AsyncClient, db_session: S
     from tests.integration.test_api_profile import pdf_text
 
     _seed_month(db_session)
-    resp = await client.get(
-        "/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"}
-    )
+    resp = await client.get("/api/v1/reports/annual.pdf", params={"year": 2023, "lang": "fr"})
     text = pdf_text(resp.content)
     assert "bilan de l'année 2023" in text
     assert "janvier" in text

@@ -87,18 +87,14 @@ class EnrollmentService:
         existing = self.periods.list_for_student(student_id)
         if any(p.leave_date is None for p in existing):
             raise InvalidPeriodError("period_already_open", student_id=student_id)
-        last_leave = max(
-            (p.leave_date for p in existing if p.leave_date is not None), default=None
-        )
+        last_leave = max((p.leave_date for p in existing if p.leave_date is not None), default=None)
         if last_leave is not None and entry_date < last_leave:
             raise InvalidPeriodError(
                 "return_before_leave",
                 entry_date=entry_date,
                 leave_date=last_leave,
             )
-        period = self.periods.create(
-            EnrollmentPeriod(student_id=student_id, entry_date=entry_date)
-        )
+        period = self.periods.create(EnrollmentPeriod(student_id=student_id, entry_date=entry_date))
         self._sync_status(student_id)
         self.session.commit()
         return period

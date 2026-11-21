@@ -44,9 +44,7 @@ class Student(Base):
     last_name: Mapped[str | None] = mapped_column(nullable=True)
     phone: Mapped[str | None] = mapped_column(nullable=True)
     # "Redoublant": repeating the year. Informational — it has no effect on pricing or drift.
-    is_repeating: Mapped[bool] = mapped_column(
-        nullable=False, default=False, server_default="0"
-    )
+    is_repeating: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
     # The immutable anchor; the API must never let this move (enforced in Sprint 6).
     join_date: Mapped[date] = mapped_column(nullable=False)
     status: Mapped[StudentStatus] = mapped_column(

@@ -84,18 +84,14 @@ async def test_months_overdue_counts_arrears_and_ignores_free_students(
     students.enroll(
         first_name="Behind",
         phone=None,
-        join_date=date(2023,
-        3,
-        5),
+        join_date=date(2023, 3, 5),
         custom_price=_FEE,
     )
     # Free student (fee 0), never paid → owes nothing → 0.
     students.enroll(
         first_name="Free",
         phone=None,
-        join_date=date(2023,
-        3,
-        5),
+        join_date=date(2023, 3, 5),
         custom_price=Decimal("0"),
     )
     resp = await client.get("/api/v1/students", params=_AS_OF)
@@ -155,9 +151,7 @@ async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Sessi
     students = StudentService(db_session)
     payments = PaymentService(db_session)
     a = students.enroll(
-
         first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("300")
-
     )
     payments.record_payment(
         student_id=a.id, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("300")
@@ -166,9 +160,7 @@ async def test_dashboard_summary_endpoint(client: AsyncClient, db_session: Sessi
         student_id=a.id, cycle_number=2, paid_date=date(2023, 5, 10), amount=Decimal("300")
     )
     b = students.enroll(
-
         first_name="B", phone=None, join_date=date(2023, 5, 5), custom_price=Decimal("200")
-
     )
     payments.record_payment(
         student_id=b.id, cycle_number=1, paid_date=date(2023, 6, 3), amount=Decimal("200")

@@ -79,9 +79,7 @@ def test_money_can_leave_the_currency_off_for_a_chart_label() -> None:
 
 
 def test_digits_are_set_in_bricolage_so_a_zero_is_never_slashed() -> None:
-    assert markup("Année 2026 & co") == (
-        'Année <font face="Digits">2026</font> &amp; co'
-    )
+    assert markup("Année 2026 & co") == ('Année <font face="Digits">2026</font> &amp; co')
     assert 'face="Digits-Bold"' in markup("300 DH", bold=True)
 
 
@@ -110,10 +108,17 @@ def test_a_month_is_in_the_future_only_once_it_has_not_started() -> None:
 def _status(
     summary: StudentSummary, price: str = "300", **kw: object
 ) -> tuple[str, str | None, str]:
-    args: dict[str, object] = {"enrolled": True, "left_on": None, "as_of": date(2026, 11, 14),
-                               "locale": "fr"} | kw
-    entries = [_entry(0, date(2026, 9, 5), date(2026, 9, 5), 0), _entry(1, date(2026, 10, 5)),
-               _entry(2, date(2026, 11, 5))]
+    args: dict[str, object] = {
+        "enrolled": True,
+        "left_on": None,
+        "as_of": date(2026, 11, 14),
+        "locale": "fr",
+    } | kw
+    entries = [
+        _entry(0, date(2026, 9, 5), date(2026, 9, 5), 0),
+        _entry(1, date(2026, 10, 5)),
+        _entry(2, date(2026, 11, 5)),
+    ]
     return ledger_status(summary, entries, Decimal(price), **args)  # type: ignore[arg-type]
 
 
@@ -232,8 +237,11 @@ def test_what_a_student_still_owes_this_month(owed: str, price: str, text: str, 
     assert (pill.text, pill.tone) == (text, tone)
 
 
-def _roster_row(months: int = 0, price: str = "300", status: StudentStatus = StudentStatus.ACTIVE,
-                ) -> RosterRow:
+def _roster_row(
+    months: int = 0,
+    price: str = "300",
+    status: StudentStatus = StudentStatus.ACTIVE,
+) -> RosterRow:
     return RosterRow(
         student=Student(id=1, first_name="Amina", status=status, join_date=date(2023, 3, 5)),
         cumulative_drift=0,

@@ -46,9 +46,7 @@ class PricingService:
         """Whether a cycle costs anything — an unpriced or free month is not arrears."""
         return self.price_of(student) > 0
 
-    def level_mismatch(
-        self, student: Student, pack: Pack
-    ) -> tuple[ClassLevel, ClassLevel] | None:
+    def level_mismatch(self, student: Student, pack: Pack) -> tuple[ClassLevel, ClassLevel] | None:
         """``(class level, pack level)`` when they disagree, else ``None``.
 
         Advisory only — never a block. A student may have no class yet, or genuinely sit with a

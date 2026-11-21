@@ -115,9 +115,7 @@ def test_ensure_tenant_is_memoised(central: Path, monkeypatch: pytest.MonkeyPatc
     provisioning.forget_ready()
     calls: list[str] = []
     real = provisioning.migrate
-    monkeypatch.setattr(
-        provisioning, "migrate", lambda url: (calls.append(url), real(url))[1]
-    )
+    monkeypatch.setattr(provisioning, "migrate", lambda url: (calls.append(url), real(url))[1])
 
     provisioning.ensure_tenant(9)
     provisioning.ensure_tenant(9)

@@ -129,8 +129,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     "error.too_many_attempts": {
         "en": "Too many failed sign-in attempts. Try again in {retry_after} seconds.",
         "fr": (
-            "Trop de tentatives de connexion échouées. "
-            "Réessayez dans {retry_after}\u00a0secondes."
+            "Trop de tentatives de connexion échouées. Réessayez dans {retry_after}\u00a0secondes."
         ),
     },
     "error.not_authenticated": {
@@ -169,15 +168,13 @@ MESSAGES: dict[str, dict[str, str]] = {
     "error.leave_before_entry": {
         "en": "A departure ({leave_date}) cannot precede the arrival it closes ({entry_date})",
         "fr": (
-            "La date de départ ({leave_date}) ne peut pas précéder "
-            "la date d'arrivée ({entry_date})"
+            "La date de départ ({leave_date}) ne peut pas précéder la date d'arrivée ({entry_date})"
         ),
     },
     "error.return_before_leave": {
         "en": "A return ({entry_date}) cannot precede the last departure ({leave_date})",
         "fr": (
-            "La date de retour ({entry_date}) ne peut pas précéder "
-            "le dernier départ ({leave_date})"
+            "La date de retour ({entry_date}) ne peut pas précéder le dernier départ ({leave_date})"
         ),
     },
     "error.periods_overlap": {
@@ -402,20 +399,44 @@ def format_date(value: date, locale: str) -> str:
 # Abbreviated months: chart and tile labels ("Juin", "Juil") and medium dates ("14 nov. 2026").
 _MONTH_SHORT = {
     "en": ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"),
-    "fr": ("Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct", "Nov",
-           "Déc"),
+    "fr": (
+        "Janv",
+        "Févr",
+        "Mars",
+        "Avr",
+        "Mai",
+        "Juin",
+        "Juil",
+        "Août",
+        "Sept",
+        "Oct",
+        "Nov",
+        "Déc",
+    ),
 }
-_MONTH_IN_DATE_FR = ("janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.",
-                     "oct.", "nov.", "déc.")
+_MONTH_IN_DATE_FR = (
+    "janv.",
+    "févr.",
+    "mars",
+    "avr.",
+    "mai",
+    "juin",
+    "juil.",
+    "août",
+    "sept.",
+    "oct.",
+    "nov.",
+    "déc.",
+)
 
 
 def month_short(month: int, locale: str) -> str:
-    """"Juin" / "Jun": short enough for twelve side by side, long enough to tell apart."""
+    """ "Juin" / "Jun": short enough for twelve side by side, long enough to tell apart."""
     return _MONTH_SHORT.get(locale, _MONTH_SHORT[DEFAULT_LOCALE])[month - 1]
 
 
 def month_name(month: int, locale: str, *, in_sentence: bool = False) -> str:
-    """"Octobre", or "octobre" inside a French sentence ("Encaissé en octobre")."""
+    """ "Octobre", or "octobre" inside a French sentence ("Encaissé en octobre")."""
     name = translate(f"month.{month}", locale)
     return name.lower() if in_sentence and locale == "fr" else name
 

@@ -133,7 +133,7 @@ def test_full_name_joins_the_parts(db_session: Session) -> None:
 
 
 def test_a_student_may_have_no_surname(db_session: Session) -> None:
-    """"Fatima Zahra" is one compound given name — the case a first/last split gets wrong."""
+    """ "Fatima Zahra" is one compound given name — the case a first/last split gets wrong."""
     svc = StudentService(db_session)
     student = svc.enroll(first_name="Fatima Zahra", join_date=date(2023, 3, 5))
     assert student.last_name is None

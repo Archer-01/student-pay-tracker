@@ -53,6 +53,7 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     migrate_all(user_ids)
     yield
 
+
 # The built-in docs URLs are disabled here and re-registered below behind the session gate. An
 # open /openapi.json hands an attacker a complete map of the API; it leaks no student data, but
 # there is no reason to publish it to people who cannot sign in.

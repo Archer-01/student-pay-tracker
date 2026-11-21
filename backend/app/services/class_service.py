@@ -25,9 +25,7 @@ from app.services.pricing_service import PricingService
 
 # Declaration order in ClassLevel is school order; sorting on the stored value would put "1BAC"
 # before "2AC". Materialised once so ordering is a dict lookup, not a linear scan per row.
-LEVEL_ORDER: Final[dict[ClassLevel, int]] = {
-    level: index for index, level in enumerate(ClassLevel)
-}
+LEVEL_ORDER: Final[dict[ClassLevel, int]] = {level: index for index, level in enumerate(ClassLevel)}
 
 
 class _Unset:

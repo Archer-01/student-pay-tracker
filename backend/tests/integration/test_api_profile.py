@@ -97,18 +97,31 @@ async def test_patch_names_and_repeating(client: AsyncClient, db_session: Sessio
     assert resp.json()["is_repeating"] is False
 
 
-async def test_detail_carries_the_whole_profile(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_detail_carries_the_whole_profile(client: AsyncClient, db_session: Session) -> None:
     student_id = _seed(db_session)
     body = (
         await client.get(f"/api/v1/students/{student_id}", params={"as_of": "2023-06-30"})
     ).json()
     for field in (
-        "full_name", "first_name", "last_name", "phone", "is_repeating", "join_date",
-        "status", "school_class", "pack", "custom_price", "price_note", "monthly_price",
-        "amount_owed", "months_overdue", "cumulative_drift", "next_expected_date",
-        "payments_count", "total_paid", "first_payment_date",
+        "full_name",
+        "first_name",
+        "last_name",
+        "phone",
+        "is_repeating",
+        "join_date",
+        "status",
+        "school_class",
+        "pack",
+        "custom_price",
+        "price_note",
+        "monthly_price",
+        "amount_owed",
+        "months_overdue",
+        "cumulative_drift",
+        "next_expected_date",
+        "payments_count",
+        "total_paid",
+        "first_payment_date",
     ):
         assert field in body, field
     assert body["first_payment_date"] == "2023-04-10"
@@ -120,9 +133,7 @@ async def test_search_by_either_name_part(client: AsyncClient, db_session: Sessi
     StudentService(db_session).enroll(
         first_name="Omar",
         last_name="Tazi",
-        join_date=date(2023,
-        3,
-        5),
+        join_date=date(2023, 3, 5),
     )
     found = (await client.get("/api/v1/students", params={"q": "benali"})).json()
     assert [s["full_name"] for s in found] == ["Amina Benali"]

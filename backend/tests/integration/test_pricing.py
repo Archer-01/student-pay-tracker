@@ -33,9 +33,7 @@ def _pack(session: Session, name: str = "Maths seul", price: str = "150"):
 
 
 def _student(session: Session, **kw: object):
-    return StudentService(session).enroll(
-        first_name="Amina", phone=None, join_date=_JOIN, **kw
-    )
+    return StudentService(session).enroll(first_name="Amina", phone=None, join_date=_JOIN, **kw)
 
 
 # --------------------------------------------------------------------------- #

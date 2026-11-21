@@ -6,7 +6,6 @@ and ``/offerings/...`` ones edit the **row** (name, subjects) across every level
 that split is what stops a level-variant's subject list drifting away from its siblings.
 """
 
-
 from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 

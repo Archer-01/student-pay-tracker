@@ -106,9 +106,7 @@ async def test_both_teachers_can_use_the_same_class_name(two_teachers: dict[str,
     """
     for username in ("aymen", "ayoub"):
         async for client in _signed_in(username):
-            response = await client.post(
-                "/api/v1/classes", json={"level": "2BAC", "name": "A"}
-            )
+            response = await client.post("/api/v1/classes", json={"level": "2BAC", "name": "A"})
             assert response.status_code in (200, 201), f"{username}: {response.text}"
 
 

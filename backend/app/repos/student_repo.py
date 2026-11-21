@@ -41,9 +41,7 @@ class StudentRepo:
         if query:
             # Match either part, so searching "benali" or "amina" both find Amina Benali.
             like = f"%{query.strip()}%"
-            stmt = stmt.where(
-                or_(Student.first_name.ilike(like), Student.last_name.ilike(like))
-            )
+            stmt = stmt.where(or_(Student.first_name.ilike(like), Student.last_name.ilike(like)))
         return list(self.session.scalars(stmt))
 
     def count_in_class(self, class_id: int) -> int:

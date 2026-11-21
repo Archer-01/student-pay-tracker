@@ -945,9 +945,7 @@ def db_seed(
     with _session() as session:
         existing = StudentService(session).list()
         if existing and not force:
-            _abort(
-                f"Database already has {len(existing)} student(s); pass --force to seed anyway."
-            )
+            _abort(f"Database already has {len(existing)} student(s); pass --force to seed anyway.")
         summary = seed_dummy_data(session)
     console.print(
         f"Seeded [bold]{summary.classes}[/bold] classes, "

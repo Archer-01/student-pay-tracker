@@ -236,9 +236,7 @@ async def record_payment(
     return PaymentOut.model_validate(payment)
 
 
-@router.patch(
-    "/{student_id}/payments/{cycle_number}", response_model=PaymentOut, tags=["payments"]
-)
+@router.patch("/{student_id}/payments/{cycle_number}", response_model=PaymentOut, tags=["payments"])
 async def update_payment(
     student_id: int, cycle_number: int, payload: PaymentUpdate, db: Session = Depends(get_db)
 ) -> PaymentOut:
@@ -333,9 +331,7 @@ async def record_return(
     )
 
 
-@router.patch(
-    "/{student_id}/periods/{period_id}", response_model=PeriodOut, tags=["enrollment"]
-)
+@router.patch("/{student_id}/periods/{period_id}", response_model=PeriodOut, tags=["enrollment"])
 async def amend_period(
     student_id: int,
     period_id: int,

@@ -93,15 +93,16 @@ async def test_the_home_page_carries_the_months_dues_and_the_week_ahead(
     client: AsyncClient, db_session: Session
 ) -> None:
     _paid_in_october(db_session)  # Amina, 240 a month from 5 September, paid October
-    home = (
-        await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-10-31"})
-    ).json()
+    home = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-10-31"})).json()
     assert home["this_month"] == {
-        "expected": "240.00", "settled": "240.00", "students_expected": 1, "students_settled": 1
+        "expected": "240.00",
+        "settled": "240.00",
+        "students_expected": 1,
+        "students_settled": 1,
     }
-    soon = (
-        await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-11-01"})
-    ).json()["due_this_week"]
+    soon = (await client.get("/api/v1/dashboard/summary", params={"as_of": "2026-11-01"})).json()[
+        "due_this_week"
+    ]
     assert [(d["name"], d["due_date"], d["amount"]) for d in soon] == [
         ("Amina", "2026-11-05", "240.00")
     ]
@@ -136,9 +137,7 @@ async def test_a_handover_that_makes_no_sense_is_refused_in_words(
 ) -> None:
     monkeypatch.setattr(settings, "school_share_percent", Decimal("25"))
     _paid_in_october(db_session)
-    resp = await client.put(
-        "/api/v1/school-share/2026/9?lang=fr", json={"handed_on": "2026-10-03"}
-    )
+    resp = await client.put("/api/v1/school-share/2026/9?lang=fr", json={"handed_on": "2026-10-03"})
     assert resp.status_code == 409
     assert resp.json()["code"] == "nothing_to_hand_over"
     assert resp.json()["detail"].startswith("Rien n'a été encaissé ce mois-là")

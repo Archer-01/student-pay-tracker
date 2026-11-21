@@ -96,8 +96,20 @@ def test_a_day_reads_the_way_the_app_writes_it(day: date, fr: str, en: str) -> N
 def test_short_months_tell_every_month_apart() -> None:
     # The labels under a chart and on the month tiles, as in the app: "J" and "J" were ambiguous.
     fr = [month_short(m, "fr") for m in range(1, 13)]
-    assert fr == ["Janv", "Févr", "Mars", "Avr", "Mai", "Juin", "Juil", "Août", "Sept", "Oct",
-                  "Nov", "Déc"]
+    assert fr == [
+        "Janv",
+        "Févr",
+        "Mars",
+        "Avr",
+        "Mai",
+        "Juin",
+        "Juil",
+        "Août",
+        "Sept",
+        "Oct",
+        "Nov",
+        "Déc",
+    ]
     assert [month_short(m, "en") for m in (1, 6, 7, 9)] == ["Jan", "Jun", "Jul", "Sep"]
 
 

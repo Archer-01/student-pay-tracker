@@ -20,9 +20,7 @@ class ClassRepo:
 
     def find(self, level: ClassLevel, name: str) -> SchoolClass | None:
         """Look up by the natural key (the unique ``level`` + ``name`` pair)."""
-        stmt = select(SchoolClass).where(
-            SchoolClass.level == level, SchoolClass.name == name
-        )
+        stmt = select(SchoolClass).where(SchoolClass.level == level, SchoolClass.name == name)
         return self.session.scalars(stmt).one_or_none()
 
     def list(self, *, level: ClassLevel | None = None) -> list[SchoolClass]:

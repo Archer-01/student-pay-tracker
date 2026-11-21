@@ -47,8 +47,12 @@ def states(entries: list[LedgerEntry], **over: object) -> list[TileState]:
 
 @pytest.mark.parametrize(
     ("day", "year"),
-    [(date(2026, 9, 1), 2026), (date(2026, 12, 31), 2026), (date(2027, 1, 15), 2026),
-     (date(2027, 8, 31), 2026)],
+    [
+        (date(2026, 9, 1), 2026),
+        (date(2026, 12, 31), 2026),
+        (date(2027, 1, 15), 2026),
+        (date(2027, 8, 31), 2026),
+    ],
 )
 def test_a_date_belongs_to_the_school_year_its_september_starts(day: date, year: int) -> None:
     assert school_year_start(day) == year
@@ -57,8 +61,18 @@ def test_a_date_belongs_to_the_school_year_its_september_starts(day: date, year:
 def test_the_tiles_run_september_to_august() -> None:
     tiles = month_tiles([], 2026, join_date=JOINED, today=TODAY, enrolled=True)
     assert [(t.month.year, t.month.month) for t in tiles] == [
-        (2026, 9), (2026, 10), (2026, 11), (2026, 12), (2027, 1), (2027, 2),
-        (2027, 3), (2027, 4), (2027, 5), (2027, 6), (2027, 7), (2027, 8),
+        (2026, 9),
+        (2026, 10),
+        (2026, 11),
+        (2026, 12),
+        (2027, 1),
+        (2027, 2),
+        (2027, 3),
+        (2027, 4),
+        (2027, 5),
+        (2027, 6),
+        (2027, 7),
+        (2027, 8),
     ]
 
 

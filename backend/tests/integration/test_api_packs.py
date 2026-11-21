@@ -110,9 +110,7 @@ async def test_offering_subject_edit_hits_every_variant(
     assert all(p["subjects"] == ["Maths", "Physique"] for p in resp.json())
 
 
-async def test_offering_rename_hits_every_variant(
-    client: AsyncClient, db_session: Session
-) -> None:
+async def test_offering_rename_hits_every_variant(client: AsyncClient, db_session: Session) -> None:
     _offering(db_session)
     resp = await client.patch(
         "/api/v1/packs/offerings/Maths seul", json={"name": "Maths uniquement"}
@@ -239,9 +237,7 @@ async def test_patching_the_pack_changes_the_price(
     _offering(db_session)
     packs = (await client.get("/api/v1/packs")).json()
     student = _student(db_session, pack_id=packs[0]["id"])
-    resp = await client.patch(
-        f"/api/v1/students/{student.id}", json={"pack_id": packs[1]["id"]}
-    )
+    resp = await client.patch(f"/api/v1/students/{student.id}", json={"pack_id": packs[1]["id"]})
     assert resp.status_code == 200
     assert resp.json()["pack"]["id"] == packs[1]["id"]
 

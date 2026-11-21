@@ -21,7 +21,10 @@ def _seed(db_session: Session) -> tuple[int, int]:
     bac = classes.create(level=ClassLevel.BAC2, name="Groupe A")
     ac = classes.create(level=ClassLevel.AC1, name="Groupe B")
     student = StudentService(db_session).enroll(
-        first_name="Amina", phone="+212600000000", join_date=date(2023, 3, 5), custom_price=_FEE,
+        first_name="Amina",
+        phone="+212600000000",
+        join_date=date(2023, 3, 5),
+        custom_price=_FEE,
         class_id=bac.id,
     )
     PaymentService(db_session).record_payment(
@@ -210,9 +213,9 @@ async def test_create_student_into_unknown_class_returns_404(client: AsyncClient
 async def test_patch_student_class(client: AsyncClient, db_session: Session) -> None:
     bac_id, ac_id = _seed(db_session)
     student_id = (await client.get("/api/v1/students", params=_AS_OF)).json()[0]["id"]
-    assert (
-        await client.patch(f"/api/v1/students/{student_id}", json={"class_id": ac_id})
-    ).json()["class_id"] == ac_id
+    assert (await client.patch(f"/api/v1/students/{student_id}", json={"class_id": ac_id})).json()[
+        "class_id"
+    ] == ac_id
     # ...and unassigning is explicit null, not omission
     resp = await client.patch(f"/api/v1/students/{student_id}", json={"class_id": None})
     assert resp.json()["class_id"] is None

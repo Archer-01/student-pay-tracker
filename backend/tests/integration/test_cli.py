@@ -313,8 +313,16 @@ def test_students_add_with_class(cli_db: str) -> None:
     _add_class()
     result = runner.invoke(
         app,
-        ["students", "add", "--first-name", "Amina",
-         "--join-date", "2023-03-05", "--class-id", "1"],
+        [
+            "students",
+            "add",
+            "--first-name",
+            "Amina",
+            "--join-date",
+            "2023-03-05",
+            "--class-id",
+            "1",
+        ],
     )
     assert result.exit_code == 0, result.output
     assert "Amina" in runner.invoke(app, ["classes", "show", "1"]).output
@@ -341,9 +349,10 @@ def test_students_unassign_class(cli_db: str) -> None:
 def test_students_assign_class_requires_exactly_one_target(cli_db: str) -> None:
     _add_student()
     assert runner.invoke(app, ["students", "assign-class", "1"]).exit_code != 0
-    assert runner.invoke(
-        app, ["students", "assign-class", "1", "--class-id", "1", "--none"]
-    ).exit_code != 0
+    assert (
+        runner.invoke(app, ["students", "assign-class", "1", "--class-id", "1", "--none"]).exit_code
+        != 0
+    )
 
 
 def test_students_list_shows_class(cli_db: str) -> None:
@@ -362,8 +371,7 @@ def test_students_list_shows_class(cli_db: str) -> None:
 def _add_pack(name: str = "Maths seul", level: str = "2BAC", price: str = "150") -> None:
     result = runner.invoke(
         app,
-        ["packs", "add", "--name", name, "--level", level, "--price", price,
-         "--subject", "Maths"],
+        ["packs", "add", "--name", name, "--level", level, "--price", price, "--subject", "Maths"],
     )
     assert result.exit_code == 0, result.output
 
@@ -380,8 +388,18 @@ def test_packs_add_duplicate_fails(cli_db: str) -> None:
     _add_pack()
     dup = runner.invoke(
         app,
-        ["packs", "add", "--name", "Maths seul", "--level", "2BAC", "--price", "9",
-         "--subject", "Maths"],
+        [
+            "packs",
+            "add",
+            "--name",
+            "Maths seul",
+            "--level",
+            "2BAC",
+            "--price",
+            "9",
+            "--subject",
+            "Maths",
+        ],
     )
     assert dup.exit_code == 1
     assert "already exists" in dup.output
@@ -431,9 +449,7 @@ def test_clear_price_returns_to_the_pack_price(cli_db: str) -> None:
     _add_pack(price="150")
     _add_student()
     runner.invoke(app, ["students", "set-pack", "1", "--pack-id", "1", "--price", "90"])
-    cleared = runner.invoke(
-        app, ["students", "set-pack", "1", "--pack-id", "1", "--clear-price"]
-    )
+    cleared = runner.invoke(app, ["students", "set-pack", "1", "--pack-id", "1", "--clear-price"])
     assert cleared.exit_code == 0, cleared.output
     assert "150" in cleared.output
 
@@ -458,9 +474,9 @@ def test_set_unknown_pack_fails(cli_db: str) -> None:
 def test_set_pack_requires_exactly_one_target(cli_db: str) -> None:
     _add_student()
     assert runner.invoke(app, ["students", "set-pack", "1"]).exit_code != 0
-    assert runner.invoke(
-        app, ["students", "set-pack", "1", "--pack-id", "1", "--none"]
-    ).exit_code != 0
+    assert (
+        runner.invoke(app, ["students", "set-pack", "1", "--pack-id", "1", "--none"]).exit_code != 0
+    )
 
 
 def test_remove_a_student_from_their_pack(cli_db: str) -> None:

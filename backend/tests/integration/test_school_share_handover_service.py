@@ -20,9 +20,11 @@ TODAY = date(2026, 11, 21)
 
 
 def _amina(db_session: Session) -> int:
-    return StudentService(db_session).enroll(
-        first_name="Amina", join_date=date(2026, 9, 5), custom_price=Decimal("240")
-    ).id
+    return (
+        StudentService(db_session)
+        .enroll(first_name="Amina", join_date=date(2026, 9, 5), custom_price=Decimal("240"))
+        .id
+    )
 
 
 def _pay(db_session: Session, sid: int, cycle: int, on: date, amount: str = "240") -> None:
@@ -65,7 +67,9 @@ def test_marking_a_month_records_what_was_handed_over(db_session: Session) -> No
     )
     october = _months(db_session)[(2026, 10)]
     assert (october.status, october.handed_amount, october.handed_on) == (
-        "handed", Decimal("60.00"), date(2026, 11, 3)
+        "handed",
+        Decimal("60.00"),
+        date(2026, 11, 3),
     )
     assert october.remaining == Decimal("0")
 
@@ -78,20 +82,26 @@ def test_a_payment_recorded_later_shows_as_a_shortfall_until_marked_again(
     service = SchoolShareHandoverService(db_session)
     service.mark(2026, 10, handed_on=date(2026, 11, 3), share_percent=QUARTER, today=TODAY)
     # A second student's October payment, typed in after the handover.
-    other = StudentService(db_session).enroll(
-        first_name="Omar", join_date=date(2026, 10, 1), custom_price=Decimal("200")
-    ).id
+    other = (
+        StudentService(db_session)
+        .enroll(first_name="Omar", join_date=date(2026, 10, 1), custom_price=Decimal("200"))
+        .id
+    )
     _pay(db_session, other, 0, date(2026, 10, 20), "200")
 
     october = _months(db_session)[(2026, 10)]
     assert (october.status, october.due, october.remaining) == (
-        "short", Decimal("110.00"), Decimal("50.00")
+        "short",
+        Decimal("110.00"),
+        Decimal("50.00"),
     )
     # Marking again replaces the record with the full share.
     service.mark(2026, 10, handed_on=date(2026, 11, 20), share_percent=QUARTER, today=TODAY)
     october = _months(db_session)[(2026, 10)]
     assert (october.status, october.handed_amount, october.handed_on) == (
-        "handed", Decimal("110.00"), date(2026, 11, 20)
+        "handed",
+        Decimal("110.00"),
+        date(2026, 11, 20),
     )
 
 
@@ -148,5 +158,7 @@ def test_a_past_month_with_nothing_collected_has_nothing_to_hand_over(
     _pay(db_session, sid, 1, date(2026, 11, 2))  # October paid late, in November
     october = _months(db_session)[(2026, 10)]
     assert (october.status, october.due, october.remaining) == (
-        "nothing", Decimal("0.00"), Decimal("0")
+        "nothing",
+        Decimal("0.00"),
+        Decimal("0"),
     )

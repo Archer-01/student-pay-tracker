@@ -50,9 +50,7 @@ async def test_every_gated_router_has_a_route_in_this_test() -> None:
     """
     from app.main import app
 
-    mounted = {
-        path.split("/")[3] for path in app.openapi()["paths"] if path.startswith("/api/v1/")
-    }
+    mounted = {path.split("/")[3] for path in app.openapi()["paths"] if path.startswith("/api/v1/")}
     # `auth` is deliberately ungated (login can't require a login), so it's expected here.
     covered = {route.split("/")[3].split("?")[0] for route in GATED_ROUTES} | {"auth"}
     assert mounted == covered, f"routers without gate coverage: {mounted - covered}"
@@ -263,9 +261,7 @@ async def test_throttling_one_account_does_not_lock_another(
 ) -> None:
     session = Session(db_engine)
     try:
-        AuthService(session).create_user(
-            username="ayoub", display_name="Ayoub", password=PASSWORD
-        )
+        AuthService(session).create_user(username="ayoub", display_name="Ayoub", password=PASSWORD)
     finally:
         session.close()
 

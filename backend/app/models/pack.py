@@ -81,6 +81,4 @@ class Pack(Base):
     # which would silently unassign students and defeat the ON DELETE RESTRICT. With it, deleting
     # a pack that students are on raises, so the database backs up PackService's 409 rather than
     # being bypassed by any code that deletes through the ORM.
-    students: Mapped[list["Student"]] = relationship(
-        back_populates="pack", passive_deletes="all"
-    )
+    students: Mapped[list["Student"]] = relationship(back_populates="pack", passive_deletes="all")

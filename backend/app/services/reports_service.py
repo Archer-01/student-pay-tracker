@@ -118,9 +118,7 @@ class ReportsService:
             share=split(total_collected, share_percent),
         )
 
-    def annual_report(
-        self, year: int, *, share_percent: Decimal = Decimal("0")
-    ) -> AnnualReport:
+    def annual_report(self, year: int, *, share_percent: Decimal = Decimal("0")) -> AnnualReport:
         """What came in over a year, month by month.
 
         Every month is returned, including empty ones, so callers can chart or tabulate a year

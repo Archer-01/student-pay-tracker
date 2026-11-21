@@ -106,8 +106,11 @@ def test_the_chase_list_carries_the_class(db_session: Session) -> None:
 
     school_class = ClassService(db_session).create(level=ClassLevel.BAC2, name="Groupe A")
     StudentService(db_session).enroll(
-        first_name="A", phone=None, join_date=date(2023, 3, 5),
-        custom_price=Decimal("100"), class_id=school_class.id,
+        first_name="A",
+        phone=None,
+        join_date=date(2023, 3, 5),
+        custom_price=Decimal("100"),
+        class_id=school_class.id,
     )
     summary = DashboardService(db_session).get_summary(as_of=date(2023, 5, 31))
     assert summary.top_debtors[0].class_label == "2BAC — Groupe A"
@@ -117,7 +120,9 @@ def test_top_n_limits_the_chase_list(db_session: Session) -> None:
     students = StudentService(db_session)
     for i in range(4):
         students.enroll(
-            first_name=f"S{i}", phone=None, join_date=date(2023, 3, 5),
+            first_name=f"S{i}",
+            phone=None,
+            join_date=date(2023, 3, 5),
             custom_price=Decimal(str(100 * (i + 1))),
         )
     summary = DashboardService(db_session).get_summary(as_of=date(2023, 5, 1), top_n=2)
@@ -198,9 +203,11 @@ _NOV_14 = date(2026, 11, 14)
 
 
 def _student(db_session: Session, name: str, joined: date, price: str = "200") -> int:
-    return StudentService(db_session).enroll(
-        first_name=name, join_date=joined, custom_price=Decimal(price)
-    ).id
+    return (
+        StudentService(db_session)
+        .enroll(first_name=name, join_date=joined, custom_price=Decimal(price))
+        .id
+    )
 
 
 def _pay(db_session: Session, sid: int, cycle: int, on: date, amount: str = "200") -> None:
@@ -279,9 +286,7 @@ def test_a_moved_payment_day_moves_the_due_into_the_right_week(db_session: Sessi
         student_id=sid, new_due_date=date(2026, 11, 16), reason="Paie après le salaire"
     )
     summary = DashboardService(db_session).get_summary(_NOV_14)
-    assert [(d.name, d.due_date) for d in summary.due_this_week] == [
-        ("Moved", date(2026, 11, 16))
-    ]
+    assert [(d.name, d.due_date) for d in summary.due_this_week] == [("Moved", date(2026, 11, 16))]
     assert summary.this_month.expected == Decimal("200")
 
 
@@ -307,10 +312,16 @@ def test_recorded_today_lists_what_was_typed_in_today_newest_first(db_session: S
     from app.models import ClassLevel
 
     school_class = ClassService(db_session).create(level=ClassLevel.TC, name="Groupe A")
-    amina = StudentService(db_session).enroll(
-        first_name="Amina", join_date=date(2026, 9, 5), custom_price=Decimal("240"),
-        class_id=school_class.id,
-    ).id
+    amina = (
+        StudentService(db_session)
+        .enroll(
+            first_name="Amina",
+            join_date=date(2026, 9, 5),
+            custom_price=Decimal("240"),
+            class_id=school_class.id,
+        )
+        .id
+    )
     omar = _student(db_session, "Omar", date(2026, 9, 10))
     # Back-dated: September's, paid on 5 September, only typed in today. That is the point.
     _pay(db_session, amina, 0, date(2026, 9, 5), "240")
@@ -323,8 +334,7 @@ def test_recorded_today_lists_what_was_typed_in_today_newest_first(db_session: S
 
     today = DashboardService(db_session).get_summary(date(2026, 11, 21)).recorded_today
     assert [
-        (r.name, r.class_label, r.cycle_number, r.for_month, r.paid_date, r.amount)
-        for r in today
+        (r.name, r.class_label, r.cycle_number, r.for_month, r.paid_date, r.amount) for r in today
     ] == [
         ("Omar", None, 2, "2026-11", date(2026, 11, 21), Decimal("150")),
         ("Amina", "TC — Groupe A", 0, "2026-09", date(2026, 9, 5), Decimal("240")),
