@@ -107,4 +107,5 @@ uv run ardoise users list                     # account commands need no --user
 uv run ardoise db backup --to backups         # backs up every database
 ```
 
-See `backend/DEPLOYMENT_BRIEF.md`.
+Configuration and running in production: `backend/README.md`. Why it runs this way:
+`docs/decisions/` (0001, 0003, 0004).
