@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import i18n from "../i18n";
-import { formatDate, formatMonth, formatMonthShort } from "./dates";
+import { formatDate, formatMonth, formatMonthShort, localIso } from "./dates";
 import { formatMoney } from "./money";
 import { slugify } from "./slug";
 import { CLASS_LEVELS, classLabel } from "./classes";
@@ -112,5 +112,13 @@ describe("CLASS_LEVELS", () => {
 describe("classLabel", () => {
   it("composes the level and name", () => {
     expect(classLabel({ level: "2BAC", name: "Groupe A" })).toBe("2BAC — Groupe A");
+  });
+});
+
+describe("localIso", () => {
+  it("gives the day where the phone is, not the UTC day", () => {
+    // Half past midnight locally: in Morocco toISOString() would still say the 21st.
+    expect(localIso(new Date(2026, 10, 22, 0, 30))).toBe("2026-11-22");
+    expect(localIso(new Date(2026, 0, 5, 23, 59))).toBe("2026-01-05");
   });
 });

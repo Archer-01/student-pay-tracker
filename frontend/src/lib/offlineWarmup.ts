@@ -1,6 +1,7 @@
 import * as api from "../api/endpoints";
 import { connectivity } from "./connectivity";
 import { WARMUP_STORAGE_KEY } from "./offlineData";
+import { localIso } from "./dates";
 import { schoolYearStart } from "./schoolYear";
 
 /**
@@ -77,7 +78,7 @@ async function run(now: Date): Promise<number> {
   const studentIds = [...asIds(current), ...asIds(former)];
   const classIds = asIds(classes);
 
-  const today = isoDay(now);
+  const today = localIso(now);
   const schoolYear = schoolYearStart(today);
   const tasks: (() => Promise<unknown>)[] = [
     () => api.getDashboardSummary({ limit: 100 }),
@@ -129,9 +130,4 @@ function monthsSoFar(schoolYear: number, now: Date): [number, number][] {
     months.push([year, month]);
   }
   return months;
-}
-
-function isoDay(d: Date): string {
-  const pad = (n: number) => String(n).padStart(2, "0");
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }

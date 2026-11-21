@@ -34,9 +34,14 @@ export function formatMonthShort(ym: string): string {
 
 /** Today as `YYYY-MM-DD` in the teacher's own timezone, comparable with a date input's value. */
 export function todayIso(): string {
-  const now = new Date();
+  return localIso(new Date());
+}
+
+/** The calendar day of `d` where the phone is, as `YYYY-MM-DD`. Not `toISOString()`, which is
+ * UTC: in Morocco that is the previous day until 1 a.m. */
+export function localIso(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 /** "2026-11-18" → "mercredi 18 nov." / "Wednesday, Nov 18": a day this week, said as a day. */

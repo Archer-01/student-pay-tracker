@@ -22,6 +22,9 @@ export function resolveErrorMessage(err: unknown, t: TFunction): string {
 /**
  * Extract per-field messages from a 422 validation error, keyed by field name (`loc.at(-1)`), so a form
  * can surface them inline. Returns `{}` for anything that isn't an `ApiError` with an array `detail`.
+ * An error about the request as a whole (`loc: ["body"]`, from a model-level check such as "change at
+ * least one field") names no field, so it is left out: forms fall back to their form-level message
+ * when this is empty, where a key like `body` would be stored and shown nowhere.
  * Note: these `msg` strings are English (the backend leaves 422 messages unlocalized) — prefer localized
  * client-side validation for the common cases and treat these as a fallback.
  */
@@ -29,6 +32,7 @@ export function fieldErrors(err: unknown): Record<string, string> {
   if (!(err instanceof ApiError) || !Array.isArray(err.detail)) return {};
   const out: Record<string, string> = {};
   for (const d of err.detail) {
+    if (d.loc.length < 2) continue;
     const field = d.loc.at(-1);
     if (field !== undefined && !(field in out)) out[String(field)] = d.msg;
   }

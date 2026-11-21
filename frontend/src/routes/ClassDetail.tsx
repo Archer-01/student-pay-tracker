@@ -61,6 +61,7 @@ function ClassView({
   const { t } = useTranslation();
   const [renaming, setRenaming] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
   const remove = useMutation(deleteClass);
   const moneyFacts = useMoneyFacts();
   const readOnly = useReadOnly();
@@ -76,6 +77,16 @@ function ClassView({
       // The common failure is a 409: the class still has students. Show the backend's
       // already-localized detail rather than guessing at the reason.
       setActionError(resolveErrorMessage(err, t));
+    }
+  }
+
+  async function handleDownload() {
+    setDownloadError(null);
+    try {
+      await downloadClassRoster(schoolClass.id, `${slugify(label)}-roster.pdf`, schoolClass.as_of);
+    } catch (err) {
+      // Offline above all: PDFs aren't kept for offline use, so say so instead of doing nothing.
+      setDownloadError(resolveErrorMessage(err, t));
     }
   }
 
@@ -148,11 +159,12 @@ function ClassView({
         </Button>
         <Button
           variant="secondary"
-          onClick={() => downloadClassRoster(schoolClass.id, `${slugify(label)}-roster.pdf`, schoolClass.as_of)}
+          onClick={handleDownload}
         >
           {t("classes.downloadRoster")}
         </Button>
       </div>
+      {downloadError && <p className="text-sm font-bold text-bad">{downloadError}</p>}
 
       {/* Alone at the bottom, away from the everyday buttons: deleting is rare and needs the
           class to be empty first. */}

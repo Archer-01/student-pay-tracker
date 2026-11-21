@@ -33,6 +33,12 @@ describe("fieldErrors", () => {
     });
   });
 
+  it("leaves out an error about the whole request, so the form shows it instead", () => {
+    const err = new ApiError(422, [{ loc: ["body"], msg: "Value error, change at least one field", type: "value_error" }]);
+    expect(fieldErrors(err)).toEqual({});
+    expect(resolveErrorMessage(err, t)).toContain("change at least one field");
+  });
+
   it("keeps the first message when a field has several", () => {
     const err = new ApiError(422, [
       { loc: ["body", "price"], msg: "first", type: "a" },

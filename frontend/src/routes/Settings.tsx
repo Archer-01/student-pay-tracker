@@ -7,7 +7,7 @@ import { SUPPORTED_LOCALES, type Locale } from "../i18n";
 import { ChevronRightIcon, SignOutIcon } from "../components/icons";
 import { Avatar } from "../components/people";
 import { lastWarmup, WARMED_EVENT } from "../lib/offlineWarmup";
-import { formatDate } from "../lib/dates";
+import { formatDate, localIso } from "../lib/dates";
 
 /**
  * Everything set up once and rarely touched: classes, the price grid, language, appearance, and
@@ -153,7 +153,7 @@ function OfflineCopy() {
       <span className="font-bold">{t(warmup ? "offlineCopy.ready" : "offlineCopy.notYet")}</span>
       <span className="text-sm text-muted">
         {warmup
-          ? t("offlineCopy.madeAt", { date: formatDate(warmup.at.slice(0, 10)), time: formatTime(warmup.at, i18n.language) })
+          ? t("offlineCopy.madeAt", { date: formatDate(localIso(new Date(warmup.at))), time: formatTime(warmup.at, i18n.language) })
           : t("offlineCopy.notYetHint")}
       </span>
     </div>
