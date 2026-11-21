@@ -124,7 +124,7 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         ]}
         error={errors.class_id}
       />
-      <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-200">
+      <label className="flex items-center gap-2 text-sm text-ink">
         <input
           type="checkbox"
           checked={isRepeating}

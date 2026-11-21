@@ -9,7 +9,7 @@ export function ErrorState({ message, onRetry }: { message?: string; onRetry?: (
       {onRetry && (
         <button
           onClick={onRetry}
-          className="rounded-md border border-slate-300 px-3 py-1.5 text-sm font-medium text-slate-600 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-300 dark:hover:bg-slate-800"
+          className="min-h-11 rounded-xl border border-line bg-surface px-4 text-sm font-bold text-brand hover:bg-brand-soft"
         >
           {t("common.retry")}
         </button>
