@@ -7,6 +7,7 @@ import { ChartIcon, HomeIcon, PlusIcon, SettingsIcon, StudentsIcon } from "./ico
 import { PaymentSheetProvider } from "./PaymentSheet";
 import { OfflineBanner } from "./OfflineBanner";
 import { useReadOnly } from "../lib/connectivity";
+import { useOfflineWarmup } from "../lib/useOfflineWarmup";
 import { Logo } from "./Logo";
 import { Avatar } from "./people";
 
@@ -43,6 +44,8 @@ function Shell() {
   const { user } = useAuth();
   const payments = usePaymentSheet();
   const readOnly = useReadOnly();
+  // While signed in, keep a copy of every screen's data for when there's no signal.
+  useOfflineWarmup();
 
   return (
     // No full-height rule: `body` already paints the background, and `min-h-screen` (100vh) is

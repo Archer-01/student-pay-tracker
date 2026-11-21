@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "../lib/authContext";
@@ -6,6 +6,8 @@ import { useTheme, type ThemePreference } from "../lib/themeContext";
 import { SUPPORTED_LOCALES, type Locale } from "../i18n";
 import { ChevronRightIcon, SignOutIcon } from "../components/icons";
 import { Avatar } from "../components/people";
+import { lastWarmup, WARMED_EVENT } from "../lib/offlineWarmup";
+import { formatDate } from "../lib/dates";
 
 /**
  * Everything set up once and rarely touched: classes, the price grid, language, appearance, and
@@ -33,6 +35,10 @@ export function Settings() {
       <Group label={t("settings.school")}>
         <LinkRow to="/settings/packs">{t("settings.prices")}</LinkRow>
         <LinkRow to="/settings/classes">{t("settings.classes")}</LinkRow>
+      </Group>
+
+      <Group label={t("offlineCopy.title")}>
+        <OfflineCopy />
       </Group>
 
       <Group label={t("settings.app")}>
@@ -128,4 +134,32 @@ function Segmented<T extends string>({
       ))}
     </div>
   );
+}
+
+/**
+ * When every screen was last copied for use without a connection (`lib/offlineWarmup.ts`), so
+ * the teacher can check before leaving for a place with no signal.
+ */
+function OfflineCopy() {
+  const { t, i18n } = useTranslation();
+  const [warmup, setWarmup] = useState(lastWarmup);
+  useEffect(() => {
+    const refresh = () => setWarmup(lastWarmup());
+    window.addEventListener(WARMED_EVENT, refresh);
+    return () => window.removeEventListener(WARMED_EVENT, refresh);
+  }, []);
+  return (
+    <div className="flex flex-col gap-1 p-4">
+      <span className="font-bold">{t(warmup ? "offlineCopy.ready" : "offlineCopy.notYet")}</span>
+      <span className="text-sm text-muted">
+        {warmup
+          ? t("offlineCopy.madeAt", { date: formatDate(warmup.at.slice(0, 10)), time: formatTime(warmup.at, i18n.language) })
+          : t("offlineCopy.notYetHint")}
+      </span>
+    </div>
+  );
+}
+
+function formatTime(iso: string, locale: string): string {
+  return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
 }

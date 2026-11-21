@@ -186,8 +186,9 @@ opens with no address bar or tabs. That changes a few things to keep in mind:
 
 ## Offline
 
-Read only, by design: the app opens without a connection and shows the last data each screen
-saw, with a banner saying so and how old it is. Nothing is stored for later sending.
+Read only, by design: the app opens without a connection and shows the last data the server
+gave for any screen, with a banner saying so and how old it is. Nothing is stored for later
+sending (yet: recording payments offline is the next phase).
 
 - **The service worker** is `sw/service-worker.js`, built into `dist/sw.js` by the
   `ardoise-service-worker` plugin in `vite.config.ts` (which writes in the build id and the files
@@ -204,6 +205,16 @@ saw, with a banner saying so and how old it is. Nothing is stored for later send
   the browser's `online` event, which turns them live again, and when the app comes back to the
   front after more than 30 seconds (`visibilitychange` in `useApi`), so an installed app left in
   the background for days doesn't show yesterday's figures.
+- **Every screen is copied, not only the ones opened** (`lib/offlineWarmup.ts`, started by
+  `useOfflineWarmup` in `Layout`). While signed in, online and on screen, the app asks for the
+  data behind every screen: Accueil, each student's page (current and former), each class,
+  Bilan's months of the school year so far and its two calendar years, École, Partis sans
+  régler, Packs. The worker stores each answer as it passes. It calls the same `endpoints.ts`
+  functions with the same arguments as the screens, because a stored copy is found by its exact
+  address. A round runs on opening, on reconnecting and on returning to the front, at most every
+  15 minutes, three requests at a time; a failed request is skipped. Réglages › Hors ligne says
+  when the last full copy was made. The app also asks the browser to keep the storage
+  (`navigator.storage.persist()`). Only production builds have the worker, so `vite dev` skips it.
 - **The stored data is wiped** on sign-in, sign-out and an expired session (`lib/offlineData.ts`,
   from `lib/auth.tsx`), so one account's students never show for another.
 - **Updates:** every build has a new id, so a deploy ships a new worker; it takes over at once and

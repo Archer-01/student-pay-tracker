@@ -557,5 +557,12 @@
       "dateRequired": "Choose the day it was handed over.",
       "dateFuture": "The date can't be in the future."
     }
+  },
+  "offlineCopy": {
+    "title": "Offline",
+    "ready": "Every screen can be read without a connection",
+    "notYet": "Not copied for offline use yet",
+    "madeAt": "Copied on {{date}} at {{time}}. Updated every 15 minutes while Ardoise is open and online.",
+    "notYetHint": "It happens on its own once Ardoise is installed and online for a moment."
   }
 }

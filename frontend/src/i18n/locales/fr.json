@@ -557,5 +557,12 @@
       "dateRequired": "Choisissez le jour de la remise.",
       "dateFuture": "La date ne peut pas être dans le futur."
     }
+  },
+  "offlineCopy": {
+    "title": "Hors ligne",
+    "ready": "Tous les écrans sont consultables sans connexion",
+    "notYet": "Pas encore copié pour le hors ligne",
+    "madeAt": "Copie faite le {{date}} à {{time}}. Mise à jour toutes les 15 minutes quand Ardoise est ouverte et connectée.",
+    "notYetHint": "Cela se fait tout seul une fois Ardoise installée et connectée un moment."
   }
 }
