@@ -152,6 +152,9 @@ class DashboardService:
             if digest.price_status == "unset":
                 # Free on purpose is not a problem to flag (decision 0011); a missing price is.
                 unbilled.append(digest)
+            elif digest.price_status == "free":
+                # Not chased, even for lateness from before they were made free.
+                continue
             elif digest.amount_owed > 0 or digest.cumulative_drift > 0:
                 debtors.append(digest)
 

@@ -162,6 +162,20 @@ def test_a_student_free_on_purpose_is_never_flagged_or_chased(db_session: Sessio
     assert summary.top_debtors == []
 
 
+def test_a_free_student_late_in_the_past_is_not_chased(db_session: Session) -> None:
+    # Paid late while priced, then made free: old lateness is no reason to chase them now.
+    students = StudentService(db_session)
+    sid = students.enroll(
+        first_name="Was", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("200")
+    ).id
+    PaymentService(db_session).record_payment(
+        student_id=sid, cycle_number=0, paid_date=date(2023, 3, 25), amount=Decimal("200")
+    )
+    students.update(sid, custom_price=Decimal("0"))
+    summary = DashboardService(db_session).get_summary(as_of=date(2023, 5, 31))
+    assert summary.top_debtors == []
+
+
 def test_a_healthy_database_has_nothing_needing_attention(db_session: Session) -> None:
     StudentService(db_session).enroll(
         first_name="A", phone=None, join_date=date(2023, 3, 5), custom_price=Decimal("100")
