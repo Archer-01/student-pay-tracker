@@ -332,3 +332,25 @@ async def test_the_list_and_the_student_say_how_late_they_usually_pay(client: As
     fresh = await _create_student(client, name="Nouveau", join="2023-06-20")
     rows = (await client.get("/api/v1/students", params=as_of)).json()
     assert next(r for r in rows if r["id"] == fresh)["average_days_late"] is None
+
+
+@pytest.mark.parametrize("amount", ["1e30", "123456789012"])
+async def test_an_absurd_amount_is_a_422_not_a_crash(client: AsyncClient, amount: str) -> None:
+    sid = await _create_student(client)
+    resp = await client.post(
+        f"/api/v1/students/{sid}/payments",
+        json={"paid_date": "2023-04-10", "amount": amount, "cycle_number": 1},
+    )
+    assert resp.status_code == 422
+
+
+async def test_an_agreed_price_with_three_decimals_is_refused_not_rounded(
+    client: AsyncClient,
+) -> None:
+    # Rounded, "0.004" became 0: a student silently free.
+    resp = await client.post(
+        "/api/v1/students?lang=fr",
+        json={"first_name": "A", "join_date": "2023-03-05", "custom_price": "0.004"},
+    )
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "price_precision"

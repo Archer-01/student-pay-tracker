@@ -38,6 +38,7 @@ class _Unset:
 
 
 _UNSET: Final = _Unset()
+_CENTS: Final = Decimal("0.01")
 
 
 class StudentService:
@@ -121,6 +122,9 @@ class StudentService:
     def _check_price(price: Decimal | None) -> None:
         if price is not None and price < 0:
             raise InvalidPackError("custom_price_negative")
+        if price is not None and price != price.quantize(_CENTS):
+            # The column keeps two decimals and would round: "0.004" would make them free.
+            raise InvalidPackError("price_precision")
 
     def delete(self, student_id: int) -> None:
         """Hard-delete a student and cascade to their payments and overrides.

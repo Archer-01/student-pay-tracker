@@ -244,3 +244,14 @@ def test_editing_a_pack_cleans_its_name_and_subjects(db_session: Session) -> Non
         PackService(db_session).update(pack.id, name="   ")
     with pytest.raises(InvalidPackError):
         PackService(db_session).update(pack.id, subjects=[" ", ""])
+
+
+def test_a_pack_price_has_at_most_two_decimals(db_session: Session) -> None:
+    service = PackService(db_session)
+    with pytest.raises(InvalidPackError) as exc:
+        service.create(name="X", level=ClassLevel.BAC2, price=Decimal("0.004"), subjects=["Maths"])
+    assert exc.value.code == "price_precision"
+    pack = service.create(name="Y", level=ClassLevel.BAC2, price=Decimal("300"), subjects=["Maths"])
+    with pytest.raises(InvalidPackError) as exc:
+        service.update(pack.id, price=Decimal("299.995"))
+    assert exc.value.code == "price_precision"

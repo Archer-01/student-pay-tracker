@@ -214,3 +214,15 @@ def test_a_pack_at_zero_is_free_on_purpose(db_session: Session) -> None:
 
 def test_no_pack_and_no_agreed_price_is_not_set_up(db_session: Session) -> None:
     assert PricingService(db_session).price_status(_student(db_session)) == "unset"
+
+
+@pytest.mark.parametrize("price", ["0.004", "199.999"])
+def test_an_agreed_price_has_at_most_two_decimals(db_session: Session, price: str) -> None:
+    # The column keeps two decimals: "0.004" would be stored as 0 and the student silently free.
+    with pytest.raises(InvalidPackError) as exc:
+        _student(db_session, custom_price=Decimal(price))
+    assert exc.value.code == "price_precision"
+    sid = _student(db_session, custom_price=Decimal("300")).id
+    with pytest.raises(InvalidPackError) as exc:
+        StudentService(db_session).update(sid, custom_price=Decimal(price))
+    assert exc.value.code == "price_precision"

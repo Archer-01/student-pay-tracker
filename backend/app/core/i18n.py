@@ -115,6 +115,10 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Pack {pack_id} is retired and cannot be assigned to a student",
         "fr": "Ce pack n'est plus proposé et ne peut pas être attribué à un élève",
     },
+    "error.price_precision": {
+        "en": "Enter a price with at most two decimal places",
+        "fr": "Saisissez un tarif avec au plus deux chiffres après la virgule",
+    },
     "error.custom_price_negative": {
         "en": "Agreed price must not be negative",
         "fr": "Le tarif convenu ne peut pas être négatif",

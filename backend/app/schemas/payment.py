@@ -5,10 +5,12 @@ from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from app.schemas.money import Money
+
 
 class PaymentCreate(BaseModel):
     paid_date: date
-    amount: Decimal = Field(gt=0)  # a recorded payment is real money
+    amount: Money = Field(gt=0)  # a recorded payment is real money
     cycle_number: int | None = Field(default=None, ge=0)
     for_month: str | None = Field(default=None, description="Which month it settles, YYYY-MM")
 
@@ -49,7 +51,7 @@ class PaymentUpdate(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    amount: Decimal | None = Field(default=None, gt=0)
+    amount: Money | None = Field(default=None, gt=0)
     paid_date: date | None = None
 
     @field_validator("paid_date")

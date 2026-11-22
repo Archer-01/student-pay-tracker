@@ -1035,7 +1035,7 @@ export interface components {
          */
         PaymentUpdate: {
             /** Amount */
-            amount?: number | string | null;
+            amount?: (number | string) | null;
             /** Paid Date */
             paid_date?: string | null;
         };

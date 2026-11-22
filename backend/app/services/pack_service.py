@@ -22,6 +22,15 @@ class _Unset:
 
 
 _UNSET: Final = _Unset()
+_CENTS: Final = Decimal("0.01")
+
+
+def _check_price(price: Decimal) -> None:
+    if price < 0:
+        raise InvalidPackError("pack_price_negative")
+    if price != price.quantize(_CENTS):
+        # The column keeps two decimals and would round: "0.004" would make the pack free.
+        raise InvalidPackError("price_precision")
 
 
 # `list` is a method name on PackService (the house convention), which shadows the builtin for
@@ -85,8 +94,7 @@ class PackService:
         """Create one pack (one offering at one level)."""
         cleaned_name = _clean_name(name)
         cleaned_subjects = _clean_subjects(subjects)
-        if price < 0:
-            raise InvalidPackError("pack_price_negative")
+        _check_price(price)
         if self.packs.find(cleaned_name, level) is not None:
             raise DuplicatePackError(cleaned_name, level.value)
         pack = self.packs.create(
@@ -132,8 +140,7 @@ class PackService:
             pack.subjects = self._resolve_subjects(_clean_subjects(subjects))
         pack.name, pack.level = new_name, new_level
         if not isinstance(price, _Unset):
-            if price < 0:
-                raise InvalidPackError("pack_price_negative")
+            _check_price(price)
             pack.price = price
         if not isinstance(is_active, _Unset):
             pack.is_active = is_active
