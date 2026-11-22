@@ -18,7 +18,7 @@ every change: a commit message is enough for those.
 | [0001](0001-one-database-per-teacher.md) | One SQLite file per teacher, not an `owner_id` column | Accepted |
 | [0002](0002-current-pricing.md) | Prices are current, not historical | Accepted |
 | [0003](0003-web-app-not-native.md) | A web app (PWA), not a native app, for now | Accepted |
-| [0004](0004-northflank-single-copy.md) | Northflank holds the only copy of the data; backups come later | Accepted |
+| [0004](0004-northflank-single-copy.md) | Northflank holds the only copy of the data; backups come later | Replaced by 0012 |
 | [0005](0005-session-cookie-no-csrf.md) | A session cookie, and no CSRF token | Accepted |
 | [0006](0006-offline-read-only-first.md) | Offline is read-only first; recording payments offline comes next | Accepted |
 | [0007](0007-zero-payments.md) | A 0 DH payment is allowed on purpose | Replaced by 0011 |
@@ -26,6 +26,7 @@ every change: a commit message is enough for those.
 | [0009](0009-leavers-debt-is-a-warning.md) | A leaver's debt is a warning, never a block | Accepted |
 | [0010](0010-cli-is-an-admin-tool.md) | The CLI is an admin tool, not a second app | Accepted |
 | [0011](0011-free-students.md) | A student can be free on purpose | Accepted |
+| [0012](0012-nightly-encrypted-backup-to-drive.md) | A nightly encrypted backup, sent to the developer's Google Drive | Accepted |
 
 ## Template
 

@@ -47,7 +47,8 @@ in. Commands about a teacher's data need to know which teacher: `--user <usernam
 |---|---|
 | `users add / list / passwd / deactivate / activate` | accounts (there is no sign-up in the app) |
 | `db migrate` | bring the central database and every teacher's up to date |
-| `db backup [--to DIR]` | a consistent, timestamped copy of every database, safe while running |
+| `db backup [--to DIR]` | a plain local copy of every database, on the same disk |
+| `backup keygen / run / status / restore` | the nightly encrypted backup to Drive (`../docs/backups.md`) |
 | `db reset` | drop and recreate the central database (dev only, needs `ALLOW_DB_RESET=1`) |
 | `openapi` | print the API schema (what `npm run gen:api` uses) |
 | `students list [--owing] [--search NAME]` | students, most owed first |
@@ -70,6 +71,8 @@ Read from the environment, then `.env`. No secrets are needed.
 | `SCHOOL_SHARE_PERCENT` | `25` | The school owner's share of every payment, 0–100 (0 hides it). |
 | `DEFAULT_LOCALE` | `en` | Language when a request names none; the app always sends one. |
 | `LOG_LEVEL` | `INFO` | Logging level; logs go to stdout. |
+| `BACKUP_URL`, `BACKUP_SECRET`, `BACKUP_PUBLIC_KEY` | — | The nightly encrypted backup to Google Drive; all three or none (`../docs/backups.md`). |
+| `BACKUP_HOUR` | `3` | When it runs, Morocco time. |
 | `ARDOISE_USER` | — | CLI only: the teacher to work on. |
 | `ALLOW_DB_RESET` | — | CLI only: `1` allows `ardoise db reset`. |
 
@@ -82,7 +85,7 @@ by hand. `docker compose up --build` runs the same thing locally.
 
 - **Health**: `GET /health` checks the database (`200`, or `503` when it's unreachable); it is
   open, for the platform's probes.
-- **Data**: the `/data` volume is the only copy (`../docs/decisions/0004`). `ardoise db backup`
-  makes consistent copies; keep them off the host.
+- **Data**: the `/data` volume, backed up every night, encrypted, to the developer's Google Drive
+  (`../docs/backups.md`, decision 0012). `/health` reports `"backup": "ok" | "stale" | "off"`.
 - **Language**: API errors and PDFs follow the request's `Accept-Language` (or `?lang=`), in
   French or English; the CLI speaks English.

@@ -1,7 +1,11 @@
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+if TYPE_CHECKING:
+    from app.core.offsite_backup import BackupConfig
 
 
 class Settings(BaseSettings):
@@ -25,6 +29,24 @@ class Settings(BaseSettings):
     # it next to what came in, with what's left for the teacher. 0 hides the split entirely.
     # One value for every account and every month: changing it recalculates past months too.
     school_share_percent: Decimal = Field(default=Decimal("25"), ge=0, le=100)
+    # The nightly off-site copy (decision 0012, docs/backups.md). All three or nothing: without
+    # them the app runs with no off-site backup, and /health says "off".
+    backup_url: str | None = None  # the Apps Script web app
+    backup_secret: str | None = None  # also set in the script's properties
+    backup_public_key: str | None = None  # "age1…"; its private half stays with the developer
+    backup_hour: int = Field(default=3, ge=0, le=23)  # Morocco time
+
+    def backup_config(self) -> "BackupConfig | None":
+        from app.core.offsite_backup import BackupConfig
+
+        if not (self.backup_url and self.backup_secret and self.backup_public_key):
+            return None
+        return BackupConfig(
+            url=self.backup_url,
+            secret=self.backup_secret,
+            public_key=self.backup_public_key,
+            hour=self.backup_hour,
+        )
 
 
 settings = Settings()

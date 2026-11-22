@@ -1,6 +1,6 @@
 # 0004. Northflank holds the only copy of the data; backups come later
 
-- Status: Accepted
+- Status: Replaced by 0012
 - Decided: 2026-11-20 · Recorded: 2026-11-21
 
 ## Context

@@ -9,9 +9,11 @@ dependencies = [
     "argon2-cffi>=25.1.0",
     "fastapi[standard]>=0.139.2",
     "pydantic-settings>=2.14.2",
+    "pyrage>=1.4.0",
     "reportlab>=5.0.0",
     "sqlalchemy>=2.0.51",
     "typer>=0.15.0",
+    "tzdata>=2026.6",
 ]
 
 [project.scripts]

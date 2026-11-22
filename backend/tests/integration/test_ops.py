@@ -27,7 +27,7 @@ def test_sqlite_pragmas_on_file_db(tmp_path: Path) -> None:
 async def test_health_ok(client: AsyncClient) -> None:
     resp = await client.get("/health")
     assert resp.status_code == 200
-    assert resp.json() == {"status": "ok", "database": "ok"}
+    assert resp.json() == {"status": "ok", "database": "ok", "backup": "off"}
 
 
 async def test_health_reports_503_when_db_down(client: AsyncClient) -> None:

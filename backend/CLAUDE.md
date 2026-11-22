@@ -34,7 +34,8 @@ which talks to the databases directly and so keeps working when nobody can log i
 
 ```
 app/
-  core/      settings, engines and SQLite pragmas, per-teacher routing, security, i18n, backup
+  core/      settings, engines and SQLite pragmas, per-teacher routing, security, i18n,
+             backups (offsite_backup.py: the nightly encrypted copy, decision 0012)
   models/    SQLAlchemy models: no logic
   repos/     thin CRUD: no business logic, no date math
   services/  the domain (schedule, ledger, payments, pricing, reports, school share…): sync, no

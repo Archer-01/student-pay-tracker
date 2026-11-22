@@ -6,7 +6,7 @@ deleting a student for good, and read-only lookups for support. Everything the t
 one set of checks.
 """
 
-from app.cli import db, money, students, users  # noqa: F401  (each registers its commands)
+from app.cli import backup, db, money, students, users  # noqa: F401  (each registers its commands)
 from app.cli._common import app
 
 __all__ = ["app"]

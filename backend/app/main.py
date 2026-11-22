@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -51,7 +53,38 @@ async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         session.close()
 
     migrate_all(user_ids)
-    yield
+
+    backup = _start_backups()
+    try:
+        yield
+    finally:
+        if backup is not None:
+            backup.cancel()
+
+
+def _start_backups() -> "asyncio.Task[None] | None":
+    """The nightly off-site copy (decision 0012), if it is configured."""
+    from sqlalchemy import select
+
+    from app.core.db import central_url, get_auth_db, tenant_url
+    from app.core.offsite_backup import backup_loop, status_path
+    from app.core.settings import settings
+    from app.models import User
+
+    config = settings.backup_config()
+    if config is None:
+        logging.getLogger("app.backup").warning("no off-site backup: BACKUP_* not set")
+        return None
+
+    def database_urls() -> list[str]:
+        # Asked each night, so an account added since startup is in the next copy.
+        session = next(get_auth_db())
+        try:
+            return [central_url(), *(tenant_url(i) for i in session.scalars(select(User.id)))]
+        finally:
+            session.close()
+
+    return asyncio.create_task(backup_loop(database_urls, config, status_path(central_url())))
 
 
 # The built-in docs URLs are disabled here and re-registered below behind the session gate. An

@@ -9,9 +9,11 @@ tier) with **real student data**. Two apps in one repo:
   screen does in `frontend/docs/screens.md`.
 - The API contract is the OpenAPI schema: `ardoise openapi` prints it, `npm run gen:api` turns it
   into the frontend's types, and CI fails when they differ.
+- `docs/backups.md`: the nightly encrypted backup to Google Drive, how to set it up and
+  restore.
 - `docs/decisions/`: why things are the way they are (one database per teacher, current
-  pricing, a PWA, read-only offline, free students…). **Read the relevant record before changing
-  what it covers.**
+  pricing, a PWA, read-only offline, free students, backups…). **Read the relevant record
+  before changing what it covers.**
 
 ## Commands
 
