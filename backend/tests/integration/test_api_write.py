@@ -354,3 +354,14 @@ async def test_an_agreed_price_with_three_decimals_is_refused_not_rounded(
     )
     assert resp.status_code == 400
     assert resp.json()["code"] == "price_precision"
+
+
+async def test_a_payment_to_a_free_student_is_refused_in_french(client: AsyncClient) -> None:
+    sid = await _create_student(client, price="0")
+    resp = await client.post(
+        f"/api/v1/students/{sid}/payments?lang=fr",
+        json={"paid_date": "2023-04-10", "amount": "300", "cycle_number": 1},
+    )
+    assert resp.status_code == 400
+    assert resp.json()["code"] == "payment_student_free"
+    assert resp.json()["detail"].startswith("Cet élève ne paie rien")

@@ -175,7 +175,7 @@ export function StudentDetail() {
                   studentId={studentId}
                   monthlyPrice={detail.monthly_price}
                   readOnly={readOnly}
-                  payable={!readOnly && payableMonths(ledger.entries, detail.next_expected_date).some(
+                  payable={!readOnly && detail.price_status !== "free" && payableMonths(ledger.entries, detail.next_expected_date).some(
                     (m) => m.month === openModal.tile.month,
                   )}
                   onClose={close}

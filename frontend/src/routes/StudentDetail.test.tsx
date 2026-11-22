@@ -123,6 +123,9 @@ describe("StudentDetail status", () => {
     expect(screen.queryByText("to come")).not.toBeInTheDocument();
     expect(screen.getAllByText("free").length).toBeGreaterThan(0);
     expect(screen.getByText("free, nothing owed")).toBeInTheDocument();
+    // Nothing can be taken from them, not even a month in advance (decision 0014).
+    await userEvent.click(screen.getByRole("button", { name: /^December 2026 · free, nothing owed/ }));
+    expect(screen.queryByRole("button", { name: /^Record / })).not.toBeInTheDocument();
   });
 
   it("keeps the months a student was free for as free once they have a price", async () => {

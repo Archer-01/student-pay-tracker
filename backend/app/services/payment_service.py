@@ -91,6 +91,10 @@ class PaymentService:
     ) -> Payment:
         student = self._require_student(student_id)
         _check_paid_date(paid_date, today)
+        if self.pricing.price_status(student) == "free":
+            # Their cap is their price, 0 (decision 0014). Corrections to a payment taken before
+            # they were free stay possible: only new money is refused.
+            raise InvalidPaymentError("payment_student_free")
         self._check_amount(student, amount)
 
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
@@ -132,12 +136,18 @@ class PaymentService:
 
         Only a changed amount is checked against the cap. Pricing is current, not historical, so
         a payment genuinely made before a price cut can exceed today's price, and fixing its date
-        must not be blocked by an amount nobody is touching.
+        must not be blocked by an amount nobody is touching. A student free now has no price to
+        compare with, so their old payment can be lowered, never raised (decision 0014).
         """
         payment = self.get_payment(student_id=student_id, cycle_number=cycle_number)
         # "Changed" by value: the same amount sent again (the CLI sends every field) isn't one.
         if amount is not None and amount != payment.amount:
             self._check_amount(payment.student, amount)
+            free = self.pricing.price_status(payment.student) == "free"
+            if free and amount > payment.amount:
+                raise InvalidPaymentError(
+                    "payment_raised_for_free_student", recorded=payment.amount.quantize(_CENTS)
+                )
             payment.amount = amount
         if paid_date is not None:
             _check_paid_date(paid_date, today)

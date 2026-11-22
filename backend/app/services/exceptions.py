@@ -62,8 +62,9 @@ class PaymentNotFoundError(DomainError):
 
 
 class InvalidPaymentError(DomainError):
-    """Bad payment amount. ``code`` is one of: payment_amount_not_positive /
-    payment_exceeds_price."""
+    """A payment that can't be taken. ``code`` is one of: payment_amount_not_positive /
+    payment_amount_precision / payment_exceeds_price / payment_date_in_future /
+    payment_student_free / payment_raised_for_free_student."""
 
 
 class InvalidOverrideError(DomainError):

@@ -20,6 +20,7 @@ from app.models import ClassLevel, FreePeriod
 from app.services.dashboard_service import DashboardService
 from app.services.debt_service import DebtService
 from app.services.enrollment_service import EnrollmentService
+from app.services.exceptions import InvalidPaymentError
 from app.services.ledger_service import LedgerService
 from app.services.pack_service import PackService
 from app.services.payment_service import PaymentService
@@ -267,6 +268,39 @@ def test_a_paid_month_is_never_waived(db_session: Session) -> None:
     students.update(sid, custom_price=Decimal("300"), today=date(2026, 12, 10))
     first = LedgerService(db_session).get_ledger(sid, date(2026, 12, 10))[0]
     assert (first.paid_date, first.waived, first.days_late) == (date(2026, 9, 15), False, 10)
+
+
+# --------------------------------------------------------------------------- #
+# Correcting a payment taken before the student became free
+# --------------------------------------------------------------------------- #
+
+
+def _paid_then_free(session: Session) -> int:
+    sid = _priced(session)
+    PaymentService(session).record_payment(
+        student_id=sid, cycle_number=0, paid_date=date(2026, 9, 5), amount=Decimal("300")
+    )
+    StudentService(session).update(sid, custom_price=Decimal("0"), today=date(2026, 10, 1))
+    return sid
+
+
+def test_a_free_students_old_payment_can_be_lowered(db_session: Session) -> None:
+    sid = _paid_then_free(db_session)
+    payment = PaymentService(db_session).update_payment(
+        student_id=sid, cycle_number=0, amount=Decimal("250")
+    )
+    assert payment.amount == Decimal("250")
+
+
+def test_a_free_students_old_payment_cannot_be_raised(db_session: Session) -> None:
+    # No price left to compare with: 30000 for 300 would go straight into revenue.
+    sid = _paid_then_free(db_session)
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).update_payment(
+            student_id=sid, cycle_number=0, amount=Decimal("30000")
+        )
+    assert exc.value.code == "payment_raised_for_free_student"
+    assert exc.value.params == {"recorded": Decimal("300.00")}
 
 
 # --------------------------------------------------------------------------- #

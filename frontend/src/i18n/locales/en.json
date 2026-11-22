@@ -372,7 +372,9 @@
     "submitEmpty": "Record",
     "done": "Payment recorded: {{amount}} for {{name}}",
     "undo": "Undo",
-    "undone": "Payment undone"
+    "undone": "Payment undone",
+    "onlyFree_one": "This student pays nothing: there is nothing to record.",
+    "onlyFree_other": "These students pay nothing: there is nothing to record."
   },
   "tiles": {
     "late_one": "paid +{{count}} d",

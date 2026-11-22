@@ -154,6 +154,7 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
   const [query, setQuery] = useState("");
   const q = useDebounced(query.trim(), 250);
   const state = useApi(() => listStudents({ status: "active", q: q || undefined }), [q]);
+  const onlyFree = state.status === "success" && payableFirst(state.data).length === 0 ? state.data.length : 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -168,10 +169,16 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
           className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-placeholder"
         />
       </label>
-      <AsyncView state={state} onRetry={state.reload} isEmpty={(rows) => rows.length === 0} emptyMessage={t("students.empty")}>
+      <AsyncView
+        state={state}
+        onRetry={state.reload}
+        // Empty once the free students are left out; if they were all there was, say so.
+        isEmpty={(rows) => payableFirst(rows).length === 0}
+        emptyMessage={onlyFree ? t("pay.onlyFree", { count: onlyFree }) : t("students.empty")}
+      >
         {(rows) => (
           <ul className="-mx-2 flex flex-col">
-            {owingFirst(rows).map((s) => (
+            {payableFirst(rows).map((s) => (
               <li key={s.id}>
                 <button
                   type="button"
@@ -198,9 +205,12 @@ function StudentPicker({ onPick }: { onPick: (id: number) => void }) {
   );
 }
 
-/** Students who owe first, most months first; then everyone else by name. */
-function owingFirst(rows: StudentListItem[]): StudentListItem[] {
-  return [...rows].sort(
+/**
+ * Who can be sent a payment: students who owe first, most months first, then everyone else by
+ * name. A student free on purpose can't be (decision 0014).
+ */
+function payableFirst(rows: StudentListItem[]): StudentListItem[] {
+  return rows.filter((s) => s.price_status !== "free").sort(
     (a, b) => b.months_overdue - a.months_overdue || a.full_name.localeCompare(b.full_name),
   );
 }

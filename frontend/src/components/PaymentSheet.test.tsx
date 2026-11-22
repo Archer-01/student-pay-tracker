@@ -116,3 +116,41 @@ describe("PaymentSheetProvider", () => {
     expect(screen.getByRole("button", { name: "Undo" })).toBeDisabled();
   });
 });
+
+describe("choosing who paid", () => {
+  it("leaves out students free on purpose: they can't be sent a payment", async () => {
+    vi.spyOn(endpoints, "listStudents").mockResolvedValue([
+      { ...student, id: 13, full_name: "Amina Benali" },
+      { ...student, id: 14, full_name: "Imrane Free", price_status: "free", months_overdue: 0, amount_owed: "0.00" },
+    ] as never);
+    function Picker() {
+      const sheet = usePaymentSheet();
+      return <button type="button" onClick={() => sheet.open()}>Take any payment</button>;
+    }
+    renderWithProviders(
+      <PaymentSheetProvider>
+        <Picker />
+      </PaymentSheetProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Take any payment" }));
+    expect(await screen.findByText("Amina Benali")).toBeInTheDocument();
+    expect(screen.queryByText("Imrane Free")).not.toBeInTheDocument();
+  });
+
+  it("says why when the search finds only students who pay nothing", async () => {
+    vi.spyOn(endpoints, "listStudents").mockResolvedValue([
+      { ...student, id: 14, full_name: "Imrane Free", price_status: "free", months_overdue: 0, amount_owed: "0.00" },
+    ] as never);
+    function Picker() {
+      const sheet = usePaymentSheet();
+      return <button type="button" onClick={() => sheet.open()}>Take any payment</button>;
+    }
+    renderWithProviders(
+      <PaymentSheetProvider>
+        <Picker />
+      </PaymentSheetProvider>,
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Take any payment" }));
+    expect(await screen.findByText("This student pays nothing: there is nothing to record.")).toBeInTheDocument();
+  });
+});

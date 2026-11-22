@@ -48,6 +48,15 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Enter at most two decimal places",
         "fr": "Saisissez au plus deux chiffres après la virgule",
     },
+    "error.payment_student_free": {
+        "en": "This student pays nothing: change their price before recording a payment",
+        "fr": "Cet élève ne paie rien\u00a0: modifiez son tarif avant d'encaisser un paiement",
+    },
+    "error.payment_raised_for_free_student": {
+        "en": "This student pays nothing now: the amount can't go above {recorded} DH",
+        "fr": "Cet élève ne paie plus rien\u00a0: le montant ne peut pas dépasser "
+        "{recorded}\u00a0DH",
+    },
     "error.payment_date_in_future": {
         "en": "The paid date ({paid_date}) can't be in the future",
         "fr": "La date de paiement ({paid_date}) ne peut pas être dans le futur",

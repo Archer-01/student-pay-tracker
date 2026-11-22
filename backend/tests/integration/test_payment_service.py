@@ -327,3 +327,29 @@ def test_cents_are_fine(db_session: Session) -> None:
         student_id=sid, cycle_number=1, paid_date=date(2023, 4, 10), amount=Decimal("199.50")
     )
     assert payment.amount == Decimal("199.50")
+
+
+def test_a_free_student_cannot_be_sent_a_payment(db_session: Session) -> None:
+    # Decision 0013: their cap is their price, 0. To take money, give them a price first.
+    sid = (
+        StudentService(db_session)
+        .enroll(first_name="Imrane", join_date=date(2023, 3, 5), custom_price=Decimal("0"))
+        .id
+    )
+    with pytest.raises(InvalidPaymentError) as exc:
+        PaymentService(db_session).record_payment(
+            student_id=sid, cycle_number=0, paid_date=date(2023, 3, 5), amount=Decimal("300")
+        )
+    assert exc.value.code == "payment_student_free"
+
+
+def test_a_payment_already_taken_from_a_student_now_free_can_still_be_corrected(
+    db_session: Session,
+) -> None:
+    # Only new money is refused; fixing the date of one taken before stays possible.
+    sid = _paid(db_session)
+    StudentService(db_session).update(sid, custom_price=Decimal("0"))
+    payment = PaymentService(db_session).update_payment(
+        student_id=sid, cycle_number=1, paid_date=date(2023, 4, 6)
+    )
+    assert payment.days_late == 1

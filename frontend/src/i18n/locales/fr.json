@@ -372,7 +372,9 @@
     "submitEmpty": "Encaisser",
     "done": "Paiement enregistré : {{amount}} pour {{name}}",
     "undo": "Annuler",
-    "undone": "Paiement annulé"
+    "undone": "Paiement annulé",
+    "onlyFree_one": "Cet élève ne paie rien : il n'y a rien à encaisser.",
+    "onlyFree_other": "Ces élèves ne paient rien : il n'y a rien à encaisser."
   },
   "tiles": {
     "late_one": "payé +{{count}} j",
