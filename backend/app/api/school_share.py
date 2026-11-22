@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import get_db
 from app.core.settings import settings
-from app.schemas.school_share import HandoverIn, SchoolShareOut, ShareMonthOut
+from app.schemas.school_share import HandOverAllIn, HandoverIn, SchoolShareOut, ShareMonthOut
 from app.services.school_share_handover_service import SchoolShareHandoverService, outstanding
 
 router = APIRouter(prefix="/school-share", tags=["reports"])
@@ -31,12 +31,13 @@ async def list_months(db: Session = Depends(get_db)) -> SchoolShareOut:
 
 
 @router.post("/hand-over-all", response_model=SchoolShareOut)
-async def hand_over_all(payload: HandoverIn, db: Session = Depends(get_db)) -> SchoolShareOut:
+async def hand_over_all(payload: HandOverAllIn, db: Session = Depends(get_db)) -> SchoolShareOut:
     """Catch up: mark every ended month still to hand over as handed over on one day."""
     SchoolShareHandoverService(db).mark_all(
         handed_on=payload.handed_on,
         share_percent=settings.school_share_percent,
         today=date.today(),
+        expected=payload.expected,
     )
     return await list_months(db)
 

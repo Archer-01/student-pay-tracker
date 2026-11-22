@@ -3,7 +3,9 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
+
+from app.schemas.money import Money
 
 
 class ShareMonthOut(BaseModel):
@@ -32,3 +34,8 @@ class HandoverIn(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     handed_on: date
+
+
+class HandOverAllIn(HandoverIn):
+    # The total the teacher was shown and confirmed: a different one now is a 409, not a guess.
+    expected: Money = Field(ge=0)

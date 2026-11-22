@@ -135,7 +135,7 @@ async def test_the_list_says_how_much_is_still_to_hand_over_and_can_catch_up(
     assert (months["outstanding"], months["outstanding_months"]) == ("60.00", 1)
 
     caught_up = await client.post(
-        "/api/v1/school-share/hand-over-all", json={"handed_on": "2026-11-03"}
+        "/api/v1/school-share/hand-over-all", json={"handed_on": "2026-11-03", "expected": "60.00"}
     )
     assert caught_up.status_code == 200, caught_up.text
     body = caught_up.json()
@@ -144,7 +144,28 @@ async def test_the_list_says_how_much_is_still_to_hand_over_and_can_catch_up(
     assert (october["status"], october["handed_on"]) == ("handed", "2026-11-03")
 
     future = await client.post(
-        "/api/v1/school-share/hand-over-all", json={"handed_on": "2999-01-01"}
+        "/api/v1/school-share/hand-over-all", json={"handed_on": "2999-01-01", "expected": "0"}
     )
     assert future.status_code == 409
     assert future.json()["code"] == "handover_in_future"
+
+
+async def test_catching_up_on_a_total_that_changed_is_a_409_naming_the_new_one(
+    client: AsyncClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "school_share_percent", Decimal("25"))
+    _paid_in_october(db_session)
+    resp = await client.post(
+        "/api/v1/school-share/hand-over-all?lang=fr",
+        json={"handed_on": "2026-11-03", "expected": "50"},
+    )
+    assert resp.status_code == 409
+    assert resp.json()["code"] == "share_outstanding_changed"
+    assert resp.json()["detail"] == (
+        "Le montant à remettre a changé\u00a0: il est maintenant de 60,00\u00a0DH. "
+        "Vérifiez-le, puis recommencez."
+    )
+    missing = await client.post(
+        "/api/v1/school-share/hand-over-all", json={"handed_on": "2026-11-03"}
+    )
+    assert missing.status_code == 422

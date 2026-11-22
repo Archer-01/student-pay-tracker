@@ -101,15 +101,23 @@ class SchoolShareHandoverService:
         self.session.commit()
         return handover
 
-    def mark_all(self, *, handed_on: date, share_percent: Decimal, today: date) -> int:
+    def mark_all(
+        self, *, handed_on: date, share_percent: Decimal, today: date, expected: Decimal
+    ) -> int:
         """Catch up in one go: every ended month still due or short is marked handed over on
         ``handed_on``, each for its share as it stands now. Returns how many were marked.
 
         For a teacher who has already handed those months over in cash and only needs the app to
-        say so; the app asks first. The month under way is never touched.
+        say so; the app asks first, showing the total, and sends it back as ``expected``. If the
+        total has moved since (a payment taken meanwhile), nothing is marked: the teacher
+        confirmed one amount, not whatever it has become. The month under way is never touched.
         """
         _check_handover(share_percent, handed_on, today)
-        owing = [m for m in self.months(today, share_percent) if m.remaining > 0]
+        months = self.months(today, share_percent)
+        total, _ = outstanding(months)
+        if total != expected:
+            raise InvalidHandoverError("share_outstanding_changed", amount=total)
+        owing = [m for m in months if m.remaining > 0]
         for month in owing:
             self._record(month.year, month.month, month.due, handed_on)
         self.session.commit()

@@ -774,6 +774,16 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HandOverAllIn */
+        HandOverAllIn: {
+            /**
+             * Handed On
+             * Format: date
+             */
+            handed_on: string;
+            /** Expected */
+            expected: number | string;
+        };
         /** HandoverIn */
         HandoverIn: {
             /**
@@ -2739,7 +2749,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["HandoverIn"];
+                "application/json": components["schemas"]["HandOverAllIn"];
             };
         };
         responses: {

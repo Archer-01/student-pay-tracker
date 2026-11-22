@@ -111,7 +111,9 @@ the month was settled), "À remettre", "Rien à remettre". A handed-over month c
 changed or the handover undone (asked first). With two or more months outstanding, the card adds
 « Au total : 3 412,50 DH à remettre sur 7 mois » (summed by the server) and **Tout marquer comme
 remis**, a sheet that says how many months and how much, takes the date, and marks every ended
-month still due or short in one go, for months already handed over in cash. While last month's
+month still due or short in one go, for months already handed over in cash. The total shown goes
+with the request: if a payment moved it meanwhile, the server refuses, the sheet says so and shows
+the new total, and nothing is marked until that one is confirmed. While last month's
 share is outstanding, Accueil's "À vérifier" box says so and links here. The tab is hidden when
 the share is 0 %.
 

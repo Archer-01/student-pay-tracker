@@ -215,6 +215,12 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "The school's share is turned off.",
         "fr": "La part de l'école est désactivée.",
     },
+    "error.share_outstanding_changed": {
+        "en": "The amount to hand over has changed: it is now {amount} DH. "
+        "Check it, then try again.",
+        "fr": "Le montant à remettre a changé\u00a0: il est maintenant de {amount}\u00a0DH. "
+        "Vérifiez-le, puis recommencez.",
+    },
     "error.handover_not_found": {
         "en": "That month's share was not marked as handed over.",
         "fr": "La part de ce mois n'a pas été marquée comme remise.",

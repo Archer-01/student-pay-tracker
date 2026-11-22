@@ -33,7 +33,7 @@ class InvalidWriteoffError(DomainError):
 
 class InvalidHandoverError(DomainError):
     """Bad school-share handover. ``code`` is one of: share_month_not_over / handover_in_future /
-    nothing_to_hand_over / school_share_off."""
+    nothing_to_hand_over / school_share_off / share_outstanding_changed."""
 
 
 class HandoverNotFoundError(DomainError):

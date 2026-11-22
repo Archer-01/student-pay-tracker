@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
+import { ApiError } from "../api/client";
 import { getSchoolShare, handOverAllShare, markShareHandedOver, unmarkShareHandedOver } from "../api/endpoints";
 import type { SchoolShare as Share, ShareMonth } from "../api/types";
 import { useApi } from "../lib/useApi";
@@ -31,11 +32,11 @@ export function SchoolShare() {
   const paymentsVersion = usePaymentsVersion();
   const state = useApi(() => getSchoolShare(), [paymentsVersion]);
   const [open, setOpen] = useState<ShareMonth | null>(null);
-  const [catchingUp, setCatchingUp] = useState<Share | null>(null);
+  const [catchingUp, setCatchingUp] = useState(false);
 
   const done = () => {
     setOpen(null);
-    setCatchingUp(null);
+    setCatchingUp(false);
     state.reload();
   };
 
@@ -80,7 +81,7 @@ export function SchoolShare() {
                       </p>
                       <button
                         type="button"
-                        onClick={() => setCatchingUp(data)}
+                        onClick={() => setCatchingUp(true)}
                         disabled={readOnly}
                         className="min-h-11 self-start font-bold text-warn underline disabled:opacity-50"
                       >
@@ -130,7 +131,16 @@ export function SchoolShare() {
       </AsyncView>
 
       {open && <MonthSheet month={open} readOnly={readOnly} onClose={() => setOpen(null)} onDone={done} />}
-      {catchingUp && <CatchUpSheet share={catchingUp} onClose={() => setCatchingUp(null)} onDone={done} />}
+      {/* The live data, not a copy taken on opening: a total that moves shows in the sheet. */}
+      {catchingUp && state.status === "success" && (
+        <CatchUpSheet
+          share={state.data}
+          readOnly={readOnly}
+          onClose={() => setCatchingUp(false)}
+          onDone={done}
+          onStale={state.reload}
+        />
+      )}
     </div>
   );
 }
@@ -253,8 +263,24 @@ function MonthSheet({
   );
 }
 
-/** Catch up: every month still to hand over, marked as handed over on one day, said in full first. */
-function CatchUpSheet({ share, onClose, onDone }: { share: Share; onClose: () => void; onDone: () => void }) {
+/**
+ * Catch up: every month still to hand over, marked as handed over on one day, said in full first.
+ * The total shown goes with the request; if a payment moved it meanwhile, the server refuses, the
+ * sheet says so and reloads, and the teacher confirms the new total.
+ */
+function CatchUpSheet({
+  share,
+  readOnly,
+  onClose,
+  onDone,
+  onStale,
+}: {
+  share: Share;
+  readOnly: boolean;
+  onClose: () => void;
+  onDone: () => void;
+  onStale: () => void;
+}) {
   const { t } = useTranslation();
   const markAll = useMutation(handOverAllShare);
   const date = useHandedOn();
@@ -267,10 +293,11 @@ function CatchUpSheet({ share, onClose, onDone }: { share: Share; onClose: () =>
     const invalid = date.problem();
     if (invalid) return setError(invalid);
     try {
-      await markAll.mutate(date.value);
+      await markAll.mutate(date.value, share.outstanding);
       onDone();
     } catch (err) {
       setError(resolveErrorMessage(err, t));
+      if (err instanceof ApiError && err.code === "share_outstanding_changed") onStale();
     }
   }
 
@@ -284,7 +311,7 @@ function CatchUpSheet({ share, onClose, onDone }: { share: Share; onClose: () =>
           <Button variant="ghost" onClick={onClose}>
             {t("common.cancel")}
           </Button>
-          <Button type="submit" pending={markAll.status === "pending"} className="min-h-12">
+          <Button type="submit" pending={markAll.status === "pending"} disabled={readOnly} className="min-h-12">
             {t("schoolShare.markAllButton", counted)}
           </Button>
         </div>

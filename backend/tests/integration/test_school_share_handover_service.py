@@ -193,7 +193,9 @@ def test_outstanding_adds_up_every_month_still_to_hand_over(db_session: Session)
 
 def test_catching_up_marks_every_due_and_short_month_on_one_day(db_session: Session) -> None:
     service = _three_months_and_a_short_one(db_session)
-    marked = service.mark_all(handed_on=date(2026, 11, 20), share_percent=QUARTER, today=TODAY)
+    marked = service.mark_all(
+        handed_on=date(2026, 11, 20), share_percent=QUARTER, today=TODAY, expected=Decimal("110")
+    )
     assert marked == 2
     months = {(m.year, m.month): m for m in service.months(TODAY, QUARTER)}
     assert months[(2026, 9)].status == "handed"
@@ -207,7 +209,10 @@ def test_catching_up_with_nothing_outstanding_marks_nothing(db_session: Session)
     sid = _amina(db_session)
     _pay(db_session, sid, 0, date(2026, 11, 5))  # only the running month has money
     service = SchoolShareHandoverService(db_session)
-    assert service.mark_all(handed_on=TODAY, share_percent=QUARTER, today=TODAY) == 0
+    assert (
+        service.mark_all(handed_on=TODAY, share_percent=QUARTER, today=TODAY, expected=Decimal(0))
+        == 0
+    )
 
 
 @pytest.mark.parametrize(
@@ -222,5 +227,20 @@ def test_catching_up_refuses_what_marking_one_month_refuses(
 ) -> None:
     service = _three_months_and_a_short_one(db_session)
     with pytest.raises(InvalidHandoverError) as exc:
-        service.mark_all(handed_on=handed_on, share_percent=percent, today=TODAY)
+        service.mark_all(
+            handed_on=handed_on, share_percent=percent, today=TODAY, expected=Decimal("110")
+        )
     assert exc.value.code == code
+
+
+def test_catching_up_marks_only_what_the_teacher_saw(db_session: Session) -> None:
+    # A payment taken since the sheet opened changes the total: marking it unseen would record
+    # cash as handed over that the teacher never confirmed.
+    service = _three_months_and_a_short_one(db_session)
+    with pytest.raises(InvalidHandoverError) as exc:
+        service.mark_all(
+            handed_on=TODAY, share_percent=QUARTER, today=TODAY, expected=Decimal("60")
+        )
+    assert exc.value.code == "share_outstanding_changed"
+    assert exc.value.params == {"amount": Decimal("110.00")}
+    assert all(m.status != "handed" for m in service.months(TODAY, QUARTER))

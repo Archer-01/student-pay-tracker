@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { screen, within } from "@testing-library/react";
+import { act, screen, within } from "@testing-library/react";
 import { renderWithProviders } from "../test/render";
 import * as endpoints from "../api/endpoints";
 import { todayIso } from "../lib/dates";
+import { ApiError } from "../api/client";
+import { reportStored, resetConnectivity } from "../lib/connectivity";
 import { SchoolShare } from "./SchoolShare";
 
 function month(over: Partial<Record<string, unknown>>) {
@@ -53,7 +55,36 @@ describe("Bilan › École", () => {
     expect(sheet.getByText(/The 2 months still to hand over \(452\.50\sDH\)/)).toBeInTheDocument();
     expect(markAll).not.toHaveBeenCalled();
     await userEvent.click(sheet.getByRole("button", { name: "Mark the 2 months as handed over" }));
-    expect(markAll).toHaveBeenCalledWith(todayIso());
+    // The total the teacher was shown goes with it: the server refuses if it has moved since.
+    expect(markAll).toHaveBeenCalledWith(todayIso(), "452.50");
+  });
+
+  it("shows the new total when it changed meanwhile, and marks only once it is confirmed", async () => {
+    const markAll = vi
+      .spyOn(endpoints, "handOverAllShare")
+      .mockRejectedValueOnce(new ApiError(409, "The amount to hand over has changed: it is now 502.50 DH.", "share_outstanding_changed"))
+      .mockResolvedValue(share as never);
+    renderWithProviders(<SchoolShare />);
+    const due = await screen.findByRole("region", { name: /to hand over/i });
+    await userEvent.click(within(due).getByRole("button", { name: "Mark all as handed over" }));
+    // A payment came in meanwhile: the page now reads a larger total.
+    vi.mocked(endpoints.getSchoolShare).mockResolvedValue({ ...share, outstanding: "502.50" } as never);
+    await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Mark the 2 months as handed over" }));
+
+    const sheet = within(screen.getByRole("dialog"));
+    expect(await sheet.findByText(/it is now 502\.50 DH/)).toBeInTheDocument();
+    expect(await sheet.findByText(/The 2 months still to hand over \(502\.50\sDH\)/)).toBeInTheDocument();
+    await userEvent.click(sheet.getByRole("button", { name: "Mark the 2 months as handed over" }));
+    expect(markAll).toHaveBeenLastCalledWith(todayIso(), "502.50");
+  });
+
+  it("can't mark everything once the app goes offline, even with the sheet open", async () => {
+    renderWithProviders(<SchoolShare />);
+    const due = await screen.findByRole("region", { name: /to hand over/i });
+    await userEvent.click(within(due).getByRole("button", { name: "Mark all as handed over" }));
+    act(() => reportStored("2026-11-14T09:41:00"));
+    expect(within(screen.getByRole("dialog")).getByRole("button", { name: "Mark the 2 months as handed over" })).toBeDisabled();
+    act(() => resetConnectivity());
   });
 
   it("shows no total when a single month is outstanding", async () => {
