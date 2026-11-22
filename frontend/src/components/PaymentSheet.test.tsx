@@ -16,8 +16,8 @@ const student = {
 const ledger = {
   student_id: 13, as_of: "2026-10-20", cumulative_drift: 0,
   entries: [
-    { cycle_number: 0, expected_due_date: "2026-09-05", paid_date: "2026-09-05", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
-    { cycle_number: 1, expected_due_date: "2026-10-05", paid_date: null, days_late: null, amount: null, cumulative_drift: 0, suspended: false },
+    { cycle_number: 0, expected_due_date: "2026-09-05", paid_date: "2026-09-05", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false, waived: false },
+    { cycle_number: 1, expected_due_date: "2026-10-05", paid_date: null, days_late: null, amount: null, cumulative_drift: 0, suspended: false, waived: false },
   ],
 };
 

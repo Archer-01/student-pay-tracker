@@ -110,7 +110,7 @@ def students_show(
             if entry.paid_date is not None:
                 state = "late" if (entry.days_late or 0) > 0 else "paid"
             else:
-                state = "away" if entry.suspended else "unpaid"
+                state = "away" if entry.suspended else "free" if entry.waived else "unpaid"
             view.add_row(
                 entry.expected_due_date.strftime("%Y-%m"),
                 entry.expected_due_date.isoformat(),

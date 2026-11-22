@@ -17,6 +17,9 @@ class LedgerEntryOut(BaseModel):
     cumulative_drift: int
     # True when the student was away that month: shown, but neither owed nor accruing drift.
     suspended: bool
+    # True when it fell due while the student was free on purpose, before they got a price
+    # (decision 0011): it stays free, never owed.
+    waived: bool
 
 
 class LedgerOut(BaseModel):

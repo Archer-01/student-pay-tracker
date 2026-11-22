@@ -85,7 +85,9 @@ and changes nothing.
 
 The status card of a free student says « Gratuit » (nothing is ever asked of them) with
 « Modifier le tarif », and their unpaid and coming months read « gratuit » on the tiles (and on
-the PDF); one with no price says « Sans tarif » with « Choisir un pack ».
+the PDF); one with no price says « Sans tarif » with « Choisir un pack ». Once a free student is
+given a price, the months that fell due while they were free stay « gratuit » (`waived` in the
+ledger, decision 0014), say so when tapped, and are never offered for payment.
 
 Under the status card sits the teacher's **note** on the student (`student.note`, up to 500
 characters), or a quiet "Ajouter une note" link when there is none; both open `NoteSheet`, a sheet
@@ -109,7 +111,7 @@ leads with the latest month still to hand over and **Marquer comme remis** (toda
 day); below, every month in words: "Remis le 3 nov.", "Il manque 50 DH" (a payment recorded after
 the month was settled), "À remettre", "Rien à remettre". A handed-over month can have its date
 changed or the handover undone (asked first). With two or more months outstanding, the card adds
-« Au total : 3 412,50 DH à remettre sur 7 mois » (summed by the server) and **Tout marquer comme
+« Au total : 3 412,50 DH à remettre pour 7 mois » (summed by the server) and **Tout marquer comme
 remis**, a sheet that says how many months and how much, takes the date, and marks every ended
 month still due or short in one go, for months already handed over in cash. The total shown goes
 with the request: if a payment moved it meanwhile, the server refuses, the sheet says so and shows

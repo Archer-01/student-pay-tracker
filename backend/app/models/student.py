@@ -72,6 +72,10 @@ class Student(Base):
     # The teacher's own note ("paie le samedi", "père : Ahmed"). Private: shown on the student
     # page only, never on a PDF, since those go to parents. Length is limited by the schema.
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # The day the student was entered in the app (by StudentService, in the teacher's date), which
+    # ``join_date`` can precede. A price fixed on that day is a correction of the enrolment: made
+    # free then, they are free from joining (decision 0014). Backfilled from ``created_at``.
+    entered_on: Mapped[date | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(nullable=False, server_default=func.now())
 
     @property

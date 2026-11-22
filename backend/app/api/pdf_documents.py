@@ -146,7 +146,10 @@ def ledger_status(
         owed = [
             e
             for e in entries
-            if e.paid_date is None and not e.suspended and e.expected_due_date <= as_of
+            if e.paid_date is None
+            and not e.suspended
+            and not e.waived
+            and e.expected_due_date <= as_of
         ]
         title = translate(
             "pdf.ledger.owes",

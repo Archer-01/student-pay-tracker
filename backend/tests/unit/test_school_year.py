@@ -13,7 +13,7 @@ from app.services.ledger_service import LedgerEntry
 from app.services.school_year import TileState, month_tiles, school_year_start, school_years
 
 
-def entry(cycle: int, due: date, *, suspended: bool = False) -> LedgerEntry:
+def entry(cycle: int, due: date, *, suspended: bool = False, waived: bool = False) -> LedgerEntry:
     return LedgerEntry(
         cycle_number=cycle,
         expected_due_date=due,
@@ -22,6 +22,7 @@ def entry(cycle: int, due: date, *, suspended: bool = False) -> LedgerEntry:
         amount=None,
         cumulative_drift=0,
         suspended=suspended,
+        waived=waived,
     )
 
 
@@ -106,6 +107,16 @@ def test_a_month_the_student_was_away_is_not_owed() -> None:
         entry(1, date(2026, 10, 5), suspended=True),
     ]
     assert states(entries)[1] == "away"
+
+
+def test_a_month_due_while_free_stays_free_after_a_price() -> None:
+    # Free until November (decision 0011): September and October stay free, November is owed.
+    entries = [
+        entry(0, date(2026, 9, 5), waived=True),
+        entry(1, date(2026, 10, 5), waived=True),
+        entry(2, date(2026, 11, 5)),
+    ]
+    assert states(entries)[:4] == ["free", "free", "due", "upcoming"]
 
 
 def test_months_before_joining_are_blank() -> None:

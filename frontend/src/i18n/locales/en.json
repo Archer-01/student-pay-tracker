@@ -409,7 +409,8 @@
     "deleteConfirmButton": "Delete",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days",
-    "free": "This student pays nothing: nothing is owed for this month."
+    "free": "This student pays nothing: nothing is owed for this month.",
+    "waived": "This month came due while the student paid nothing: it stays free, nothing is owed."
   },
   "share": {
     "title": "Split",

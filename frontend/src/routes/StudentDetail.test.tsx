@@ -87,9 +87,9 @@ describe("StudentDetail status", () => {
     vi.spyOn(endpoints, "getLedger").mockResolvedValue({
       ...ledger,
       entries: [
-        { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
-        { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-09", days_late: 8, amount: "200.00", cumulative_drift: 8, suspended: false },
-        { cycle_number: 2, expected_due_date: "2026-11-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 8, suspended: false },
+        { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false, waived: false },
+        { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-09", days_late: 8, amount: "200.00", cumulative_drift: 8, suspended: false, waived: false },
+        { cycle_number: 2, expected_due_date: "2026-11-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 8, suspended: false, waived: false },
       ],
     } as never);
     vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
@@ -123,6 +123,27 @@ describe("StudentDetail status", () => {
     expect(screen.queryByText("to come")).not.toBeInTheDocument();
     expect(screen.getAllByText("free").length).toBeGreaterThan(0);
     expect(screen.getByText("free, nothing owed")).toBeInTheDocument();
+  });
+
+  it("keeps the months a student was free for as free once they have a price", async () => {
+    vi.spyOn(endpoints, "getStudent").mockResolvedValue(
+      student({ months_overdue: 1, amount_owed: "200.00", next_expected_date: "2026-12-01" }) as never,
+    );
+    vi.spyOn(endpoints, "getLedger").mockResolvedValue({
+      ...ledger,
+      entries: [
+        { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 0, suspended: false, waived: true },
+        { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 0, suspended: false, waived: true },
+        { cycle_number: 2, expected_due_date: "2026-11-01", paid_date: null, days_late: null, amount: null, cumulative_drift: 0, suspended: false, waived: false },
+      ],
+    } as never);
+    vi.spyOn(endpoints, "listPeriods").mockResolvedValue([open] as never);
+    renderPage();
+    await userEvent.click(await screen.findByRole("button", { name: /September 2026 · free, nothing owed/ }));
+    expect(screen.getByText(/came due while the student paid nothing/)).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Record September/ })).not.toBeInTheDocument();
+    // November, due after the price, is owed and is the month to pay.
+    expect(screen.getByRole("button", { name: /November 2026 · to pay/ })).toBeInTheDocument();
   });
 
   it("asks for a price when none was set", async () => {
@@ -177,8 +198,8 @@ describe("StudentDetail correcting a payment", () => {
   const paidLedger = {
     ...ledger,
     entries: [
-      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
-      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false },
+      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false, waived: false },
+      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false, waived: false },
     ],
   };
 
@@ -329,8 +350,8 @@ describe("StudentDetail opened on a month", () => {
   const paidLedger = {
     ...ledger,
     entries: [
-      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false },
-      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false },
+      { cycle_number: 0, expected_due_date: "2026-09-01", paid_date: "2026-09-01", days_late: 0, amount: "200.00", cumulative_drift: 0, suspended: false, waived: false },
+      { cycle_number: 1, expected_due_date: "2026-10-01", paid_date: "2026-10-10", days_late: 9, amount: "200.00", cumulative_drift: 9, suspended: false, waived: false },
     ],
   };
 
@@ -363,7 +384,7 @@ describe("StudentDetail opened on a month", () => {
     vi.spyOn(endpoints, "getLedger").mockResolvedValue({
       ...paidLedger,
       entries: [
-        { cycle_number: 6, expected_due_date: "2026-03-01", paid_date: "2026-03-02", days_late: 1, amount: "200.00", cumulative_drift: 1, suspended: false },
+        { cycle_number: 6, expected_due_date: "2026-03-01", paid_date: "2026-03-02", days_late: 1, amount: "200.00", cumulative_drift: 1, suspended: false, waived: false },
         ...paidLedger.entries,
       ],
     } as never);

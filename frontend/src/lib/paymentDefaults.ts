@@ -18,12 +18,12 @@ const monthOf = (isoDate: string) => isoDate.slice(0, 7);
 
 /**
  * Months that can be paid, oldest first; the first is the default. Unpaid months the student was
- * away for are skipped (they are not owed), and the next scheduled month is offered last so a
+ * away for, or that fell due while they were free (decision 0011), are skipped (they are not owed), and the next scheduled month is offered last so a
  * payment in advance is one tap too.
  */
 export function payableMonths(entries: LedgerEntry[], nextExpectedDate: string): MonthOption[] {
   const owed = entries
-    .filter((e) => e.paid_date === null && !e.suspended)
+    .filter((e) => e.paid_date === null && !e.suspended && !e.waived)
     .sort((a, b) => a.cycle_number - b.cycle_number)
     .map((e) => ({ month: monthOf(e.expected_due_date), overdue: true }));
   const next = monthOf(nextExpectedDate);

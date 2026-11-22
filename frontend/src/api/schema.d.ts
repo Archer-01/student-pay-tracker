@@ -828,6 +828,8 @@ export interface components {
             cumulative_drift: number;
             /** Suspended */
             suspended: boolean;
+            /** Waived */
+            waived: boolean;
         };
         /** LedgerOut */
         LedgerOut: {

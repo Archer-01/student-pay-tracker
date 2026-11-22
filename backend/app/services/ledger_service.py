@@ -11,6 +11,10 @@ counted as debt. Suspension only ever removes *future* accrual — it can't subt
 already happened, because drift comes from recorded payments, which are never suspended.
 ``schedule.py`` is untouched by any of this: the schedule is still generated from the immutable
 anchor, and absence is a filter applied on top.
+
+**Waived.** An unpaid cycle that fell due inside one of the student's free periods (they were free
+on purpose then, decision 0014) stays free after they get a price: ``waived``, not owed, never
+chased. Like suspension it only ever applies to unpaid cycles, so it can't move drift.
 """
 
 from collections.abc import Callable
@@ -21,8 +25,9 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from app.models import Student
-from app.repos import EnrollmentRepo, OverrideRepo, PaymentRepo, StudentRepo
+from app.repos import EnrollmentRepo, FreePeriodRepo, OverrideRepo, PaymentRepo, StudentRepo
 from app.services.exceptions import StudentNotFoundError
+from app.services.free_periods import FreePeriodService
 from app.services.pricing_service import PricingService
 from app.services.punctuality import average_days_late
 from app.services.schedule import generate_expected_due_dates, next_expected_date
@@ -39,6 +44,9 @@ class LedgerEntry:
     # True when this month fell outside every enrollment period: the student was away, so it is
     # neither owed nor able to accrue drift. Always False for a cycle that was actually paid.
     suspended: bool = False
+    # True when this month fell due inside a free period (the student was free on purpose then):
+    # it stays free. Always False for a cycle that was actually paid.
+    waived: bool = False
 
 
 @dataclass(frozen=True)
@@ -62,6 +70,7 @@ class LedgerService:
         self.students = StudentRepo(session)
         self.payments = PaymentRepo(session)
         self.overrides = OverrideRepo(session)
+        self.free_periods = FreePeriodRepo(session)
         self.enrollment = EnrollmentRepo(session)
         self.pricing = PricingService(session)
 
@@ -91,6 +100,7 @@ class LedgerService:
 
     def get_ledger(self, student_id: int, as_of: date) -> list[LedgerEntry]:
         join_date = self._require_student_join(student_id)
+        free_periods = self.free_periods.list_for_student(student_id)
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
         live_dues = generate_expected_due_dates(join_date, as_of, override_dates)
 
@@ -132,6 +142,7 @@ class LedgerService:
                         # A paid cycle is never suspended (handled above): a recorded payment is
                         # audit truth regardless of what the attendance history says.
                         suspended=not attending(due),
+                        waived=FreePeriodService.covers(free_periods, due),
                     )
                 )
         return entries
@@ -149,12 +160,16 @@ class LedgerService:
         """Due dates of unpaid cycles that actually cost something.
 
         Arrears are the unpaid cycles due by ``as_of``, minus any the student was away for and
-        any priced at zero — a student with no pack, or on a free one, is not in debt.
+        any priced at zero — a student with no pack, or on a free one, is not in debt — and any
+        that fell due while they were free on purpose (``waived``).
         """
         return [
             e.expected_due_date
             for e in entries
-            if e.paid_date is None and not e.suspended and self.pricing.billable(student)
+            if e.paid_date is None
+            and not e.suspended
+            and not e.waived
+            and self.pricing.billable(student)
         ]
 
     def next_expected_date(self, student_id: int, as_of: date) -> date:
@@ -164,6 +179,7 @@ class LedgerService:
         not by date, since a payment's frozen due date can differ from the live one once an
         override moves the schedule.
         """
+
         join_date = self._require_student_join(student_id)
         override_dates = [o.new_due_date for o in self.overrides.list_for_student(student_id)]
         paid = {p.cycle_number for p in self.payments.list_for_student(student_id)}

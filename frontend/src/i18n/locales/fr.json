@@ -409,7 +409,8 @@
     "deleteConfirmButton": "Supprimer",
     "days_one": "{{count}} jour",
     "days_other": "{{count}} jours",
-    "free": "Cet élève ne paie rien : rien n'est dû pour ce mois."
+    "free": "Cet élève ne paie rien : rien n'est dû pour ce mois.",
+    "waived": "Quand ce mois est arrivé, l'élève ne payait rien : il reste gratuit, rien n'est dû."
   },
   "share": {
     "title": "Répartition",

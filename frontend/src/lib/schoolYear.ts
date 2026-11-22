@@ -41,7 +41,8 @@ function monthsOf(startYear: number): string[] {
  * Twelve tiles, September to August. The ledger already holds every month that has come due
  * (and any paid in advance); a month without an entry is either not due yet or not expected at
  * all. `enrolled` decides which: someone who has left is expected to pay nothing further. For a
- * student free on purpose, `free` turns what would be owed or coming into "free".
+ * student free on purpose, `free` turns what would be owed or coming into "free"; so does a month
+ * that fell due while they were free (`waived`, decision 0011).
  */
 export function monthTiles(
   entries: LedgerEntry[],
@@ -62,7 +63,7 @@ export function monthTiles(
       if (entry.paid_date !== null) {
         return { month, entry, state: (entry.days_late ?? 0) > 0 ? "late" : "paid" };
       }
-      return { month, entry, state: entry.suspended ? "away" : free ? "free" : "due" };
+      return { month, entry, state: entry.suspended ? "away" : free || entry.waived ? "free" : "due" };
     }
     if (month < joinMonth) return { month, state: "none" };
     // No entry and not in the past: this month's day hasn't come, or it's a later month.

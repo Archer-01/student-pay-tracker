@@ -19,6 +19,7 @@ from app.services.exceptions import (
     PackNotFoundError,
     StudentNotFoundError,
 )
+from app.services.free_periods import FreePeriodService
 
 
 def _clean_name(value: str) -> str:
@@ -64,10 +65,12 @@ class StudentService:
         price_note: str | None = None,
         note: str | None = None,
         is_repeating: bool = False,
+        today: date | None = None,
     ) -> Student:
         self._require_class(class_id)
         self._require_pack(pack_id)
         self._check_price(custom_price)
+        today = today or date.today()
         student = Student(
             first_name=_clean_name(first_name),
             last_name=_clean_optional(last_name),
@@ -80,11 +83,14 @@ class StudentService:
             custom_price=custom_price,
             price_note=price_note,
             note=note,
+            entered_on=today,
         )
         self.students.create(student)
         # Every student starts with an open period at their anchor, so "was they attending?" has
         # an answer from day one rather than only after their first leave.
         EnrollmentService(self.session).start(student)
+        # Enrolled at 0 on purpose: free from the day they joined (decision 0014).
+        FreePeriodService(self.session).follow_price(student, today, free_from=join_date)
         self.session.commit()
         return student
 
@@ -157,11 +163,14 @@ class StudentService:
         custom_price: Decimal | None | _Unset = _UNSET,
         price_note: str | None | _Unset = _UNSET,
         note: str | None | _Unset = _UNSET,
+        today: date | None = None,
     ) -> Student:
         """Apply only the provided fields (a single PATCH). ``join_date`` is never accepted.
 
         Changing ``class_id`` (including to ``None``) is purely organisational: it must not
-        affect the anchor, payments, or drift.
+        affect the anchor, payments, or drift. A price change that makes the student free, or
+        stops them being free, opens or closes a free period on ``today``: the months that fell
+        due while they were free stay free (decision 0014).
         """
         student = self.get(student_id)
         if not isinstance(first_name, _Unset):
@@ -188,5 +197,14 @@ class StudentService:
             student.price_note = price_note
         if not isinstance(note, _Unset):
             student.note = note
+        self.session.flush()
+        self.session.expire(student, ["pack"])  # a new pack_id must be read through
+        today = today or date.today()
+        # Made free on the day they were entered: a correction of the enrolment, so free from
+        # joining, as if entered at 0. Any later day: free from that day.
+        entered_today = student.entered_on is not None and today <= student.entered_on
+        FreePeriodService(self.session).follow_price(
+            student, today, free_from=student.join_date if entered_today else None
+        )
         self.session.commit()
         return student

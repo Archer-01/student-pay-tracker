@@ -367,7 +367,9 @@ const tileStyles: Record<MonthTile["state"], string> = {
   due: "border-bad bg-bad-soft text-bad",
   away: "border-dashed border-off bg-off-soft text-off",
   upcoming: "border-line bg-surface text-muted",
-  free: "border-transparent bg-off-soft text-off",
+  // A solid grey edge (away's is dashed): without it the tile and its legend swatch all but
+  // vanish on the light page.
+  free: "border-off bg-off-soft text-off",
   none: "border-transparent bg-transparent text-placeholder",
 };
 
@@ -571,7 +573,7 @@ function TileDetails({
               {tile.state === "away"
                 ? t("tile.away")
                 : tile.state === "free"
-                  ? t("tile.free")
+                  ? t(e?.waived ? "tile.waived" : "tile.free")
                   : tile.state === "due" && e
                   ? t("tile.notPaid", { date: formatDate(e.expected_due_date) })
                   : t("tile.upcoming")}

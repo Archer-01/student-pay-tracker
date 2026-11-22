@@ -5,7 +5,7 @@ import { monthTiles, schoolYearStart, schoolYears } from "./schoolYear";
 function entry(cycle: number, due: string, over: Partial<LedgerEntry> = {}): LedgerEntry {
   return {
     cycle_number: cycle, expected_due_date: due, paid_date: null, days_late: null, amount: null,
-    cumulative_drift: 0, suspended: false, ...over,
+    cumulative_drift: 0, suspended: false, waived: false, ...over,
   };
 }
 const paid = (cycle: number, due: string, paidOn: string, daysLate = 0) =>
@@ -55,6 +55,13 @@ describe("monthTiles", () => {
   it("marks months the student was away for, which are not owed", () => {
     const entries = [paid(0, "2026-09-05", "2026-09-05"), entry(1, "2026-10-05", { suspended: true })];
     expect(monthTiles(entries, 2026, base)[1]!.state).toBe("away");
+  });
+
+  it("keeps months that fell due while free as free once the student has a price", () => {
+    const entries = [entry(0, "2026-09-05", { waived: true }), entry(1, "2026-10-05", { waived: true }), entry(2, "2026-11-05")];
+    expect(states(monthTiles(entries, 2026, base)).slice(0, 4)).toEqual([
+      "2026-09:free", "2026-10:free", "2026-11:due", "2026-12:upcoming",
+    ]);
   });
 
   it("shows a free student's unpaid and coming months as free, and paid ones as paid", () => {

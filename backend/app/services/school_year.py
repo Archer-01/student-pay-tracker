@@ -51,7 +51,8 @@ def month_tiles(
     The ledger already holds every month that has come due (and any paid in advance); a month
     without an entry is either not due yet or not expected at all. ``enrolled`` decides which:
     someone who has left is expected to pay nothing further. For a student free on purpose,
-    ``free`` turns what would be owed or coming into "free".
+    ``free`` turns what would be owed or coming into "free"; so does a month that fell due while
+    they were free (``waived``, decision 0011).
     """
     by_month = {e.expected_due_date.replace(day=1): e for e in entries}
     join_month = join_date.replace(day=1)
@@ -64,7 +65,7 @@ def month_tiles(
                 late = (entry.days_late or 0) > 0
                 tiles.append(MonthTile(month, "late" if late else "paid", entry))
             else:
-                unpaid: TileState = "free" if free else "due"
+                unpaid: TileState = "free" if free or entry.waived else "due"
                 tiles.append(MonthTile(month, "away" if entry.suspended else unpaid, entry))
         elif month >= join_month and month >= this_month and enrolled:
             # No entry and not in the past: this month's day hasn't come, or it's a later month.

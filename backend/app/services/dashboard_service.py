@@ -219,7 +219,7 @@ class DashboardService:
 
         One ledger pass per student, up to whichever is later of the month's end and a week
         ahead: the schedule there is override-aware, includes dues later this month, and marks
-        months the student was away (suspended, so not owed).
+        months the student was away (suspended) or free (waived), neither of them owed.
         """
         month_start = as_of.replace(day=1)
         month_end = add_months(month_start, 1) - timedelta(days=1)
@@ -233,7 +233,11 @@ class DashboardService:
             if not self.pricing.billable(student):
                 continue
             price = self.pricing.price_of(student)
-            owed = [e for e in self.ledger.get_ledger(student.id, horizon) if not e.suspended]
+            owed = [
+                e
+                for e in self.ledger.get_ledger(student.id, horizon)
+                if not e.suspended and not e.waived
+            ]
 
             this_month = [e for e in owed if month_start <= e.expected_due_date <= month_end]
             if this_month:

@@ -9,6 +9,7 @@ function entry(partial: Partial<LedgerEntry> & Pick<LedgerEntry, "cycle_number" 
     amount: null,
     cumulative_drift: 0,
     suspended: false,
+    waived: false,
     ...partial,
   };
 }
@@ -30,6 +31,14 @@ describe("payableMonths", () => {
 
   it("skips months the student was away for: they are not owed", () => {
     const entries = [unpaid(0, "2026-09-05", true), unpaid(1, "2026-10-05")];
+    expect(payableMonths(entries, "2026-11-05").map((m) => m.month)).toEqual(["2026-10", "2026-11"]);
+  });
+
+  it("skips months that fell due while the student was free: they stay free", () => {
+    const entries = [
+      entry({ cycle_number: 0, expected_due_date: "2026-09-05", waived: true }),
+      unpaid(1, "2026-10-05"),
+    ];
     expect(payableMonths(entries, "2026-11-05").map((m) => m.month)).toEqual(["2026-10", "2026-11"]);
   });
 

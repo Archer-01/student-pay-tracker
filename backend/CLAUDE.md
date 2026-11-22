@@ -153,7 +153,10 @@ These must hold for every change:
   every payment was on time (property tests).
 - **A price of 0 that was set is free on purpose** (decision 0011): `PricingService.price_status`
   is "free", never chased or flagged. Only "unset" (no pack, no agreed price) gets the Accueil
-  reminder.
+  reminder. **Months that were free stay free** (decision 0014): each stretch of being free is a
+  `free_period`, opened and closed only by `FreePeriodService.follow_price` after any price change
+  (student or pack); an unpaid cycle due inside one is `waived`, owed by no one, like `suspended`;
+  a paid cycle is never waived; a period closed on the day it opened is deleted (a slip).
 - **Punctuality is a reading** (`services/punctuality.py`): the mean of `max(0, days_late)` over
   the last six payments due, rounded half up; it never feeds drift.
 - **The school share is a flat percentage of money received** (`services/school_share.py`,

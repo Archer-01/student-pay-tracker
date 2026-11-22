@@ -2,6 +2,7 @@
 its own; a pack's level is locked once a student is on it.
 """
 
+from datetime import date
 from decimal import Decimal
 from typing import Final
 
@@ -15,6 +16,7 @@ from app.services.exceptions import (
     PackInUseError,
     PackNotFoundError,
 )
+from app.services.free_periods import FreePeriodService
 
 
 class _Unset:
@@ -117,13 +119,16 @@ class PackService:
         subjects: SubjectNames | _Unset = _UNSET,
         price: Decimal | _Unset = _UNSET,
         is_active: bool | _Unset = _UNSET,
+        today: date | None = None,
     ) -> Pack:
         """Edit one pack on its own: a pack is one name at one level, so nothing here reaches a
         same-named pack at another level.
 
         The level can change only while no student is on the pack: otherwise its students would
         silently find themselves on a pack for another level. Changing ``price`` immediately
-        changes what every student on it pays, including for months they have not yet paid.
+        changes what every student on it pays, including for months they have not yet paid;
+        a price that crosses 0 opens or closes those students' free periods from ``today``
+        (decision 0014), so a free pack given a price doesn't bill its free months back.
         """
         pack = self.get(pack_id)
         new_name = pack.name if isinstance(name, _Unset) else _clean_name(name)
@@ -142,6 +147,10 @@ class PackService:
         if not isinstance(price, _Unset):
             _check_price(price)
             pack.price = price
+            self.session.flush()
+            free_periods = FreePeriodService(self.session)
+            for student in pack.students:  # leavers too: their debt counts
+                free_periods.follow_price(student, today or date.today())
         if not isinstance(is_active, _Unset):
             pack.is_active = is_active
         self.session.commit()
