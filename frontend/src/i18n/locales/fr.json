@@ -461,7 +461,14 @@
     "validation": {
       "dateRequired": "Choisissez la date.",
       "dateFuture": "La date ne peut pas être dans le futur."
-    }
+    },
+    "total_one": "Au total : {{amount}} à remettre sur {{count}} mois",
+    "total_other": "Au total : {{amount}} à remettre sur {{count}} mois",
+    "markAll": "Tout marquer comme remis",
+    "markAllText_one": "Le mois encore à remettre ({{amount}}) sera marqué comme remis, à la date choisie. À faire seulement s'il a déjà été remis à l'école.",
+    "markAllText_other": "Les {{count}} mois encore à remettre ({{amount}}) seront marqués comme remis, à la date choisie. À faire seulement s'ils ont déjà tous été remis à l'école.",
+    "markAllButton_one": "Marquer le mois comme remis",
+    "markAllButton_other": "Marquer les {{count}} mois comme remis"
   },
   "offlineCopy": {
     "title": "Hors ligne",

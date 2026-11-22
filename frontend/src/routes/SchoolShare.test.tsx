@@ -15,6 +15,9 @@ function month(over: Partial<Record<string, unknown>>) {
 
 const share = {
   percent: "25",
+  // October due (402.50) and September short (50): the server's sum, never the browser's.
+  outstanding: "452.50",
+  outstanding_months: 2,
   months: [
     month({ month: 11, collected: "940.00", due: "235.00", status: "running", remaining: "0" }),
     month({}),
@@ -37,6 +40,32 @@ describe("Bilan › École", () => {
     await userEvent.click(within(due).getByRole("button", { name: /mark as handed over/i }));
     await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: /mark as handed over/i }));
     expect(mark).toHaveBeenCalledWith(2026, 10, todayIso());
+  });
+
+  it("adds up the months still to hand over, and can mark them all after saying what it will do", async () => {
+    const markAll = vi.spyOn(endpoints, "handOverAllShare").mockResolvedValue(share as never);
+    renderWithProviders(<SchoolShare />);
+    const due = await screen.findByRole("region", { name: /to hand over/i });
+    expect(within(due).getByText(/452\.50\sDH to hand over in all, over 2 months/)).toBeInTheDocument();
+
+    await userEvent.click(within(due).getByRole("button", { name: "Mark all as handed over" }));
+    const sheet = within(screen.getByRole("dialog"));
+    expect(sheet.getByText(/The 2 months still to hand over \(452\.50\sDH\)/)).toBeInTheDocument();
+    expect(markAll).not.toHaveBeenCalled();
+    await userEvent.click(sheet.getByRole("button", { name: "Mark the 2 months as handed over" }));
+    expect(markAll).toHaveBeenCalledWith(todayIso());
+  });
+
+  it("shows no total when a single month is outstanding", async () => {
+    vi.mocked(endpoints.getSchoolShare).mockResolvedValue({
+      ...share,
+      outstanding: "402.50",
+      outstanding_months: 1,
+    } as never);
+    renderWithProviders(<SchoolShare />);
+    await screen.findByRole("region", { name: /to hand over/i });
+    expect(screen.queryByText(/in all/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Mark all as handed over" })).not.toBeInTheDocument();
   });
 
   it("says where each month stands, in words", async () => {

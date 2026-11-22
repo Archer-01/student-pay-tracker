@@ -108,8 +108,12 @@ The school's share of each month, and whether it was handed over (`routes/School
 leads with the latest month still to hand over and **Marquer comme remis** (today, or another
 day); below, every month in words: "Remis le 3 nov.", "Il manque 50 DH" (a payment recorded after
 the month was settled), "À remettre", "Rien à remettre". A handed-over month can have its date
-changed or the handover undone (asked first). While last month's share is outstanding, Accueil's
-"À vérifier" box says so and links here. The tab is hidden when the share is 0 %.
+changed or the handover undone (asked first). With two or more months outstanding, the card adds
+« Au total : 3 412,50 DH à remettre sur 7 mois » (summed by the server) and **Tout marquer comme
+remis**, a sheet that says how many months and how much, takes the date, and marks every ended
+month still due or short in one go, for months already handed over in cash. While last month's
+share is outstanding, Accueil's "À vérifier" box says so and links here. The tab is hidden when
+the share is 0 %.
 
 ## Réglages
 

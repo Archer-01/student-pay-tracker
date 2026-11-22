@@ -550,6 +550,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/school-share/hand-over-all": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Hand Over All
+         * @description Catch up: mark every ended month still to hand over as handed over on one day.
+         */
+        post: operations["hand_over_all_api_v1_school_share_hand_over_all_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/school-share/{year}/{month}": {
         parameters: {
             query?: never;
@@ -1110,6 +1130,10 @@ export interface components {
             percent: string;
             /** Months */
             months: components["schemas"]["ShareMonthOut"][];
+            /** Outstanding */
+            outstanding: string;
+            /** Outstanding Months */
+            outstanding_months: number;
         };
         /** ShareMonthOut */
         ShareMonthOut: {
@@ -2683,6 +2707,41 @@ export interface operations {
             };
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SchoolShareOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    hand_over_all_api_v1_school_share_hand_over_all_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: {
+                ardoise_session?: string | null;
+            };
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HandoverIn"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

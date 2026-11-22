@@ -162,3 +162,65 @@ def test_a_past_month_with_nothing_collected_has_nothing_to_hand_over(
         Decimal("0.00"),
         Decimal("0"),
     )
+
+
+# --------------------------------------------------------------------------- #
+# Everything still to hand over, and catching up in one go
+# --------------------------------------------------------------------------- #
+
+
+def _three_months_and_a_short_one(db_session: Session) -> SchoolShareHandoverService:
+    """September handed, then short after a late payment; October due; November running."""
+    sid = _amina(db_session)
+    service = SchoolShareHandoverService(db_session)
+    _pay(db_session, sid, 0, date(2026, 9, 5))
+    service.mark(2026, 9, handed_on=date(2026, 10, 2), share_percent=QUARTER, today=TODAY)
+    _pay(db_session, sid, 1, date(2026, 9, 28), "200")  # paid in September, after the handover
+    _pay(db_session, sid, 2, date(2026, 10, 5))
+    _pay(db_session, sid, 3, date(2026, 11, 5))
+    return service
+
+
+def test_outstanding_adds_up_every_month_still_to_hand_over(db_session: Session) -> None:
+    from app.services.school_share_handover_service import outstanding
+
+    service = _three_months_and_a_short_one(db_session)
+    months = service.months(TODAY, QUARTER)
+    # September short by 50 (25 % of 200), October due 60, November running (not counted).
+    assert outstanding(months) == (Decimal("110.00"), 2)
+    assert outstanding([]) == (Decimal("0"), 0)
+
+
+def test_catching_up_marks_every_due_and_short_month_on_one_day(db_session: Session) -> None:
+    service = _three_months_and_a_short_one(db_session)
+    marked = service.mark_all(handed_on=date(2026, 11, 20), share_percent=QUARTER, today=TODAY)
+    assert marked == 2
+    months = {(m.year, m.month): m for m in service.months(TODAY, QUARTER)}
+    assert months[(2026, 9)].status == "handed"
+    assert months[(2026, 9)].handed_amount == Decimal("110.00")  # the share as it stands now
+    assert months[(2026, 10)].status == "handed"
+    assert months[(2026, 10)].handed_on == date(2026, 11, 20)
+    assert months[(2026, 11)].status == "running"  # this month isn't over: never touched
+
+
+def test_catching_up_with_nothing_outstanding_marks_nothing(db_session: Session) -> None:
+    sid = _amina(db_session)
+    _pay(db_session, sid, 0, date(2026, 11, 5))  # only the running month has money
+    service = SchoolShareHandoverService(db_session)
+    assert service.mark_all(handed_on=TODAY, share_percent=QUARTER, today=TODAY) == 0
+
+
+@pytest.mark.parametrize(
+    ("handed_on", "percent", "code"),
+    [
+        (date(2026, 11, 22), QUARTER, "handover_in_future"),
+        (TODAY, Decimal("0"), "school_share_off"),
+    ],
+)
+def test_catching_up_refuses_what_marking_one_month_refuses(
+    db_session: Session, handed_on: date, percent: Decimal, code: str
+) -> None:
+    service = _three_months_and_a_short_one(db_session)
+    with pytest.raises(InvalidHandoverError) as exc:
+        service.mark_all(handed_on=handed_on, share_percent=percent, today=TODAY)
+    assert exc.value.code == code

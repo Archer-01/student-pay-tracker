@@ -163,6 +163,8 @@ These must hold for every change:
 - **A share handover records cash given to the school** (migration 0010): it snapshots what was
   handed over and when; a later payment for that month shows as "short". Only ended months, never
   a future date, never a month with nothing due, never at 0 %. Never revenue, payment or drift.
+  `mark_all` (catching up) marks every ended month still due or short on one date, under the
+  same rules, each for its share as it stands; the month under way is never touched.
 - **A write-off is not a payment**: it never appears in revenue, the annual report or drift.
 - **A student's `note` is private** (migration 0009) and never reaches a PDF.
 

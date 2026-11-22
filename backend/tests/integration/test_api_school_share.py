@@ -124,3 +124,27 @@ async def test_a_handover_that_makes_no_sense_is_refused_in_words(
     assert resp.json()["detail"].startswith("Rien n'a été encaissé ce mois-là")
     bad = await client.put("/api/v1/school-share/2026/13", json={"handed_on": "2026-10-03"})
     assert bad.status_code == 422
+
+
+async def test_the_list_says_how_much_is_still_to_hand_over_and_can_catch_up(
+    client: AsyncClient, db_session: Session, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "school_share_percent", Decimal("25"))
+    _paid_in_october(db_session)
+    months = (await client.get("/api/v1/school-share")).json()
+    assert (months["outstanding"], months["outstanding_months"]) == ("60.00", 1)
+
+    caught_up = await client.post(
+        "/api/v1/school-share/hand-over-all", json={"handed_on": "2026-11-03"}
+    )
+    assert caught_up.status_code == 200, caught_up.text
+    body = caught_up.json()
+    assert (body["outstanding"], body["outstanding_months"]) == ("0", 0)
+    october = next(m for m in body["months"] if (m["year"], m["month"]) == (2026, 10))
+    assert (october["status"], october["handed_on"]) == ("handed", "2026-11-03")
+
+    future = await client.post(
+        "/api/v1/school-share/hand-over-all", json={"handed_on": "2999-01-01"}
+    )
+    assert future.status_code == 409
+    assert future.json()["code"] == "handover_in_future"

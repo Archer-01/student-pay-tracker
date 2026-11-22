@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
-import { getSchoolShare, markShareHandedOver, unmarkShareHandedOver } from "../api/endpoints";
-import type { ShareMonth } from "../api/types";
+import { getSchoolShare, handOverAllShare, markShareHandedOver, unmarkShareHandedOver } from "../api/endpoints";
+import type { SchoolShare as Share, ShareMonth } from "../api/types";
 import { useApi } from "../lib/useApi";
 import { useMutation } from "../lib/useMutation";
 import { usePaymentsVersion } from "../lib/paymentSheetContext";
@@ -20,7 +20,9 @@ const ym = (m: ShareMonth) => `${m.year}-${String(m.month).padStart(2, "0")}`;
  * Bilan › École: the school's share of each month and whether it was handed over. Leads with the
  * latest month still to hand over and the button that settles it; below, every month in words
  * ("Remis le 3 nov.", "Il manque 50 DH", "À remettre"). A payment recorded after a month was
- * settled shows as what is missing; marking the month again records the full share.
+ * settled shows as what is missing; marking the month again records the full share. With two or
+ * more months outstanding, the card adds their total and a way to mark them all at once (for
+ * months already handed over in cash), which asks first.
  */
 export function SchoolShare() {
   const { t } = useTranslation();
@@ -29,9 +31,11 @@ export function SchoolShare() {
   const paymentsVersion = usePaymentsVersion();
   const state = useApi(() => getSchoolShare(), [paymentsVersion]);
   const [open, setOpen] = useState<ShareMonth | null>(null);
+  const [catchingUp, setCatchingUp] = useState<Share | null>(null);
 
   const done = () => {
     setOpen(null);
+    setCatchingUp(null);
     state.reload();
   };
 
@@ -66,6 +70,24 @@ export function SchoolShare() {
                   <Button onClick={() => setOpen(next)} disabled={readOnly} className="min-h-12 sm:self-start">
                     {t("schoolShare.mark")}
                   </Button>
+                  {data.outstanding_months >= 2 && (
+                    <div className="mt-1 flex flex-col gap-1">
+                      <p className="font-bold text-warn">
+                        {t("schoolShare.total", {
+                          amount: formatMoney(data.outstanding),
+                          count: data.outstanding_months,
+                        })}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCatchingUp(data)}
+                        disabled={readOnly}
+                        className="min-h-11 self-start font-bold text-warn underline disabled:opacity-50"
+                      >
+                        {t("schoolShare.markAll")}
+                      </button>
+                    </div>
+                  )}
                 </section>
               )}
 
@@ -108,6 +130,7 @@ export function SchoolShare() {
       </AsyncView>
 
       {open && <MonthSheet month={open} readOnly={readOnly} onClose={() => setOpen(null)} onDone={done} />}
+      {catchingUp && <CatchUpSheet share={catchingUp} onClose={() => setCatchingUp(null)} onDone={done} />}
     </div>
   );
 }
@@ -144,17 +167,16 @@ function MonthSheet({
   const mark = useMutation(markShareHandedOver);
   const unmark = useMutation(unmarkShareHandedOver);
   const [mode, setMode] = useState<"view" | "mark" | "undo">(month.status === "handed" ? "view" : "mark");
-  const [today, setToday] = useState(true);
-  const [otherDate, setOtherDate] = useState("");
+  const date = useHandedOn();
   const [error, setError] = useState<string | null>(null);
   const title = formatMonthTitle(ym(month));
-  const handedOn = today ? todayIso() : otherDate;
+  const handedOn = date.value;
 
   async function submit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!handedOn) return setError(t("schoolShare.validation.dateRequired"));
-    if (handedOn > todayIso()) return setError(t("schoolShare.validation.dateFuture"));
+    const invalid = date.problem();
+    if (invalid) return setError(invalid);
     try {
       await mark.mutate(month.year, month.month, handedOn);
       onDone();
@@ -189,20 +211,7 @@ function MonthSheet({
 
         {mode === "mark" && !readOnly && (
           <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
-            <fieldset className="flex flex-col gap-2">
-              <legend className="mb-2 text-sm font-bold">{t("schoolShare.handedDate")}</legend>
-              <div className="flex flex-wrap gap-2">
-                <Chip name="handed_on" checked={today} onChange={() => setToday(true)}>
-                  {t("pay.today")}
-                </Chip>
-                <Chip name="handed_on" checked={!today} onChange={() => setToday(false)}>
-                  {t("pay.otherDate")}
-                </Chip>
-              </div>
-              {!today && (
-                <DateField id="share-handed-on" label={t("schoolShare.handedDate")} value={otherDate} onChange={setOtherDate} />
-              )}
-            </fieldset>
+            <HandedOnField date={date} />
             {error && <p className="text-sm font-bold text-bad">{error}</p>}
             <Button type="submit" pending={mark.status === "pending"} className="min-h-12 text-lg">
               {t("schoolShare.mark")}
@@ -241,6 +250,87 @@ function MonthSheet({
         )}
       </div>
     </Modal>
+  );
+}
+
+/** Catch up: every month still to hand over, marked as handed over on one day, said in full first. */
+function CatchUpSheet({ share, onClose, onDone }: { share: Share; onClose: () => void; onDone: () => void }) {
+  const { t } = useTranslation();
+  const markAll = useMutation(handOverAllShare);
+  const date = useHandedOn();
+  const [error, setError] = useState<string | null>(null);
+  const counted = { count: share.outstanding_months, amount: formatMoney(share.outstanding) };
+
+  async function submit(e: FormEvent) {
+    e.preventDefault();
+    setError(null);
+    const invalid = date.problem();
+    if (invalid) return setError(invalid);
+    try {
+      await markAll.mutate(date.value);
+      onDone();
+    } catch (err) {
+      setError(resolveErrorMessage(err, t));
+    }
+  }
+
+  return (
+    <Modal title={t("schoolShare.markAll")} onClose={onClose}>
+      <form onSubmit={submit} className="flex flex-col gap-4" noValidate>
+        <p>{t("schoolShare.markAllText", counted)}</p>
+        <HandedOnField date={date} />
+        {error && <p className="text-sm font-bold text-bad">{error}</p>}
+        <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          <Button variant="ghost" onClick={onClose}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" pending={markAll.status === "pending"} className="min-h-12">
+            {t("schoolShare.markAllButton", counted)}
+          </Button>
+        </div>
+      </form>
+    </Modal>
+  );
+}
+
+/** The day a share was handed over: today, or another day (never in the future). */
+function useHandedOn() {
+  const { t } = useTranslation();
+  const [today, setToday] = useState(true);
+  const [other, setOther] = useState("");
+  const value = today ? todayIso() : other;
+  return {
+    today,
+    setToday,
+    other,
+    setOther,
+    value,
+    problem: () =>
+      !value
+        ? t("schoolShare.validation.dateRequired")
+        : value > todayIso()
+          ? t("schoolShare.validation.dateFuture")
+          : null,
+  };
+}
+
+function HandedOnField({ date }: { date: ReturnType<typeof useHandedOn> }) {
+  const { t } = useTranslation();
+  return (
+    <fieldset className="flex flex-col gap-2">
+      <legend className="mb-2 text-sm font-bold">{t("schoolShare.handedDate")}</legend>
+      <div className="flex flex-wrap gap-2">
+        <Chip name="handed_on" checked={date.today} onChange={() => date.setToday(true)}>
+          {t("pay.today")}
+        </Chip>
+        <Chip name="handed_on" checked={!date.today} onChange={() => date.setToday(false)}>
+          {t("pay.otherDate")}
+        </Chip>
+      </div>
+      {!date.today && (
+        <DateField id="share-handed-on" label={t("schoolShare.handedDate")} value={date.other} onChange={date.setOther} />
+      )}
+    </fieldset>
   );
 }
 

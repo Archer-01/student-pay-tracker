@@ -95,6 +95,11 @@ export function markShareHandedOver(year: number, month: number, handedOn: strin
   return apiRequest<SchoolShare>(`/school-share/${year}/${month}`, { method: "PUT", body: { handed_on: handedOn } });
 }
 
+/** Catch up: every ended month still to hand over, marked as handed over on one day. */
+export function handOverAllShare(handedOn: string) {
+  return apiRequest<SchoolShare>("/school-share/hand-over-all", { method: "POST", body: { handed_on: handedOn } });
+}
+
 export function unmarkShareHandedOver(year: number, month: number) {
   return apiRequest<void>(`/school-share/${year}/${month}`, { method: "DELETE" });
 }

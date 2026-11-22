@@ -461,7 +461,14 @@
     "validation": {
       "dateRequired": "Choose the date.",
       "dateFuture": "The date can't be in the future."
-    }
+    },
+    "total_one": "{{amount}} to hand over in all, over {{count}} month",
+    "total_other": "{{amount}} to hand over in all, over {{count}} months",
+    "markAll": "Mark all as handed over",
+    "markAllText_one": "The month still to hand over ({{amount}}) will be marked as handed over, on the date chosen. Only if it was already given to the school.",
+    "markAllText_other": "The {{count}} months still to hand over ({{amount}}) will be marked as handed over, on the date chosen. Only if all of it was already given to the school.",
+    "markAllButton_one": "Mark the month as handed over",
+    "markAllButton_other": "Mark the {{count}} months as handed over"
   },
   "offlineCopy": {
     "title": "Offline",

@@ -64,6 +64,7 @@ const everyEndpoint: Record<keyof typeof endpoints, () => Promise<unknown>> = {
   getSchoolShare: () => endpoints.getSchoolShare(),
   markShareHandedOver: () => endpoints.markShareHandedOver(2026, 10, "2026-11-03"),
   unmarkShareHandedOver: () => endpoints.unmarkShareHandedOver(2026, 10),
+  handOverAllShare: () => endpoints.handOverAllShare("2026-11-20"),
   getAnnualReport: () => endpoints.getAnnualReport(2026),
   downloadMonthlyReportPdf: () => endpoints.downloadMonthlyReportPdf(2026, 11, "mois.pdf"),
   downloadAnnualReportPdf: () => endpoints.downloadAnnualReportPdf(2026, "annee.pdf"),

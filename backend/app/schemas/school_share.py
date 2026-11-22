@@ -23,6 +23,9 @@ class SchoolShareOut(BaseModel):
     percent: Decimal
     # Newest first, from the month of the first payment to this one.
     months: list[ShareMonthOut]
+    # What is still to hand over, all months together, and in how many months.
+    outstanding: Decimal
+    outstanding_months: int
 
 
 class HandoverIn(BaseModel):

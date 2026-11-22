@@ -45,6 +45,19 @@ class ShareMonth:
 ShareMonths = list[ShareMonth]
 
 
+def outstanding(months: ShareMonths) -> tuple[Decimal, int]:
+    """What is still to hand over across `months`, and in how many of them (due or short)."""
+    owing = [m for m in months if m.remaining > 0]
+    return sum((m.remaining for m in owing), Decimal("0")), len(owing)
+
+
+def _check_handover(share_percent: Decimal, handed_on: date, today: date) -> None:
+    if share_percent <= 0:
+        raise InvalidHandoverError("school_share_off")
+    if handed_on > today:
+        raise InvalidHandoverError("handover_in_future")
+
+
 class SchoolShareHandoverService:
     def __init__(self, session: Session) -> None:
         self.session = session
@@ -78,16 +91,31 @@ class SchoolShareHandoverService:
     ) -> SchoolShareHandover:
         """Record that ``month``'s share was handed over on ``handed_on``: the share as it stands
         now. Marking a month again replaces its record."""
-        if share_percent <= 0:
-            raise InvalidHandoverError("school_share_off")
+        _check_handover(share_percent, handed_on, today)
         if (year, month) >= (today.year, today.month):
             raise InvalidHandoverError("share_month_not_over", year=year, month=month)
-        if handed_on > today:
-            raise InvalidHandoverError("handover_in_future")
         due = split(self._collected(date(year, month, 1)), share_percent).school
         if due <= 0:
             raise InvalidHandoverError("nothing_to_hand_over", year=year, month=month)
+        handover = self._record(year, month, due, handed_on)
+        self.session.commit()
+        return handover
 
+    def mark_all(self, *, handed_on: date, share_percent: Decimal, today: date) -> int:
+        """Catch up in one go: every ended month still due or short is marked handed over on
+        ``handed_on``, each for its share as it stands now. Returns how many were marked.
+
+        For a teacher who has already handed those months over in cash and only needs the app to
+        say so; the app asks first. The month under way is never touched.
+        """
+        _check_handover(share_percent, handed_on, today)
+        owing = [m for m in self.months(today, share_percent) if m.remaining > 0]
+        for month in owing:
+            self._record(month.year, month.month, month.due, handed_on)
+        self.session.commit()
+        return len(owing)
+
+    def _record(self, year: int, month: int, due: Decimal, handed_on: date) -> SchoolShareHandover:
         handover = self.handovers.get(year, month)
         if handover is None:
             handover = self.handovers.create(
@@ -96,7 +124,6 @@ class SchoolShareHandoverService:
         else:
             handover.amount = due
             handover.handed_on = handed_on
-        self.session.commit()
         return handover
 
     def unmark(self, year: int, month: int) -> None:
