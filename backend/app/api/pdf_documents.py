@@ -49,6 +49,7 @@ from app.core.i18n import (
 from app.models import Student, StudentStatus
 from app.services.class_service import RosterRow
 from app.services.ledger_service import LedgerEntry, StudentSummary
+from app.services.pricing_service import PriceStatus
 from app.services.reports_service import AnnualReport, MonthlyReport
 from app.services.school_share import ShareSplit
 from app.services.school_year import MonthTile, month_tiles, school_years
@@ -132,15 +133,15 @@ def _share_block(share: ShareSplit, total: Decimal, locale: str) -> list[Flowabl
 def ledger_status(
     summary: StudentSummary,
     entries: Sequence[LedgerEntry],
-    price: Decimal,
+    price_status: PriceStatus,
     *,
     enrolled: bool,
     left_on: date | None,
     as_of: date,
     locale: str,
 ) -> tuple[str, str | None, Tone]:
-    """The status card, decided as the student page decides it: what's owed first, then no
-    price, then gone, else up to date."""
+    """The status card, decided as the student page decides it: what's owed first, then free or
+    no price, then gone, else up to date."""
     if summary.months_overdue > 0:
         owed = [
             e
@@ -163,7 +164,10 @@ def ledger_status(
             else None
         )
         return title, text, "warn" if summary.months_overdue == 1 else "bad"
-    if price <= 0:
+    if price_status == "free":
+        # Free on purpose (decision 0011), not a price nobody set: this goes to parents.
+        return translate("pdf.free", locale), translate("pdf.ledger.free_text", locale), "off"
+    if price_status == "unset":
         return (
             translate("pdf.no_price", locale),
             translate("pdf.ledger.no_price_text", locale),
@@ -214,7 +218,7 @@ def ledger_story(
     left_on: date | None,
     as_of: date,
     locale: str,
-    free: bool = False,
+    price_status: PriceStatus,
 ) -> list[Flowable]:
     sub = " · ".join(
         part
@@ -222,7 +226,13 @@ def ledger_story(
         if part
     )
     title, text, tone = ledger_status(
-        summary, entries, price, enrolled=enrolled, left_on=left_on, as_of=as_of, locale=locale
+        summary,
+        entries,
+        price_status,
+        enrolled=enrolled,
+        left_on=left_on,
+        as_of=as_of,
+        locale=locale,
     )
     agreed = (
         translate("pdf.ledger.agreed_price", locale, note=student.price_note)
@@ -257,7 +267,7 @@ def ledger_story(
             join_date=student.join_date,
             today=as_of,
             enrolled=enrolled,
-            free=free,
+            free=price_status == "free",
         )
         label = translate("pdf.ledger.school_year", locale, start=start, end=start + 1)
         story += [
@@ -369,7 +379,7 @@ def monthly_story(
                 cell(money(row.collected, locale), numeric=True, align="RIGHT")
                 if row.collected > 0
                 else cell("—", muted=True, align="RIGHT"),
-                owed_pill(row.outstanding, row.fee, locale),
+                owed_pill(row.outstanding, row.price_status, locale),
             ]
         )
     total = [
@@ -382,18 +392,25 @@ def monthly_story(
     return story
 
 
-def owed_pill(outstanding: Decimal, price: Decimal, locale: str) -> Pill:
-    """What's still owed in red, else "À jour", or "Sans tarif" for someone not billed."""
+def owed_pill(outstanding: Decimal, price_status: PriceStatus, locale: str) -> Pill:
+    """What's still owed in red, else "À jour", or "Gratuit" / "Sans tarif" for someone not
+    billed."""
     if outstanding > 0:
         return Pill(money(outstanding, locale), "bad")
-    if price <= 0:
-        return Pill(translate("pdf.no_price", locale), "off")
+    if price_status != "priced":
+        return _unbilled_pill(price_status, locale)
     return Pill(translate("pdf.paid_up", locale), "ok")
 
 
 # --------------------------------------------------------------------------- #
 # The year
 # --------------------------------------------------------------------------- #
+
+
+def _unbilled_pill(price_status: PriceStatus, locale: str) -> Pill:
+    """« Gratuit » for a student free on purpose (decision 0011), « Sans tarif » for one with no
+    price yet: grey either way, never a debt."""
+    return Pill(translate("pdf.free" if price_status == "free" else "pdf.no_price", locale), "off")
 
 
 def is_future(year: int, month: int, today: date) -> bool:
@@ -523,8 +540,8 @@ def roster_pill(row: RosterRow, locale: str) -> Pill:
     if row.months_overdue > 0:
         tone: Tone = "warn" if row.months_overdue == 1 else "bad"
         return Pill(translate("pdf.months_unpaid", locale, count=row.months_overdue), tone)
-    if row.monthly_price <= 0:
-        return Pill(translate("pdf.no_price", locale), "off")
+    if row.price_status != "priced":
+        return _unbilled_pill(row.price_status, locale)
     return Pill(translate("pdf.paid_up", locale), "ok")
 
 
@@ -535,7 +552,7 @@ def roster_story(title: str, rows: Sequence[RosterRow], locale: str) -> list[Flo
         row
         for row in rows
         if row.months_overdue == 0
-        and row.monthly_price > 0
+        and row.price_status == "priced"
         and row.student.status is not StudentStatus.INACTIVE
     ]
     story: list[Flowable] = [

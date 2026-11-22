@@ -13,7 +13,7 @@ from sqlalchemy.orm import Session
 from app.models import StudentStatus
 from app.repos import PaymentRepo, StudentRepo
 from app.services.ledger_service import LedgerService
-from app.services.pricing_service import PricingService
+from app.services.pricing_service import PriceStatus, PricingService
 from app.services.schedule import add_months
 from app.services.school_share import ShareSplit, split, split_months
 
@@ -27,6 +27,8 @@ class MonthlyReportRow:
     collected: Decimal
     cumulative_drift: int
     outstanding: Decimal
+    # Free on purpose or not priced yet: the PDF says which (decision 0011). Not in the API.
+    price_status: PriceStatus
 
 
 @dataclass(frozen=True)
@@ -103,6 +105,7 @@ class ReportsService:
                     collected=collected_by_student.get(student.id, Decimal("0")),
                     cumulative_drift=drift,
                     outstanding=self.pricing.amount_for_cycles(student, unpaid_due),
+                    price_status=self.pricing.price_status(student),
                 )
             )
 

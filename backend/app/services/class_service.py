@@ -21,7 +21,7 @@ from app.services.exceptions import (
     InvalidClassError,
 )
 from app.services.ledger_service import LedgerService
-from app.services.pricing_service import PricingService
+from app.services.pricing_service import PriceStatus, PricingService
 
 # Declaration order in ClassLevel is school order; sorting on the stored value would put "1BAC"
 # before "2AC". Materialised once so ordering is a dict lookup, not a linear scan per row.
@@ -44,6 +44,7 @@ class RosterRow:
     months_overdue: int
     amount_owed: Decimal
     monthly_price: Decimal
+    price_status: PriceStatus
 
 
 # ClassService has a method named `list` (matching StudentService), which shadows the builtin for
@@ -130,6 +131,7 @@ class ClassService:
                     months_overdue=summary.months_overdue,
                     amount_owed=summary.amount_owed,
                     monthly_price=pricing.price_of(student),
+                    price_status=pricing.price_status(student),
                 )
             )
         return rows

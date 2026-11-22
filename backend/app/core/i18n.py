@@ -247,6 +247,7 @@ MESSAGES: dict[str, dict[str, str]] = {
     # --- PDFs: shared words (the app's own, so paper and screen agree) ---
     "pdf.paid_up": {"en": "Up to date", "fr": "À jour"},
     "pdf.no_price": {"en": "No price", "fr": "Sans tarif"},
+    "pdf.free": {"en": "Free", "fr": "Gratuit"},
     "pdf.former": {"en": "Former student", "fr": "Ancien élève"},
     "pdf.on_time": {"en": "On time", "fr": "À l'heure"},
     "pdf.days_late_one": {"en": "{count} day late", "fr": "{count}\u00a0jour de retard"},
@@ -282,6 +283,10 @@ MESSAGES: dict[str, dict[str, str]] = {
     "pdf.ledger.next_payment": {
         "en": "Next payment expected on {date}.",
         "fr": "Prochain paiement attendu le {date}.",
+    },
+    "pdf.ledger.free_text": {
+        "en": "This student pays nothing: no payment is asked of them.",
+        "fr": "Cet élève ne paie rien\u00a0: aucun paiement ne lui est demandé.",
     },
     "pdf.ledger.no_price_text": {
         "en": "Nothing is charged to this student until they have a pack or an agreed price.",

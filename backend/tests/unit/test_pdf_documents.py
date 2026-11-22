@@ -26,6 +26,7 @@ from app.api.students import _ledger_filename
 from app.models import ClassLevel, Pack, SchoolClass, Student, StudentStatus
 from app.services.class_service import RosterRow
 from app.services.ledger_service import LedgerEntry, StudentSummary
+from app.services.pricing_service import PriceStatus
 from app.services.school_year import MonthTile
 
 NBSP = "\u00a0"
@@ -106,7 +107,7 @@ def test_a_month_is_in_the_future_only_once_it_has_not_started() -> None:
 
 
 def _status(
-    summary: StudentSummary, price: str = "300", **kw: object
+    summary: StudentSummary, price_status: PriceStatus = "priced", **kw: object
 ) -> tuple[str, str | None, str]:
     args: dict[str, object] = {
         "enrolled": True,
@@ -119,7 +120,7 @@ def _status(
         _entry(1, date(2026, 10, 5)),
         _entry(2, date(2026, 11, 5)),
     ]
-    return ledger_status(summary, entries, Decimal(price), **args)  # type: ignore[arg-type]
+    return ledger_status(summary, entries, price_status, **args)  # type: ignore[arg-type]
 
 
 def test_what_is_owed_comes_first_naming_the_oldest_month() -> None:
@@ -135,9 +136,16 @@ def test_one_month_owed_is_amber_not_red() -> None:
 
 
 def test_a_student_with_no_price_says_nothing_is_charged() -> None:
-    title, text, tone = _status(_summary(), price="0")
+    title, text, tone = _status(_summary(), price_status="unset")
     assert (title, tone) == ("Sans tarif", "off")
     assert text is not None and "Rien n'est facturé" in text
+
+
+def test_a_student_free_on_purpose_says_free_not_that_a_price_is_missing() -> None:
+    # Decision 0011: as on the student page. This PDF goes to parents.
+    title, text, tone = _status(_summary(), price_status="free")
+    assert (title, tone) == ("Gratuit", "off")
+    assert text is not None and "ne paie rien" in text
 
 
 def test_a_student_who_left_says_since_when() -> None:
@@ -227,13 +235,16 @@ def test_ledger_filename_falls_back_to_id_only_for_unsluggable_name() -> None:
 @pytest.mark.parametrize(
     ("owed", "price", "text", "tone"),
     [
-        ("400", "200", f"400{NBSP}DH", "bad"),
-        ("0", "200", "À jour", "ok"),
-        ("0", "0", "Sans tarif", "off"),
+        ("400", "priced", f"400{NBSP}DH", "bad"),
+        ("0", "priced", "À jour", "ok"),
+        ("0", "unset", "Sans tarif", "off"),
+        ("0", "free", "Gratuit", "off"),
     ],
 )
-def test_what_a_student_still_owes_this_month(owed: str, price: str, text: str, tone: str) -> None:
-    pill = owed_pill(Decimal(owed), Decimal(price), "fr")
+def test_what_a_student_still_owes_this_month(
+    owed: str, price: PriceStatus, text: str, tone: str
+) -> None:
+    pill = owed_pill(Decimal(owed), price, "fr")
     assert (pill.text, pill.tone) == (text, tone)
 
 
@@ -241,6 +252,7 @@ def _roster_row(
     months: int = 0,
     price: str = "300",
     status: StudentStatus = StudentStatus.ACTIVE,
+    price_status: PriceStatus = "priced",
 ) -> RosterRow:
     return RosterRow(
         student=Student(id=1, first_name="Amina", status=status, join_date=date(2023, 3, 5)),
@@ -248,6 +260,7 @@ def _roster_row(
         months_overdue=months,
         amount_owed=Decimal(price) * months,
         monthly_price=Decimal(price),
+        price_status=price_status,
     )
 
 
@@ -257,7 +270,8 @@ def _roster_row(
         (_roster_row(2), f"2{NBSP}mois impayés", "bad"),
         (_roster_row(1), f"1{NBSP}mois impayé", "warn"),
         (_roster_row(), "À jour", "ok"),
-        (_roster_row(price="0"), "Sans tarif", "off"),
+        (_roster_row(price="0", price_status="unset"), "Sans tarif", "off"),
+        (_roster_row(price="0", price_status="free"), "Gratuit", "off"),
         (_roster_row(2, status=StudentStatus.INACTIVE), "Ancien élève", "off"),
     ],
 )

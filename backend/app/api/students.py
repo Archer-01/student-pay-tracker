@@ -153,7 +153,7 @@ async def get_ledger_pdf(
         left_on=max(leaves) if leaves else None,
         as_of=as_of_date,
         locale=locale,
-        free=PricingService(db).price_status(student) == "free",
+        price_status=PricingService(db).price_status(student),
     )
     return respond(
         story,
