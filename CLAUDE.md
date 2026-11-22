@@ -56,9 +56,29 @@ cd frontend && npm run gen:api # after any backend schema change; CI fails on a 
 - **Parallel agents** each own distinct files, scratch folders and ports (skill
   `parallel-agents`).
 
+## Before calling it done
+
+The skills and agents exist to be used. **Load the skill** (Skill tool) rather than working from
+memory of it, and **run the agent** before asking to commit:
+
+| The change… | Use |
+|---|---|
+| crosses backend and frontend (route, schema field, error code) | skill `api-change`, loaded at the start |
+| changes a model | skill `new-migration` |
+| touches drift, `schedule.py` or the ledger | skill `drift-invariants` |
+| adds or changes user-facing text | skill `add-i18n-keys`, then agent `fr-copy-reviewer` on the new strings |
+| touches money, payments, pricing, drift, the school share, debts or the data files | agent `domain-reviewer` on the diff |
+| adds or reworks a screen | skill `ardoise-demo` to look at it, then agent `mobile-ux-checker` |
+| settles a choice | a record in `docs/decisions/` |
+
+Then `just check`. Say in the report which of these ran, and what they found; a reviewer's
+findings are checked before they are fixed or dismissed.
+
 ## Harness
 
 `.claude/settings.json` wires the hooks (`guard-bash.sh` before Bash, `format-python.sh` after
 edits); shared skills live in `.claude/skills/`. To see a change in the running app, or take
-phone/desktop screenshots, use the `ardoise-demo` skill (demo data on scratch ports). CI is `.github/workflows/ci.yml`, one job per
-app, and `.pre-commit-config.yaml` is an optional local gate with the same tools.
+phone/desktop screenshots, use the `ardoise-demo` skill (demo data on scratch ports). Review
+agents live in `.claude/agents/` (`domain-reviewer`, `fr-copy-reviewer`, `mobile-ux-checker`).
+CI is `.github/workflows/ci.yml`, one job per app, and `.pre-commit-config.yaml` is an optional
+local gate with the same tools.
