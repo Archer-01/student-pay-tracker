@@ -6,9 +6,11 @@ small Apps Script in your Google account, which files it in Drive under « Ardoi
 Why it works this way: [decision 0012](decisions/0012-nightly-encrypted-backup-to-drive.md).
 
 - **Only your private key can read a backup.** The server has the public half only.
-- **Kept:** every copy of the last 30 days, then the first copy of each month for a year.
-- **Watching it:** `GET /health` says `"backup": "ok"`, `"stale"` (no good copy for two days) or
-  `"off"` (not set up). `ardoise backup status` gives the last success and the last error.
+- **Kept:** every copy, for a year ([decision 0013](decisions/0013-keep-every-backup-a-year.md)).
+- **Watching it:** `GET /health` says `"backup": "ok"`, `"partial"` (the last copy had to leave
+  a database out, absent or unreadable: `ardoise backup status` names it), `"stale"` (no good
+  copy for two days) or `"off"` (not set up). `ardoise backup status` gives the last success,
+  what was left out and the last error.
 - After a restart, a copy is made at once if the last one is over a day old.
 
 ## Setting it up (once)
@@ -68,7 +70,8 @@ If the script's code changes later, edit it in the Apps Script project and « De
    uv run ardoise backup restore ~/Downloads/ardoise-….tar.gz.age --key-file key.txt --to restored
    ```
 
-   It decrypts, unpacks every database into `restored/` and checks each one. (Without Ardoise,
+   It decrypts, unpacks every database into `restored/` and checks each one. It refuses a folder
+   that already holds databases, so it can never overwrite live ones. (Without Ardoise,
    the `age` tool does the same: `age -d -i key.txt FILE | tar xz`.)
 3. Look before replacing anything: run the app locally against the restored files
    (`DATABASE_URL=sqlite:///./restored/app.db just run`; the teachers' files sit beside it).

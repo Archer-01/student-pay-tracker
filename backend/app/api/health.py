@@ -30,7 +30,8 @@ def health(db: Session = Depends(get_auth_db)) -> dict[str, str]:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE, detail="database unavailable"
         ) from exc
-    # "ok", "stale" (no good copy for two days) or "off" (not set up). Information for the
+    # "ok", "partial" (the last copy left a database out), "stale" (no good copy for two days)
+    # or "off" (not set up). Information for the
     # developer, never a failure: a restart wouldn't fix a backup, and would interrupt the app.
     backup = backup_health(
         read_status(status_path(central_url())),

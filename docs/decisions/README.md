@@ -26,7 +26,8 @@ every change: a commit message is enough for those.
 | [0009](0009-leavers-debt-is-a-warning.md) | A leaver's debt is a warning, never a block | Accepted |
 | [0010](0010-cli-is-an-admin-tool.md) | The CLI is an admin tool, not a second app | Accepted |
 | [0011](0011-free-students.md) | A student can be free on purpose | Accepted |
-| [0012](0012-nightly-encrypted-backup-to-drive.md) | A nightly encrypted backup, sent to the developer's Google Drive | Accepted |
+| [0012](0012-nightly-encrypted-backup-to-drive.md) | A nightly encrypted backup, sent to the developer's Google Drive | Accepted (retention: 0013) |
+| [0013](0013-keep-every-backup-a-year.md) | Every backup copy is kept for a year | Accepted |
 
 ## Template
 

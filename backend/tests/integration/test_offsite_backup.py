@@ -81,9 +81,11 @@ def test_a_backup_is_every_database_encrypted_and_posted(
     databases: list[str], tmp_path: Path
 ) -> None:
     script, status_file = FakeScript(), tmp_path / "status.json"
-    name = ob.run_backup(databases, _config(), status_file, now=NOW, client=script.client())
+    result = ob.run_backup(databases, _config(), status_file, now=NOW, client=script.client())
+    name = result.name
 
     assert name == "ardoise-20261122-020000.tar.gz.age"
+    assert (result.included, result.skipped) == (["central.db", "tenant-1.db"], [])
     sent = script.received[0]
     assert sent["secret"] == "s3cret" and sent["name"] == name
     archive = base64.b64decode(sent["data"])
@@ -94,21 +96,59 @@ def test_a_backup_is_every_database_encrypted_and_posted(
     assert status.last_success == NOW.isoformat() and status.last_error is None
 
 
-def test_a_database_that_doesnt_exist_is_skipped_not_fatal(
-    databases: list[str], tmp_path: Path
+@pytest.mark.parametrize("missing", [None, b"x" * 4096], ids=["absent", "damaged"])
+def test_a_database_that_cant_be_copied_is_skipped_and_the_copy_is_partial(
+    databases: list[str], tmp_path: Path, missing: bytes | None
 ) -> None:
-    script = FakeScript()
-    urls = [*databases, f"sqlite:///{tmp_path / 'data' / 'tenant-9.db'}"]
-    ob.run_backup(urls, _config(), None, now=NOW, client=script.client())
+    # One teacher's damaged file must not cost every other teacher their copy, nor pass unseen.
+    bad = tmp_path / "data" / "tenant-9.db"
+    if missing is not None:
+        bad.write_bytes(missing)
+    script, status_file = FakeScript(), tmp_path / "status.json"
+    urls = [*databases, f"sqlite:///{bad}"]
+    result = ob.run_backup(urls, _config(), status_file, now=NOW, client=script.client())
     assert set(_members(base64.b64decode(script.received[0]["data"]))) == {
         "central.db",
         "tenant-1.db",
     }
+    assert result.skipped == ["tenant-9.db"]
+    status = ob.read_status(status_file)
+    assert status.last_success == NOW.isoformat() and status.skipped == ["tenant-9.db"]
+    assert ob.health(status, configured=True, now=NOW) == "partial"
 
 
 def test_nothing_to_back_up_is_an_error(tmp_path: Path) -> None:
     with pytest.raises(ob.BackupError, match="no database"):
         ob.build_archive([f"sqlite:///{tmp_path / 'missing.db'}"])
+
+
+@pytest.mark.parametrize("answer", [[1, 2], "ok", 42])
+def test_an_odd_answer_from_the_script_is_a_recorded_failure(
+    databases: list[str], tmp_path: Path, answer: object
+) -> None:
+    def script(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=answer)
+
+    status_file = tmp_path / "status.json"
+    with (
+        _RealClient(transport=httpx.MockTransport(script)) as client,
+        pytest.raises(ob.BackupError, match="upload refused"),
+    ):
+        ob.run_backup(databases, _config(), status_file, now=NOW, client=client)
+    assert ob.read_status(status_file).last_error is not None
+
+
+def test_any_failure_is_recorded_as_a_backup_error(
+    databases: list[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    def boom(data: bytes, key: str) -> bytes:
+        raise RuntimeError("disk full")
+
+    monkeypatch.setattr(ob, "encrypt", boom)
+    status_file = tmp_path / "status.json"
+    with pytest.raises(ob.BackupError, match="disk full"):
+        ob.run_backup(databases, _config(), status_file, now=NOW, client=FakeScript().client())
+    assert "disk full" in (ob.read_status(status_file).last_error or "")
 
 
 def test_a_refused_upload_is_recorded_and_raised(databases: list[str], tmp_path: Path) -> None:
@@ -145,15 +185,27 @@ def test_a_bad_public_key_is_a_backup_error(databases: list[str]) -> None:
 
 
 def test_restore_gives_back_checked_databases(databases: list[str], tmp_path: Path) -> None:
-    archive = ob.encrypt(ob.build_archive(databases), PUBLIC)
+    archive = ob.encrypt(ob.build_archive(databases).data, PUBLIC)
     restored = ob.restore(archive, PRIVATE, tmp_path / "restored")
     assert sorted(p.name for p in restored) == ["central.db", "tenant-1.db"]
     with sqlite3.connect(tmp_path / "restored" / "tenant-1.db") as conn:
         assert conn.execute("SELECT count(*) FROM student").fetchone()[0] == 3
 
 
+def test_restore_refuses_a_folder_that_already_holds_databases(
+    databases: list[str], tmp_path: Path
+) -> None:
+    # `--to` pointed at the live data folder would overwrite it with an old copy.
+    archive = ob.encrypt(ob.build_archive(databases).data, PUBLIC)
+    target = tmp_path / "data"  # where `databases` live
+    before = (target / "tenant-1.db").read_bytes()
+    with pytest.raises(ob.BackupError, match="already holds"):
+        ob.restore(archive, PRIVATE, target)
+    assert (target / "tenant-1.db").read_bytes() == before
+
+
 def test_restore_refuses_the_wrong_key(databases: list[str], tmp_path: Path) -> None:
-    archive = ob.encrypt(ob.build_archive(databases), PUBLIC)
+    archive = ob.encrypt(ob.build_archive(databases).data, PUBLIC)
     _, someone_else = ob.generate_keys()
     with pytest.raises(ob.BackupError, match="could not decrypt"):
         ob.restore(archive, someone_else, tmp_path / "restored")
@@ -229,6 +281,10 @@ def test_health_is_off_ok_or_stale() -> None:
     assert ob.health(fresh, configured=True, now=NOW) == "ok"
     assert ob.health(stale, configured=True, now=NOW) == "stale"
     assert ob.health(ob.BackupStatus(), configured=True, now=NOW) == "stale"
+    partial = ob.BackupStatus(last_success=fresh.last_success, skipped=["tenant-2.db"])
+    assert ob.health(partial, configured=True, now=NOW) == "partial"
+    stale_partial = ob.BackupStatus(last_success=stale.last_success, skipped=["tenant-2.db"])
+    assert ob.health(stale_partial, configured=True, now=NOW) == "stale"
 
 
 def test_settings_need_all_three_values(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -372,7 +428,7 @@ def test_cli_run_status_and_restore(
 
     ran = runner.invoke(cli, ["backup", "run"])
     assert ran.exit_code == 0, ran.output
-    assert "Uploaded ardoise-" in ran.output
+    assert "Uploaded ardoise-" in ran.output and "(1 database(s))" in ran.output
 
     status = runner.invoke(cli, ["backup", "status"])
     assert "Configured:   yes" in status.output and "never" not in status.output
@@ -416,3 +472,23 @@ def _no_accounts(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "app.cli.backup.AuthService", lambda session: SimpleNamespace(list_users=lambda: [])
     )
+
+
+def test_cli_run_names_a_database_it_had_to_leave_out(
+    databases: list[str], tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(settings, "database_url", databases[0])
+    monkeypatch.setattr(settings, "backup_url", "https://script.test/exec")
+    monkeypatch.setattr(settings, "backup_secret", "s3cret")
+    monkeypatch.setattr(settings, "backup_public_key", PUBLIC)
+    monkeypatch.setattr("app.cli.backup.central_session", nullcontext)
+    monkeypatch.setattr(
+        "app.cli.backup.AuthService",
+        lambda session: SimpleNamespace(list_users=lambda: [SimpleNamespace(id=9)]),
+    )
+    monkeypatch.setattr("app.cli.backup.tenant_url", lambda uid: f"sqlite:///{tmp_path}/t-{uid}.db")
+    monkeypatch.setattr(ob.httpx, "Client", lambda: FakeScript().client())
+    ran = runner.invoke(cli, ["backup", "run"])
+    assert ran.exit_code == 0, ran.output
+    assert "(1 database(s))" in ran.output and "t-9.db" in ran.output
+    assert "Left out" in runner.invoke(cli, ["backup", "status"]).output

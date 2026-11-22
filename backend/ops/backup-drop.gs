@@ -7,13 +7,13 @@
  * encrypted before they leave the server, so the address and the secret can at worst let
  * someone add junk files.
  *
- * Clean-up goes by age, never by count, so junk can't push real backups out: every copy of the
- * last 30 days is kept, then the first copy of each month for a year.
+ * Clean-up goes by age alone, never by count or by "the first of the month", so junk can't push
+ * real backups out or take their place: every copy is kept for a year (decision 0013). At about
+ * 100 KB a night, that is under 40 MB.
  */
 
 const FOLDER_NAME = "Ardoise sauvegardes";
-const KEEP_DAILY_DAYS = 30;
-const KEEP_MONTHLY_DAYS = 365;
+const KEEP_DAYS = 365;
 const NAME = /^ardoise-\d{8}-\d{6}\.tar\.gz\.age$/;
 
 function doPost(e) {
@@ -49,19 +49,10 @@ function prune(folder) {
     const file = all.next();
     if (NAME.test(file.getName())) files.push(file);
   }
-  // Oldest first, by when Drive received them (which a sender can't fake).
-  files.sort((a, b) => a.getDateCreated() - b.getDateCreated());
-  const monthsKept = {};
   for (const file of files) {
-    const created = file.getDateCreated();
-    const age = (now - created) / day;
-    const month = Utilities.formatDate(created, "UTC", "yyyy-MM");
-    if (age <= KEEP_DAILY_DAYS) continue;
-    if (age <= KEEP_MONTHLY_DAYS && !monthsKept[month]) {
-      monthsKept[month] = true; // the first copy of that month
-      continue;
-    }
-    file.setTrashed(true);
+    // By when Drive received it, which a sender can't fake.
+    const age = (now - file.getDateCreated()) / day;
+    if (age > KEEP_DAYS) file.setTrashed(true);
   }
 }
 

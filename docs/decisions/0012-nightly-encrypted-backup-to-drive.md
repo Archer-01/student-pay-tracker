@@ -1,6 +1,6 @@
 # 0012. A nightly encrypted backup, sent to the developer's Google Drive
 
-- Status: Accepted (replaces 0004)
+- Status: Accepted (replaces 0004); its retention rule is replaced by 0013
 - Decided: 2026-11-22 · Recorded: 2026-11-22
 
 ## Context

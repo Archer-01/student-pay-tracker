@@ -48,10 +48,12 @@ def backup_run() -> None:
     with central_session() as session:
         urls = [central_url(), *(tenant_url(u.id) for u in AuthService(session).list_users())]
     try:
-        name = run_backup(urls, config, status_path(central_url()), now=datetime.now(UTC))
+        result = run_backup(urls, config, status_path(central_url()), now=datetime.now(UTC))
     except BackupError as exc:
         abort(str(exc))
-    console.print(f"Uploaded [bold]{name}[/bold] ({len(urls)} database(s)).")
+    console.print(f"Uploaded [bold]{result.name}[/bold] ({len(result.included)} database(s)).")
+    if result.skipped:
+        console.print(f"[red]Left out (absent or unreadable):[/red] {', '.join(result.skipped)}")
 
 
 @backup_app.command("status")
@@ -61,6 +63,8 @@ def backup_status() -> None:
     console.print(f"Configured:   {'yes' if settings.backup_config() else 'no'}")
     console.print(f"Last success: {status.last_success or 'never'}  {status.last_name or ''}")
     console.print(f"Last attempt: {status.last_attempt or 'never'}")
+    if status.skipped:
+        console.print(f"[red]Left out:[/red]     {', '.join(status.skipped)}")
     if status.last_error:
         console.print(f"[red]Last error:[/red]   {status.last_error}")
 
