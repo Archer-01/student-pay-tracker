@@ -17,9 +17,7 @@
     "debts": "Anciens élèves avec impayés"
   },
   "drift": {
-    "onTrack": "À l'heure",
-    "late_one": "{{count}} jour de retard",
-    "late_other": "{{count}} jours de retard"
+    "onTrack": "À l'heure"
   },
   "students": {
     "empty": "Aucun élève trouvé.",
@@ -244,7 +242,7 @@
     "packFromClass": "Choisi d'après la classe",
     "freeText": "Cet élève ne paie rien : aucun mois ne lui est réclamé.",
     "changePrice": "Modifier le tarif",
-    "freeConfirm": "Tarif convenu à 0 DH : cet élève ne paiera rien et ne sera jamais relancé. C'est voulu ?"
+    "freeConfirm": "Tarif convenu à 0 DH : cet élève ne paiera rien et ne sera jamais relancé. C'est voulu ?"
   },
   "annual": {
     "payments": "Paiements",
@@ -337,7 +335,7 @@
     "monthSettled_other": "{{count}} élèves sur {{total}} ont payé",
     "monthAmounts": "{{settled}} sur {{expected}}",
     "week": "Cette semaine",
-    "weekHint": "Attendus dans les 7 jours",
+    "weekHint": "Attendus dans les 7 jours",
     "dueToday": "Attendu aujourd'hui",
     "dueTomorrow": "Attendu demain",
     "dueOn": "Attendu {{day}}",
@@ -377,8 +375,8 @@
     "undone": "Paiement annulé"
   },
   "tiles": {
-    "late_one": "payé +{{count}} j",
-    "late_other": "payé +{{count}} j",
+    "late_one": "payé +{{count}} j",
+    "late_other": "payé +{{count}} j",
     "short": {
       "paid": "payé",
       "due": "à payer",
@@ -409,9 +407,9 @@
     "deleteConfirm": "Supprimer ce paiement ({{month}}, {{amount}}) ? Le mois redeviendra à payer.",
     "deleteMoveHint": "Pour le déplacer vers un autre mois, supprimez-le puis encaissez le bon mois.",
     "deleteConfirmButton": "Supprimer",
-    "days_one": "{{count}} jour",
-    "days_other": "{{count}} jours",
-    "free": "Cet élève est gratuit : rien n'est dû pour ce mois."
+    "days_one": "{{count}} jour",
+    "days_other": "{{count}} jours",
+    "free": "Cet élève ne paie rien : rien n'est dû pour ce mois."
   },
   "share": {
     "title": "Répartition",
@@ -452,7 +450,7 @@
     "changeDate": "Changer la date",
     "undo": "Marquer comme non remis",
     "undoConfirm": "Marquer ce mois comme non remis ? Il sera de nouveau à remettre.",
-    "undoButton": "Marquer non remis",
+    "undoButton": "Marquer comme non remis",
     "collectedLabel": "Encaissé",
     "dueLabel": "Part de l'école",
     "handedLabel": "Remis",
@@ -462,13 +460,13 @@
       "dateRequired": "Choisissez la date.",
       "dateFuture": "La date ne peut pas être dans le futur."
     },
-    "total_one": "Au total : {{amount}} à remettre sur {{count}} mois",
-    "total_other": "Au total : {{amount}} à remettre sur {{count}} mois",
+    "total_one": "Au total : {{amount}} à remettre pour {{count}} mois",
+    "total_other": "Au total : {{amount}} à remettre pour {{count}} mois",
     "markAll": "Tout marquer comme remis",
-    "markAllText_one": "Le mois encore à remettre ({{amount}}) sera marqué comme remis, à la date choisie. À faire seulement s'il a déjà été remis à l'école.",
-    "markAllText_other": "Les {{count}} mois encore à remettre ({{amount}}) seront marqués comme remis, à la date choisie. À faire seulement s'ils ont déjà tous été remis à l'école.",
+    "markAllText_one": "Le mois encore à remettre ({{amount}}) sera marqué comme remis à la date choisie. À faire seulement si cet argent a déjà été remis à l'école.",
+    "markAllText_other": "Les {{count}} mois encore à remettre ({{amount}}) seront marqués comme remis à la date choisie. À faire seulement si vous avez déjà tout remis.",
     "markAllButton_one": "Marquer le mois comme remis",
-    "markAllButton_other": "Marquer les {{count}} mois comme remis"
+    "markAllButton_other": "Marquer les {{count}} mois comme remis"
   },
   "offlineCopy": {
     "title": "Hors ligne",

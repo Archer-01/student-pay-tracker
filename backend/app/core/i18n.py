@@ -45,8 +45,8 @@ MESSAGES: dict[str, dict[str, str]] = {
         "fr": "Le montant ({amount}) dépasse le tarif mensuel de l'élève ({price})",
     },
     "error.payment_amount_precision": {
-        "en": "An amount has at most two decimals",
-        "fr": "Un montant a au plus deux chiffres après la virgule",
+        "en": "Enter at most two decimal places",
+        "fr": "Saisissez au plus deux chiffres après la virgule",
     },
     "error.payment_date_in_future": {
         "en": "The paid date ({paid_date}) can't be in the future",

@@ -88,9 +88,14 @@ def drop(catalogue: dict, key: str) -> bool:
     return True
 
 
+UNIT = re.compile(r"(\d|\}\}) (j|jours?|mois|DH)\b")
+
+
 def french_spacing(text: str) -> str:
-    """Plain spaces where French needs no-break ones; nothing else is touched."""
+    """Plain spaces where French needs no-break ones: before : ; ? ! », after «, and between a
+    number and its unit ("6 j", "{{count}} mois", "0 DH"). Nothing else is touched."""
     text = re.sub(r" ([:;?!»])", NBSP + r"\1", text)
+    text = UNIT.sub(lambda m: m[1] + NBSP + m[2], text)
     return text.replace("« ", "«" + NBSP)
 
 
@@ -101,6 +106,8 @@ def problems(fr_text: str, en_text: str, key: str) -> list[str]:
                      f"en {PLACEHOLDER.findall(en_text)})")  # fmt: skip
     if re.search(r" [:;?!»]|« ", fr_text):
         found.append(f"{key}: plain space before French punctuation (use U+00A0)")
+    if UNIT.search(fr_text):
+        found.append(f"{key}: plain space between a number and its unit (use U+00A0)")
     if re.search(r"[\w\d][;?!»]|«\w|\w:", PLACEHOLDER.sub("x", fr_text)):
         found.append(f"{key}: French punctuation glued to the word before it")
     return found

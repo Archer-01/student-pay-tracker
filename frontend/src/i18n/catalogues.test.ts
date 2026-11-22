@@ -26,6 +26,14 @@ describe("translation catalogues", () => {
     expect(offenders).toEqual([]);
   });
 
+  it("keep a number on the line of its unit with a no-break space", () => {
+    // "6 j", "3 mois", "0 DH": an ordinary space lets the unit wrap away from its number, which a
+    // narrow month tile or a full-width button on a phone will do.
+    const loose = /(\d|\}\}) (j|jours?|mois|DH)\b/;
+    const offenders = leaves(fr as Catalogue).filter(([, text]) => loose.test(text));
+    expect(offenders).toEqual([]);
+  });
+
   it("never glue French punctuation to the word before it", () => {
     const glued = /[\p{L}\d][;?!»]|«\p{L}|\p{L}:/u;
     const offenders = leaves(fr as Catalogue).filter(([, text]) =>

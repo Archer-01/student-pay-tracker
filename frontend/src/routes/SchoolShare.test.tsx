@@ -46,7 +46,7 @@ describe("Bilan › École", () => {
     const markAll = vi.spyOn(endpoints, "handOverAllShare").mockResolvedValue(share as never);
     renderWithProviders(<SchoolShare />);
     const due = await screen.findByRole("region", { name: /to hand over/i });
-    expect(within(due).getByText(/452\.50\sDH to hand over in all, over 2 months/)).toBeInTheDocument();
+    expect(within(due).getByText(/In all: 452\.50\sDH to hand over for 2 months/)).toBeInTheDocument();
 
     await userEvent.click(within(due).getByRole("button", { name: "Mark all as handed over" }));
     const sheet = within(screen.getByRole("dialog"));
@@ -82,7 +82,9 @@ describe("Bilan › École", () => {
     await userEvent.click(await screen.findByRole("button", { name: /august 2026/i }));
     await userEvent.click(screen.getByRole("button", { name: /mark as not handed over/i }));
     expect(unmark).not.toHaveBeenCalled();
-    await userEvent.click(screen.getByRole("button", { name: /^mark not handed over$/i }));
+    // The confirm button, in the red box, says the same as the link that opened it.
+    const confirm = within(screen.getByRole("dialog")).getAllByRole("button", { name: /mark as not handed over/i });
+    await userEvent.click(confirm[confirm.length - 1]!);
     expect(unmark).toHaveBeenCalledWith(2026, 8);
   });
 

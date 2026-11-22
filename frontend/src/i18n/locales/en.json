@@ -17,9 +17,7 @@
     "debts": "Left owing money"
   },
   "drift": {
-    "onTrack": "On track",
-    "late_one": "{{count}} day late",
-    "late_other": "{{count}} days late"
+    "onTrack": "On track"
   },
   "students": {
     "empty": "No students found.",
@@ -242,7 +240,7 @@
     "editNote": "Edit",
     "addNote": "Add a note",
     "packFromClass": "Picked from the class",
-    "freeText": "This student pays nothing: no month is ever asked of them.",
+    "freeText": "This student pays nothing: no payment is ever asked of them.",
     "changePrice": "Change the price",
     "freeConfirm": "An agreed price of 0 DH: this student will pay nothing and never be chased. Is that intended?"
   },
@@ -411,7 +409,7 @@
     "deleteConfirmButton": "Delete",
     "days_one": "{{count}} day",
     "days_other": "{{count}} days",
-    "free": "This student is free: nothing is owed for this month."
+    "free": "This student pays nothing: nothing is owed for this month."
   },
   "share": {
     "title": "Split",
@@ -452,7 +450,7 @@
     "changeDate": "Change the date",
     "undo": "Mark as not handed over",
     "undoConfirm": "Mark this month as not handed over? It will show as to hand over again.",
-    "undoButton": "Mark not handed over",
+    "undoButton": "Mark as not handed over",
     "collectedLabel": "Collected",
     "dueLabel": "School's share",
     "handedLabel": "Handed over",
@@ -462,11 +460,11 @@
       "dateRequired": "Choose the date.",
       "dateFuture": "The date can't be in the future."
     },
-    "total_one": "{{amount}} to hand over in all, over {{count}} month",
-    "total_other": "{{amount}} to hand over in all, over {{count}} months",
+    "total_one": "In all: {{amount}} to hand over for {{count}} month",
+    "total_other": "In all: {{amount}} to hand over for {{count}} months",
     "markAll": "Mark all as handed over",
-    "markAllText_one": "The month still to hand over ({{amount}}) will be marked as handed over, on the date chosen. Only if it was already given to the school.",
-    "markAllText_other": "The {{count}} months still to hand over ({{amount}}) will be marked as handed over, on the date chosen. Only if all of it was already given to the school.",
+    "markAllText_one": "The month still to hand over ({{amount}}) will be marked as handed over on the date chosen. Only do this if the money has already gone to the school.",
+    "markAllText_other": "The {{count}} months still to hand over ({{amount}}) will be marked as handed over on the date chosen. Only do this if you've already handed it all over.",
     "markAllButton_one": "Mark the month as handed over",
     "markAllButton_other": "Mark the {{count}} months as handed over"
   },
