@@ -8,7 +8,7 @@ import { fieldErrors, resolveErrorMessage } from "../../lib/errors";
 import { classLabel } from "../../lib/classes";
 import { NameFields } from "./NameFields";
 import { PricingFields } from "./PricingFields";
-import { Button, Select, TextAreaField, TextField } from "../ui";
+import { Button, ConfirmBox, Select, TextAreaField, TextField } from "../ui";
 
 /** The server's limit on a note (backend `NOTE_MAX_LENGTH`). */
 const NOTE_MAX_LENGTH = 500;
@@ -54,6 +54,8 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
   const classes = useApi(() => listClasses(), []);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  // The question asked before saving (a price of 0), or null.
+  const [asking, setAsking] = useState<string[] | null>(null);
 
   function validate(): Record<string, string> {
     const next: Record<string, string> = {};
@@ -73,9 +75,14 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
       return;
     }
     setErrors({});
-    // Asked only when the price becomes 0 here, not on every save of a student already free.
+    // Asked only when the price becomes 0 here, not on every save of a student already free;
+    // in the sheet, never a browser pop-up.
     const becomesFree = isZeroAmount(customPrice) && !isZeroAmount(initial.customPrice ?? "");
-    if (becomesFree && !window.confirm(t("student.freeConfirm"))) return;
+    if (becomesFree) setAsking([t("student.freeConfirm")]);
+    else await save();
+  }
+
+  async function save() {
     try {
       // class_id is always sent: an explicit null is what unassigns a student, so omitting the
       // key (which the backend reads as "leave unchanged") would make clearing it impossible.
@@ -95,6 +102,7 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
       });
       onSuccess();
     } catch (err) {
+      setAsking(null);
       const fields = fieldErrors(err);
       if (Object.keys(fields).length > 0) setErrors(fields);
       else setFormError(resolveErrorMessage(err, t));
@@ -156,15 +164,24 @@ export function EditStudentForm({ studentId, initial, onSuccess, onCancel }: Pro
         placeholder={t("edit.notePlaceholder")}
         maxLength={NOTE_MAX_LENGTH}
       />
-      {formError && <p className="text-sm text-rose-600">{formError}</p>}
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="secondary" onClick={onCancel}>
-          {t("common.cancel")}
-        </Button>
-        <Button type="submit" pending={update.status === "pending"}>
-          {t("common.save")}
-        </Button>
-      </div>
+      {formError && <p className="text-sm font-bold text-bad">{formError}</p>}
+      {asking ? (
+        <ConfirmBox
+          messages={asking}
+          pending={update.status === "pending"}
+          onConfirm={() => void save()}
+          onCancel={() => setAsking(null)}
+        />
+      ) : (
+        <div className="flex justify-end gap-2">
+          <Button type="button" variant="secondary" onClick={onCancel}>
+            {t("common.cancel")}
+          </Button>
+          <Button type="submit" pending={update.status === "pending"}>
+            {t("common.save")}
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

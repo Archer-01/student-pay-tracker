@@ -57,6 +57,11 @@ A student's pill reads « Gratuit » when their price was set to 0 on purpose, a
 when no price was set at all (decision 0011). Setting an agreed price of 0, when enrolling or in
 the edit form, asks « … C'est voulu ? » first; a student already free isn't asked again.
 
+Questions before a save (a price of 0) are asked in the form itself (`ConfirmBox`, amber): the
+form's buttons give way to « Non, revenir » / « Oui, enregistrer » (« Oui, inscrire » on
+enrolment) until answered. Not « Annuler »: that word already closes the sheet, and this one only
+goes back to the form.
+
 ## The student page
 
 The school year is twelve tiles, September to August (`src/lib/schoolYear.ts`, with its own

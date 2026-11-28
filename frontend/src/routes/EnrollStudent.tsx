@@ -7,10 +7,10 @@ import { useDebounced } from "../lib/useDebounced";
 import { useMutation } from "../lib/useMutation";
 import { fieldErrors, resolveErrorMessage } from "../lib/errors";
 import { classLabel } from "../lib/classes";
-import { formatMoney, isZeroAmount} from "../lib/money";
+import { formatMoney, isZeroAmount } from "../lib/money";
 import { NameFields } from "../components/students/NameFields";
 import { PricingFields } from "../components/students/PricingFields";
-import { Button, Card, DateField, Select, TextField } from "../components/ui";
+import { Button, Card, ConfirmBox, DateField, Select, TextField } from "../components/ui";
 import { ChevronLeftIcon } from "../components/icons";
 
 export function EnrollStudent() {
@@ -58,6 +58,7 @@ export function EnrollStudent() {
   );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [asking, setAsking] = useState(false);
 
   function validate(): Record<string, string> {
     const next: Record<string, string> = {};
@@ -77,8 +78,13 @@ export function EnrollStudent() {
       return;
     }
     setErrors({});
-    // A price of 0 means a student who is never chased (decision 0011): make sure it's meant.
-    if (isZeroAmount(customPrice) && !window.confirm(t("student.freeConfirm"))) return;
+    // A price of 0 means a student who is never chased (decision 0011): make sure it's meant,
+    // in the page rather than a browser pop-up.
+    if (isZeroAmount(customPrice)) setAsking(true);
+    else await save();
+  }
+
+  async function save() {
     try {
       const student = await create.mutate({
         first_name: firstName.trim(),
@@ -95,6 +101,7 @@ export function EnrollStudent() {
       });
       navigate(`/students/${student.id}`);
     } catch (err) {
+      setAsking(false);
       const fields = fieldErrors(err);
       if (Object.keys(fields).length > 0) setErrors(fields);
       else setFormError(resolveErrorMessage(err, t));
@@ -179,11 +186,21 @@ export function EnrollStudent() {
             </p>
           ))}
 
-          {formError && <p className="text-sm text-rose-600 dark:text-rose-400">{formError}</p>}
+          {formError && <p className="text-sm font-bold text-bad">{formError}</p>}
 
-          <Button type="submit" pending={create.status === "pending"} className="w-full">
-            {t("enroll.submit")}
-          </Button>
+          {asking ? (
+            <ConfirmBox
+              messages={[t("student.freeConfirm")]}
+              confirmLabel={t("enroll.yesEnroll")}
+              pending={create.status === "pending"}
+              onConfirm={() => void save()}
+              onCancel={() => setAsking(false)}
+            />
+          ) : (
+            <Button type="submit" pending={create.status === "pending"} className="w-full">
+              {t("enroll.submit")}
+            </Button>
+          )}
         </form>
       </Card>
     </div>

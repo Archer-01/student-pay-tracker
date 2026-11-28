@@ -6,6 +6,7 @@ export { AsyncView } from "./AsyncView";
 export { Button } from "./Button";
 export { Card } from "./Card";
 export { Modal } from "./Modal";
+export { ConfirmBox } from "./ConfirmBox";
 export { Field } from "./fields/Field";
 export { inputClass } from "./fields/inputClass";
 export { TextField } from "./fields/TextField";

@@ -23,6 +23,13 @@ beforeEach(() => {
   vi.spyOn(endpoints, "updateStudent").mockResolvedValue({} as never);
 });
 
+/** Answers the sheet's question, then waits for the save. */
+async function confirmAndSave() {
+  await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+  await waitFor(() => expect(endpoints.updateStudent).toHaveBeenCalled());
+  return vi.mocked(endpoints.updateStudent).mock.calls[0][1];
+}
+
 async function save() {
   await userEvent.click(screen.getByRole("button", { name: /save/i }));
   await waitFor(() => expect(endpoints.updateStudent).toHaveBeenCalled());
@@ -139,23 +146,26 @@ describe("EditStudentForm", () => {
 
 describe("EditStudentForm, a price of 0", () => {
   it("asks before making a student free, and saves nothing if the answer is no", async () => {
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const popup = vi.spyOn(window, "confirm");
     renderWithProviders(
       <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
     );
     const price = screen.getByLabelText(/agreed price/i);
     await userEvent.clear(price);
     await userEvent.type(price, "0");
-    await userEvent.click(screen.getByRole("button", { name: /save/i }));
-    expect(confirm).toHaveBeenCalledWith(expect.stringMatching(/0 DH.*never be chased/));
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByText(/0 DH.*never be chased/)).toBeInTheDocument();
+    // While it asks, the form's own buttons give way to the question's.
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "No, go back" }));
     expect(endpoints.updateStudent).not.toHaveBeenCalled();
 
-    confirm.mockReturnValue(true);
-    expect(await save()).toMatchObject({ custom_price: "0" });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(await confirmAndSave()).toMatchObject({ custom_price: "0" });
+    expect(popup).not.toHaveBeenCalled();
   });
 
   it("doesn't ask again when the student was already free", async () => {
-    const confirm = vi.spyOn(window, "confirm");
     renderWithProviders(
       <EditStudentForm
         studentId={1}
@@ -165,6 +175,6 @@ describe("EditStudentForm, a price of 0", () => {
       />,
     );
     await save();
-    expect(confirm).not.toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Yes, save" })).not.toBeInTheDocument();
   });
 });

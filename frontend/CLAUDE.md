@@ -187,7 +187,9 @@ to this list deliberately.
 
 ## Dialogs
 
-Reuse `Modal` for any overlay: it makes `aria-modal="true"` true. Focus moves to the first field
+Reuse `Modal` for any overlay: it makes `aria-modal="true"` true. A question before a save goes
+in the page with `ConfirmBox`, never `window.confirm`: a browser pop-up looks foreign in the
+installed app (`ClassDetail` still has one, to move). Focus moves to the first field
 (not the × button), Tab wraps inside the panel, closing returns focus to the opener, and the page
 behind can't scroll.
 

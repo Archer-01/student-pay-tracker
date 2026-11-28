@@ -57,7 +57,8 @@
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
       "firstNameRequired": "Le prénom est obligatoire"
-    }
+    },
+    "yesEnroll": "Oui, inscrire"
   },
   "detail": {
     "downloadPdf": "Télécharger l'historique (PDF)",
@@ -89,7 +90,9 @@
     "retry": "Réessayer",
     "cancel": "Annuler",
     "save": "Enregistrer",
-    "close": "Fermer"
+    "close": "Fermer",
+    "yesSave": "Oui, enregistrer",
+    "noGoBack": "Non, revenir"
   },
   "payment": {
     "fields": {

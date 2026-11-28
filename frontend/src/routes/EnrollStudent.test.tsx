@@ -82,25 +82,30 @@ describe("EnrollStudent, the pack", () => {
 describe("EnrollStudent, a price of 0", () => {
   it("asks before enrolling a student who will pay nothing", async () => {
     const create = vi.spyOn(endpoints, "createStudent").mockResolvedValue({ id: 42 } as never);
-    const confirm = vi.spyOn(window, "confirm").mockReturnValue(false);
+    const popup = vi.spyOn(window, "confirm");
     renderWithProviders(<EnrollStudent />);
     await userEvent.type(screen.getByLabelText(/first name/i), "Amina");
     await userEvent.type(screen.getByLabelText(/agreed price/i), "0");
     await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
-    expect(confirm).toHaveBeenCalledOnce();
+    // Asked in the page, never with a browser pop-up.
+    expect(screen.getByText(/0 DH.*never be chased/)).toBeInTheDocument();
     expect(create).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "No, go back" }));
+    expect(screen.queryByText(/0 DH.*never be chased/)).not.toBeInTheDocument();
 
-    confirm.mockReturnValue(true);
     await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, enroll" }));
     expect(create).toHaveBeenCalledWith(expect.objectContaining({ custom_price: "0" }));
+    expect(popup).not.toHaveBeenCalled();
   });
 
   it("doesn't ask when the agreed price is left empty", async () => {
     vi.spyOn(endpoints, "createStudent").mockResolvedValue({ id: 42 } as never);
-    const confirm = vi.spyOn(window, "confirm");
+    const create = vi.mocked(endpoints.createStudent);
     renderWithProviders(<EnrollStudent />);
     await userEvent.type(screen.getByLabelText(/first name/i), "Amina");
     await userEvent.click(screen.getByRole("button", { name: "Enroll student" }));
-    expect(confirm).not.toHaveBeenCalled();
+    expect(create).toHaveBeenCalled();
+    expect(screen.queryByRole("button", { name: "Yes, enroll" })).not.toBeInTheDocument();
   });
 });
