@@ -1,6 +1,7 @@
 """Student lifecycle: enroll, read, update contact/pricing, change status.
 
-``join_date`` (the drift anchor) is intentionally immutable here — no method accepts it.
+``join_date`` is the drift anchor. It can be *corrected* (a mistyped date) only while nothing
+recorded depends on it: no payment, moved due date or write-off (decision 0015).
 """
 
 from datetime import date
@@ -10,12 +11,22 @@ from typing import Final
 from sqlalchemy.orm import Session
 
 from app.models import Student, StudentStatus
-from app.repos import ClassRepo, OverrideRepo, PackRepo, PaymentRepo, StudentRepo
+from app.repos import (
+    ClassRepo,
+    EnrollmentRepo,
+    FreePeriodRepo,
+    OverrideRepo,
+    PackRepo,
+    PaymentRepo,
+    StudentRepo,
+)
 from app.services.enrollment_service import EnrollmentService
 from app.services.exceptions import (
     ClassNotFoundError,
     InvalidPackError,
+    InvalidPeriodError,
     InvalidStudentError,
+    JoinDateLockedError,
     PackNotFoundError,
     StudentNotFoundError,
 )
@@ -132,6 +143,46 @@ class StudentService:
             # The column keeps two decimals and would round: "0.004" would make them free.
             raise InvalidPackError("price_precision")
 
+    def _correct_join_date(self, student: Student, new: date) -> None:
+        """Correct a mistyped join date, as if it had been typed right at enrolment.
+
+        Refused while anything recorded was computed from the old date: a payment (its frozen due
+        date and lateness) or a written-off debt (its frozen amount). Delete the payments first,
+        as a teacher does for a typo. A changed payment day is kept, so the new date must come
+        before it. The first attendance period, and a free period from joining,
+        start on the join date, so they move with it; nothing else is stored from it. One gap:
+        a free stretch already deleted because it closed before a future typed date can't come
+        back (decision 0015).
+        """
+        payments = self.payments.list_for_student(student.id)
+        if payments:
+            raise JoinDateLockedError("join_date_has_payments", count=len(payments))
+        # A changed payment day is a date of its own, not an offset from the join date, so it
+        # stays; its one rule (it comes after the join date) must still hold.
+        payment_days = [o.new_due_date for o in self.overrides.list_for_student(student.id)]
+        if payment_days and new >= min(payment_days):
+            raise JoinDateLockedError("join_date_after_payment_day", payment_day=min(payment_days))
+        if student.writeoffs:
+            raise JoinDateLockedError("join_date_has_writeoffs")
+        old = student.join_date
+        periods = EnrollmentRepo(self.session).list_for_student(student.id)
+        first = periods[0] if periods else None
+        if first is not None and first.entry_date == old:
+            if first.leave_date is not None and new > first.leave_date:
+                raise InvalidPeriodError("join_date_after_leave", leave_date=first.leave_date)
+            first.entry_date = new
+        free_periods = FreePeriodRepo(self.session)
+        for period in free_periods.list_for_student(student.id):
+            # Only a stretch free "from joining" (opened at enrolment, or on that day) depends on
+            # the date; one opened later that merely starts on the old date stays where it is.
+            from_joining = student.entered_on is None or period.opened_on <= student.entered_on
+            if period.from_date == old and from_joining:
+                if period.to_date is not None and period.to_date <= new:
+                    free_periods.delete(period)  # it would cover no day
+                else:
+                    period.from_date = new
+        student.join_date = new
+
     def delete(self, student_id: int) -> None:
         """Hard-delete a student and cascade to their payments and overrides.
 
@@ -163,9 +214,11 @@ class StudentService:
         custom_price: Decimal | None | _Unset = _UNSET,
         price_note: str | None | _Unset = _UNSET,
         note: str | None | _Unset = _UNSET,
+        join_date: date | _Unset = _UNSET,
         today: date | None = None,
     ) -> Student:
-        """Apply only the provided fields (a single PATCH). ``join_date`` is never accepted.
+        """Apply only the provided fields (a single PATCH). A ``join_date`` that differs from the
+        current one is a correction (see :meth:`_correct_join_date`); the same date is no change.
 
         Changing ``class_id`` (including to ``None``) is purely organisational: it must not
         affect the anchor, payments, or drift. A price change that makes the student free, or
@@ -173,6 +226,9 @@ class StudentService:
         due while they were free stay free (decision 0014).
         """
         student = self.get(student_id)
+        # First, so a refusal leaves every other field as it was.
+        if not isinstance(join_date, _Unset) and join_date != student.join_date:
+            self._correct_join_date(student, join_date)
         if not isinstance(first_name, _Unset):
             student.first_name = _clean_name(first_name)
         if not isinstance(last_name, _Unset):

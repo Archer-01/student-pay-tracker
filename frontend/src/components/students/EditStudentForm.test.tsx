@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import userEvent from "@testing-library/user-event";
-import { screen, waitFor } from "@testing-library/react";
+import { fireEvent, screen, waitFor } from "@testing-library/react";
+import { ApiError } from "../../api/client";
 import { renderWithProviders } from "../../test/render";
 import * as endpoints from "../../api/endpoints";
 import { EditStudentForm } from "./EditStudentForm";
@@ -15,6 +16,8 @@ const initial = {
   customPrice: "90",
   priceNote: "remise fratrie",
   note: "Paie le samedi",
+  joinDate: "2026-09-05",
+  paymentsCount: 0,
 };
 
 beforeEach(() => {
@@ -146,23 +149,16 @@ describe("EditStudentForm", () => {
 
 describe("EditStudentForm, a price of 0", () => {
   it("asks before making a student free, and saves nothing if the answer is no", async () => {
-    const popup = vi.spyOn(window, "confirm");
     renderWithProviders(
       <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
     );
     const price = screen.getByLabelText(/agreed price/i);
     await userEvent.clear(price);
     await userEvent.type(price, "0");
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
     expect(screen.getByText(/0 DH.*never be chased/)).toBeInTheDocument();
-    // While it asks, the form's own buttons give way to the question's.
-    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole("button", { name: "No, go back" }));
     expect(endpoints.updateStudent).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByRole("button", { name: "Save" }));
     expect(await confirmAndSave()).toMatchObject({ custom_price: "0" });
-    expect(popup).not.toHaveBeenCalled();
   });
 
   it("doesn't ask again when the student was already free", async () => {
@@ -176,5 +172,158 @@ describe("EditStudentForm, a price of 0", () => {
     );
     await save();
     expect(screen.queryByRole("button", { name: "Yes, save" })).not.toBeInTheDocument();
+  });
+});
+
+describe("EditStudentForm, the join date (decision 0015)", () => {
+  it("leaves the join date out when it wasn't changed", async () => {
+    // A student with payments would otherwise be refused on every save.
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    expect("join_date" in (await save())).toBe(false);
+  });
+
+  it("asks in the sheet before correcting the join date, and sends it once confirmed", async () => {
+    // A slip in the date picker while fixing a phone number would recompute every month.
+    const popup = vi.spyOn(window, "confirm");
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    fireEvent.change(screen.getByLabelText("Join date"), { target: { value: "2026-10-12" } });
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(screen.getByText(/worked out again from Oct 12, 2026/)).toBeInTheDocument();
+    // While it asks, the form's own buttons give way to the question's.
+    expect(screen.queryByRole("button", { name: "Save" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "No, go back" }));
+    expect(endpoints.updateStudent).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Save" })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    expect(await confirmAndSave()).toMatchObject({ join_date: "2026-10-12" });
+    expect(popup).not.toHaveBeenCalled();
+  });
+
+  it("asks both questions at once when the date and a price of 0 change together", async () => {
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    fireEvent.change(screen.getByLabelText("Join date"), { target: { value: "2026-10-12" } });
+    const price = screen.getByLabelText(/agreed price/i);
+    await userEvent.clear(price);
+    await userEvent.type(price, "0");
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(screen.getByText(/never be chased/)).toBeInTheDocument();
+    expect(screen.getByText(/will be worked out again/)).toBeInTheDocument();
+    expect(await confirmAndSave()).toMatchObject({ join_date: "2026-10-12", custom_price: "0" });
+  });
+
+  it("locks the date and says why once payments are recorded", () => {
+    renderWithProviders(
+      <EditStudentForm
+        studentId={1}
+        initial={{ ...initial, paymentsCount: 2 }}
+        onSuccess={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText("Join date")).toBeDisabled();
+    expect(screen.getByText("2 payments are recorded: delete them first to correct this date.")).toBeInTheDocument();
+  });
+
+  it("won't send an emptied date", async () => {
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    fireEvent.change(screen.getByLabelText("Join date"), { target: { value: "" } });
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    expect(await screen.findByText("The join date is required.")).toBeInTheDocument();
+    expect(endpoints.updateStudent).not.toHaveBeenCalled();
+  });
+
+  it("when the server refuses the date, says why under it, puts it back and locks it", async () => {
+    vi.mocked(endpoints.updateStudent).mockRejectedValueOnce(
+      new ApiError(409, "This student's debt was written off.", "join_date_has_writeoffs"),
+    );
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const field = screen.getByLabelText("Join date");
+    fireEvent.change(field, { target: { value: "2026-10-12" } });
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+    expect(await screen.findByText("This student's debt was written off.")).toBeInTheDocument();
+    expect(field).toHaveValue("2026-09-05");
+    expect(field).toBeDisabled();
+    // So the next save, of anything else, goes through without the date.
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    await waitFor(() => expect(endpoints.updateStudent).toHaveBeenCalledTimes(2));
+    expect("join_date" in vi.mocked(endpoints.updateStudent).mock.calls[1][1]).toBe(false);
+  });
+
+  it("a date after the changed payment day is said under the field, which stays open", async () => {
+    // Another date before it is fine, so the field must not lock.
+    vi.mocked(endpoints.updateStudent).mockRejectedValueOnce(
+      new ApiError(409, "The join date must come before it.", "join_date_after_payment_day"),
+    );
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const field = screen.getByLabelText("Join date");
+    fireEvent.change(field, { target: { value: "2026-10-25" } });
+    await userEvent.click(screen.getByRole("button", { name: /save/i }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+    expect(await screen.findByText("The join date must come before it.")).toBeInTheDocument();
+    expect(field).toHaveValue("2026-10-25");
+    expect(field).not.toBeDisabled();
+  });
+
+  it("keeps the server's reason as the hint once it locked the date", async () => {
+    // Not « Un paiement est enregistré » for a student with no payments, on a later failed save.
+    vi.mocked(endpoints.updateStudent)
+      .mockRejectedValueOnce(new ApiError(409, "This student's debt was written off.", "join_date_has_writeoffs"))
+      .mockRejectedValueOnce(new ApiError(500, "Server unavailable"));
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    fireEvent.change(screen.getByLabelText("Join date"), { target: { value: "2026-10-12" } });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+    await screen.findByText("This student's debt was written off.");
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await waitFor(() => expect(endpoints.updateStudent).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText("This student's debt was written off.")).toBeInTheDocument();
+    expect(screen.queryByText(/payments? (is|are) recorded/)).not.toBeInTheDocument();
+  });
+
+  it("locks the date when the server finds payments the sheet didn't know about", async () => {
+    vi.mocked(endpoints.updateStudent).mockRejectedValueOnce(
+      new ApiError(409, "A payment is recorded for this student.", "join_date_has_payments"),
+    );
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const field = screen.getByLabelText("Join date");
+    fireEvent.change(field, { target: { value: "2026-10-12" } });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+    expect(await screen.findByText("A payment is recorded for this student.")).toBeInTheDocument();
+    expect(field).toBeDisabled();
+    expect(field).toHaveValue("2026-09-05");
+  });
+
+  it("a date after the student left is said under the field, which stays open", async () => {
+    vi.mocked(endpoints.updateStudent).mockRejectedValueOnce(
+      new ApiError(409, "The join date can't be after they left.", "join_date_after_leave"),
+    );
+    renderWithProviders(
+      <EditStudentForm studentId={1} initial={initial} onSuccess={vi.fn()} onCancel={vi.fn()} />,
+    );
+    const field = screen.getByLabelText("Join date");
+    fireEvent.change(field, { target: { value: "2026-12-01" } });
+    await userEvent.click(screen.getByRole("button", { name: "Save" }));
+    await userEvent.click(screen.getByRole("button", { name: "Yes, save" }));
+    expect(await screen.findByText("The join date can't be after they left.")).toBeInTheDocument();
+    expect(field).not.toBeDisabled();
   });
 });

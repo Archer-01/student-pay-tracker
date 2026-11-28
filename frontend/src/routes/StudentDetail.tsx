@@ -226,6 +226,8 @@ export function StudentDetail() {
                       customPrice: detail.custom_price,
                       priceNote: detail.price_note,
                       note: detail.note,
+                      joinDate: detail.join_date,
+                      paymentsCount: detail.payments_count,
                     }}
                     onSuccess={handleSaved}
                     onCancel={close}

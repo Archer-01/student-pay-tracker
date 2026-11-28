@@ -71,9 +71,37 @@ async def test_patch_partial_leaves_other_fields(client: AsyncClient) -> None:
     assert status_only.json()["phone"] == "+111"
 
 
-async def test_patch_rejecting_join_date_is_422(client: AsyncClient) -> None:
+async def test_a_mistyped_join_date_is_corrected_until_a_payment_depends_on_it(
+    client: AsyncClient,
+) -> None:
+    # Decision 0015: a correction, allowed while nothing recorded was computed from it.
+    sid = await _create_student(client, join="2023-03-05")
+    fixed = await client.patch(f"/api/v1/students/{sid}", json={"join_date": "2023-03-12"})
+    assert fixed.status_code == 200, fixed.text
+    assert fixed.json()["join_date"] == "2023-03-12"
+
+    paid = await client.post(
+        f"/api/v1/students/{sid}/payments",
+        json={"paid_date": "2023-03-12", "amount": "300", "cycle_number": 0},
+    )
+    assert paid.status_code == 201, paid.text
+    locked = await client.patch(f"/api/v1/students/{sid}?lang=fr", json={"join_date": "2023-03-20"})
+    assert locked.status_code == 409
+    assert locked.json() == {
+        "code": "join_date_has_payments",
+        "detail": "Un paiement est enregistré pour cet élève\u00a0: supprimez-le d'abord pour "
+        "corriger sa date d'inscription.",
+    }
+    # The edit form sends every field: the same date with a new phone is just a phone change.
+    same = await client.patch(
+        f"/api/v1/students/{sid}", json={"join_date": "2023-03-12", "phone": "0611"}
+    )
+    assert same.status_code == 200
+
+
+async def test_a_join_date_cannot_be_removed(client: AsyncClient) -> None:
     sid = await _create_student(client)
-    resp = await client.patch(f"/api/v1/students/{sid}", json={"join_date": "2024-01-01"})
+    resp = await client.patch(f"/api/v1/students/{sid}", json={"join_date": None})
     assert resp.status_code == 422
 
 

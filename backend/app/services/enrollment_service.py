@@ -10,7 +10,8 @@ Rules enforced here (the database backs up only the first two):
 * dates within a period are ordered (``leave_date >= entry_date``) — CHECK constraint
 * at most one open period per student — partial unique index
 * periods never overlap, and are strictly ordered
-* the first period starts on ``join_date``; moving it would fork the schedule
+* the first period starts on ``join_date``; only a correction of the join date moves it, with
+  the date (``StudentService``, decision 0015)
 """
 
 from datetime import date

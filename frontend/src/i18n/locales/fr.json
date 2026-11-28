@@ -52,7 +52,7 @@
       "phone": "Téléphone (facultatif)",
       "class": "Classe"
     },
-    "joinDateHint": "Sert de point de départ aux échéances mensuelles et ne pourra plus être modifiée.",
+    "joinDateHint": "Sert de point de départ aux échéances mensuelles. Vérifiez-la : après le premier paiement, elle ne pourra plus être modifiée.",
     "submit": "Inscrire l'élève",
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
@@ -127,14 +127,20 @@
     "fields": {
       "phone": "Téléphone",
       "class": "Classe",
-      "note": "Note"
+      "note": "Note",
+      "joinDate": "Date d'inscription"
     },
     "validation": {
       "priceInvalid": "Le tarif convenu doit être un nombre positif ou nul",
-      "firstNameRequired": "Le prénom est obligatoire"
+      "firstNameRequired": "Le prénom est obligatoire",
+      "joinDateRequired": "La date d'inscription est obligatoire."
     },
     "noteHint": "Visible seulement par vous. Elle n'apparaît pas sur les PDF.",
-    "notePlaceholder": "ex. : paie le samedi, père : Ahmed"
+    "notePlaceholder": "ex. : paie le samedi, père : Ahmed",
+    "joinDateHint": "À corriger seulement si elle a été mal saisie : les mois dus sont recalculés à partir de cette date.",
+    "joinDateLocked_one": "Un paiement est enregistré : supprimez-le d'abord pour corriger cette date.",
+    "joinDateLocked_other": "{{count}} paiements sont enregistrés : supprimez-les d'abord pour corriger cette date.",
+    "joinDateConfirm": "Les mois à payer seront recalculés à partir du {{date}}. C'est voulu ?"
   },
   "notFound": {
     "title": "Page introuvable",

@@ -20,6 +20,7 @@ from app.services.exceptions import (
     InvalidHandoverError,
     InvalidPeriodError,
     InvalidWriteoffError,
+    JoinDateLockedError,
     NotAuthenticatedError,
     PackInUseError,
     PackNotFoundError,
@@ -52,6 +53,7 @@ _STATUS_BY_ERROR: tuple[tuple[type[DomainError], int], ...] = (
     (InvalidPeriodError, 409),
     (InvalidWriteoffError, 409),
     (InvalidHandoverError, 409),
+    (JoinDateLockedError, 409),
     (TooManyAttemptsError, 429),
 )
 _FALLBACK_STATUS = 400

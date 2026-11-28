@@ -69,14 +69,6 @@ def test_update_phone_only_leaves_the_price(db_session: Session) -> None:
     assert refreshed.custom_price == Decimal("300.00")  # unchanged
 
 
-def test_update_cannot_touch_join_date(db_session: Session) -> None:
-    # The anchor is immutable at the service layer — the method has no such parameter.
-    svc = StudentService(db_session)
-    student = _enroll(svc)
-    with pytest.raises(TypeError):
-        svc.update(student.id, join_date=date(2024, 1, 1))  # type: ignore[call-arg]
-
-
 def test_delete_removes_student(db_session: Session) -> None:
     svc = StudentService(db_session)
     student = _enroll(svc)

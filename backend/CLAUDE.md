@@ -127,8 +127,12 @@ leak a row that isn't in the file, the write lock is split per teacher, and both
 
 These must hold for every change:
 
-- **`join_date` is the immutable anchor.** The API rejects it in a PATCH; a return after a leave
-  never resets it.
+- **`join_date` is the anchor**, never moved by anything except a **correction** of a mistyped
+  date (decision 0015): `StudentService._correct_join_date`, refused (409) while any payment or
+  write-off depends on it, or past a changed payment day (an override is a date, so it stays); the first enrolment period and a free period opened at
+  enrolment move with it, so the student reads as if typed right (property test), except for a
+  free stretch already deleted before a future typed date (0015, Consequences). A return after a
+  leave never resets it.
 - **Overrides are an audit log**: `override_service.create_override` writes `anchor_override`,
   never touches `join_date` or payments, and never reduces drift for cycles before its date
   (regression test required).

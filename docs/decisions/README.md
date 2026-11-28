@@ -29,6 +29,7 @@ every change: a commit message is enough for those.
 | [0012](0012-nightly-encrypted-backup-to-drive.md) | A nightly encrypted backup, sent to the developer's Google Drive | Accepted (retention: 0013) |
 | [0013](0013-keep-every-backup-a-year.md) | Every backup copy is kept for a year | Accepted |
 | [0014](0014-free-months-stay-free.md) | Months that were free stay free, and a free student pays nothing | Accepted |
+| [0015](0015-correcting-a-join-date.md) | A mistyped join date can be corrected, until something depends on it | Accepted |
 
 ## Template
 

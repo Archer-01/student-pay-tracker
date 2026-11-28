@@ -1,6 +1,6 @@
 """The ``EnrollmentPeriod`` model — a contiguous span a student was actually attending.
 
-A student's billing schedule is generated from their immutable ``join_date`` forever; periods do
+A student's billing schedule is generated from their ``join_date`` (the anchor) forever; periods do
 **not** move that anchor. They record when the student was actually present, so that months they
 were away can be excluded from what they owe without rewriting their history.
 

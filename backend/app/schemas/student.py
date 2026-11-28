@@ -55,7 +55,7 @@ class StudentCreate(BaseModel):
 
 
 class StudentUpdate(BaseModel):
-    # extra="forbid" rejects join_date (and typos) with 422 — the anchor is immutable via the API.
+    # extra="forbid": a typo in a field name is a 422, never silently ignored.
     model_config = ConfigDict(extra="forbid")
 
     first_name: str | None = Field(default=None, min_length=1)
@@ -70,11 +70,21 @@ class StudentUpdate(BaseModel):
     price_note: str | None = None
     # Explicit null (or a blank note) clears it, like the other optional fields.
     note: str | None = Field(default=None, max_length=NOTE_MAX_LENGTH)
+    # A correction of a mistyped join date, refused (409) once anything recorded depends on it
+    # (decision 0015). The same date as now is no change. Never null: every student has one.
+    join_date: date | None = None
 
     @field_validator("note")
     @classmethod
     def _note(cls, value: str | None) -> str | None:
         return _clean_note(value)
+
+    @field_validator("join_date")
+    @classmethod
+    def _join_date(cls, value: date | None) -> date:
+        if value is None:
+            raise ValueError("join_date can be corrected, not removed")
+        return value
 
 
 class StudentOut(BaseModel):

@@ -45,7 +45,8 @@ class Student(Base):
     phone: Mapped[str | None] = mapped_column(nullable=True)
     # "Redoublant": repeating the year. Informational — it has no effect on pricing or drift.
     is_repeating: Mapped[bool] = mapped_column(nullable=False, default=False, server_default="0")
-    # The immutable anchor; the API must never let this move (enforced in Sprint 6).
+    # The anchor every due date is computed from. Only a correction of a mistyped date moves it,
+    # and only while nothing recorded depends on it (StudentService, decision 0015).
     join_date: Mapped[date] = mapped_column(nullable=False)
     status: Mapped[StudentStatus] = mapped_column(
         # Store the lowercase values ("active"/"inactive"), not the member names, so the

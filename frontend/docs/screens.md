@@ -57,10 +57,19 @@ A student's pill reads « Gratuit » when their price was set to 0 on purpose, a
 when no price was set at all (decision 0011). Setting an agreed price of 0, when enrolling or in
 the edit form, asks « … C'est voulu ? » first; a student already free isn't asked again.
 
-Questions before a save (a price of 0) are asked in the form itself (`ConfirmBox`, amber): the
-form's buttons give way to « Non, revenir » / « Oui, enregistrer » (« Oui, inscrire » on
-enrolment) until answered. Not « Annuler »: that word already closes the sheet, and this one only
-goes back to the form.
+The edit form also holds the « Date d'inscription », for a date typed wrong (decision 0015). A
+corrected date asks first (« Les mois à payer seront recalculés à partir du … C'est voulu ? »),
+since a slip in the date picker would recompute every month. While the student has payments the
+field is locked (dashed), with « Un paiement est enregistré : supprimez-le d'abord pour corriger
+cette date. » under it. A debt no longer claimed is refused by the server: the reason shows under
+the field, the date goes back and the field locks, so the next save goes through. A date after
+the student's changed payment day, or after their departure, is refused under the field, which
+stays open for another date.
+
+Questions before a save (a price of 0, a corrected join date) are asked in the sheet itself
+(`ConfirmBox`, amber): the form's buttons give way to « Non, revenir » / « Oui, enregistrer »
+(« Oui, inscrire » on enrolment) until answered. Not « Annuler »: that word already closes the
+sheet, and this one only goes back to the form.
 
 ## The student page
 

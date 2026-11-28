@@ -24,7 +24,7 @@ class StudentNotFoundError(DomainError):
 
 class InvalidPeriodError(DomainError):
     """Bad enrollment period. ``code`` is one of: period_not_open / period_already_open /
-    leave_before_entry / return_before_leave."""
+    leave_before_entry / return_before_leave / join_date_after_leave."""
 
 
 class InvalidWriteoffError(DomainError):
@@ -43,6 +43,12 @@ class HandoverNotFoundError(DomainError):
 
 class InvalidStudentError(DomainError):
     """Bad student data. ``code`` is one of: first_name_empty."""
+
+
+class JoinDateLockedError(DomainError):
+    """The join date can't be corrected: something recorded depends on it (decision 0015).
+    ``code`` is one of: join_date_has_payments / join_date_has_writeoffs /
+    join_date_after_payment_day."""
 
 
 class DuplicatePaymentError(DomainError):

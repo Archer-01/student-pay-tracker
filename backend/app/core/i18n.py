@@ -178,6 +178,33 @@ MESSAGES: dict[str, dict[str, str]] = {
         "en": "Student {student_id} is already attending; record a departure first",
         "fr": "Cet élève est déjà inscrit\u00a0; indiquez d'abord son départ",
     },
+    # --- Correcting a join date (decision 0015) ---
+    "error.join_date_has_payments_one": {
+        "en": "A payment is recorded for this student: delete it first to correct their join date.",
+        "fr": "Un paiement est enregistré pour cet élève\u00a0: supprimez-le d'abord pour corriger "
+        "sa date d'inscription.",
+    },
+    "error.join_date_has_payments_other": {
+        "en": "{count} payments are recorded for this student: delete them first to correct "
+        "their join date.",
+        "fr": "{count}\u00a0paiements sont enregistrés pour cet élève\u00a0: supprimez-les d'abord "
+        "pour corriger sa date d'inscription.",
+    },
+    "error.join_date_after_payment_day": {
+        "en": "The payment day was changed starting {payment_day}: the join date must be before "
+        "that date.",
+        "fr": "Le jour de paiement a été changé à partir du {payment_day}\u00a0: la date "
+        "d'inscription doit être avant cette date.",
+    },
+    "error.join_date_has_writeoffs": {
+        "en": "This student's debt was written off: their join date can't be corrected any more.",
+        "fr": "Vous ne réclamez plus les impayés de cet élève\u00a0: sa date d'inscription ne "
+        "peut plus être corrigée.",
+    },
+    "error.join_date_after_leave": {
+        "en": "The join date can't be after they left ({leave_date}).",
+        "fr": "La date d'inscription ne peut pas être après son départ (le {leave_date}).",
+    },
     "error.leave_before_entry": {
         "en": "A departure ({leave_date}) cannot precede the arrival it closes ({entry_date})",
         "fr": (

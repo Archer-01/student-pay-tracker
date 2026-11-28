@@ -79,7 +79,8 @@ consulted. Tests run in English (the setup resets it).
 - **Money is a decimal string** (`"300.00"`) end to end. `Number()` only to compare; what is sent
   is always one of the original strings (a French `"199,5"` becomes `"199.5"` by a string edit).
   Render with `formatMoney()`: `"240.00"` → `240 DH`, `"199.50"` → `199,50 DH`.
-- **`join_date` is immutable**: no edit control (PATCHing it is a 422).
+- **`join_date` can only be corrected** (decision 0015): « Modifier » sends it only when changed,
+  and locks it while the student has payments (the server refuses with 409 otherwise).
 - **Recording a payment** sends `for_month` (`"YYYY-MM"`) **xor** `cycle_number`.
 - **Drift** is cumulative days late, an integer ≥ 0, higher is worse.
 - `as_of=YYYY-MM-DD` drives historical views; omit it for today (and omit it, don't send today's

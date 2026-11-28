@@ -1438,6 +1438,8 @@ export interface components {
             price_note?: string | null;
             /** Note */
             note?: string | null;
+            /** Join Date */
+            join_date?: string | null;
         };
         /** UserOut */
         UserOut: {

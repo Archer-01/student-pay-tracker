@@ -52,7 +52,7 @@
       "phone": "Phone (optional)",
       "class": "Class"
     },
-    "joinDateHint": "This anchors the billing cycles and can't be changed later.",
+    "joinDateHint": "The monthly due dates start from it. Check it: once a payment is recorded, it can't be changed.",
     "submit": "Enroll student",
     "validation": {
       "priceInvalid": "Agreed price must be a non-negative number",
@@ -127,14 +127,20 @@
     "fields": {
       "phone": "Phone",
       "class": "Class",
-      "note": "Note"
+      "note": "Note",
+      "joinDate": "Join date"
     },
     "validation": {
       "priceInvalid": "Agreed price must be a non-negative number",
-      "firstNameRequired": "First name is required"
+      "firstNameRequired": "First name is required",
+      "joinDateRequired": "The join date is required."
     },
     "noteHint": "Only you see it. It never appears on the PDFs.",
-    "notePlaceholder": "e.g. pays on Saturdays, father: Ahmed"
+    "notePlaceholder": "e.g. pays on Saturdays, father: Ahmed",
+    "joinDateHint": "Correct it only if it was typed wrong: the months due are worked out again from this date.",
+    "joinDateLocked_one": "A payment is recorded: delete it first to correct this date.",
+    "joinDateLocked_other": "{{count}} payments are recorded: delete them first to correct this date.",
+    "joinDateConfirm": "The months to pay will be worked out again from {{date}}. Is that intended?"
   },
   "notFound": {
     "title": "Page not found",
@@ -220,7 +226,7 @@
     "returnDate": "Return date",
     "leaveReason": "Reason",
     "leaveHint": "Months after this date stop being owed. Drift already accrued is kept.",
-    "returnHint": "The join date never moves, so any existing debt and drift come back with them.",
+    "returnHint": "A return doesn't change the join date, so any existing debt and drift come back with them.",
     "more": "More actions",
     "call": "Call",
     "oldestUnpaid": "Oldest unpaid month: {{month}}.",
